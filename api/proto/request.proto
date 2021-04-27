@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+option go_package = " github.com/awatercolorpen/olap-sql/api/proto";
+package proto;
+
+enum METRIC_TYPE {
+    METRIC_TYPE_UNKNOWN = 0;
+    METRIC_TYPE_COUNT = 1;
+    METRIC_TYPE_DISTINCT_COUNT = 2;
+    METRIC_TYPE_SUM = 3;
+    METRIC_TYPE_POST = 4;
+    METRIC_TYPE_EXTENSION = 10;
+}
+
+message Metric {
+    METRIC_TYPE type = 1;
+    string field_name = 2;
+    string name = 3;
+    string extension_value = 4;
+}
+
+message Dimension {
+    string field_name = 1;
+    string name = 2;
+}
+
+enum FILTER_OPERATOR_TYPE {
+    FILTER_OPERATOR_UNKNOWN = 0;
+    FILTER_OPERATOR_IN = 1;
+    FILTER_OPERATOR_NOT_IN = 2;
+    FILTER_OPERATOR_LESS_EQUALS = 3;
+    FILTER_OPERATOR_LESS = 4;
+    FILTER_OPERATOR_GREATER_EQUALS = 5;
+    FILTER_OPERATOR_GREATER = 6;
+    FILTER_OPERATOR_LIKE = 7;
+    FILTER_OPERATOR_EXTENSION = 20;
+}
+
+enum FILTER_VALUE_TYPE {
+    FILTER_VALUE_UNKNOWN = 0;
+    FILTER_VALUE_STRING = 1;
+    FILTER_VALUE_INTEGER = 2;
+    FILTER_VALUE_FLOAT = 3;
+}
+
+message Filter {
+    FILTER_OPERATOR_TYPE operator_type = 1;
+    FILTER_VALUE_TYPE value_type = 2;
+    string name = 3;
+    repeated string value = 4;
+}
+
+message Join {
+    string table1 = 1;
+    string key1 = 2;
+    string table2 = 3;
+    string key2 = 4;
+    repeated Filter filters = 5;
+}
+
+enum DATA_SOURCE_TYPE {
+    DATA_SOURCE_UNKNOWN = 0;
+    DATA_SOURCE_CLICKHOUSE = 1;
+    DATA_SOURCE_DRUID = 2;
+    DATA_SOURCE_KYLIN = 3;
+    DATA_SOURCE_PRESTO = 4;
+}
+
+message DataSource {
+    DATA_SOURCE_TYPE type = 1;
+    string name = 2;
+    Request sub_request = 3;
+}
+
+message Request {
+    repeated Metric metrics = 1;
+    repeated Dimension dimensions = 2;
+    repeated Filter filters = 3;
+    repeated Join joins = 4;
+    DataSource data_source = 5;
+}
