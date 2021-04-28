@@ -62,7 +62,7 @@ func NewDataDictionary(option *DataDictionaryOption) (*DataDictionary, error) {
 		return nil, nil
 	}
 
-	if err := db.AutoMigrate(&models.Metric{}, &models.Dimension{}, &models.DataSource{}, &models.DataSet{}); err != nil {
+	if err := db.AutoMigrate(&models.DataSet{}, &models.DataSource{}, &models.Metric{}, &models.Dimension{}); err != nil {
 		return nil, err
 	}
 
