@@ -80,7 +80,13 @@ func (d *DataDictionary) GetDataSources() ([]*models.DataSource, error) {
 
 func (d *DataDictionary) GetDataSets() ([]*models.DataSet, error) {
 	var out []*models.DataSet
-	return out, d.db.Find(&out).Error
+	return out, d.db.
+		Preload("Primary").
+		Preload("Primary.Metrics").
+		Preload("Primary.Dimension").
+		Preload("Secondary").
+		Preload("Secondary.Metrics").
+		Preload("Secondary.Dimension").Find(&out).Error
 }
 
 func (d *DataDictionary) Create(item interface{}) error {
@@ -88,7 +94,17 @@ func (d *DataDictionary) Create(item interface{}) error {
 }
 
 func (d *DataDictionary) Update(item interface{}) error {
-	return d.db.Updates(item).Error
+	switch v := item.(type) {
+	case *models.DataSet:
+		return d.db.Transaction(func(tx *gorm.DB) error {
+			if err := d.db.Updates(item).Error; err != nil {
+				return err
+			}
+			return d.db.Model(item).Association("Secondary").Replace(v.Secondary)
+		})
+	default:
+		return d.db.Updates(item).Error
+	}
 }
 
 func (d *DataDictionary) Delete(item interface{}, id uint64) error {
