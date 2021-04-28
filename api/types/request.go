@@ -107,10 +107,9 @@ func (r *Request) buildSql(metrics, dimensions, filters, joins []string, table s
 	selectCol := append([]string{}, metrics...)
 	selectCol = append(selectCol, dimensions...)
 
-
 	selectStatement := strings.Join(selectCol, " , ")
 	groupStatement := strings.Join(dimensions, " , ")
-	whereStatement:= strings.Join(filters, " AND ")
+	whereStatement := strings.Join(filters, " AND ")
 	joinStatement := strings.Join(joins, " ")
 
 	sql := fmt.Sprintf("SELECT %v FROM %v", selectStatement, table)

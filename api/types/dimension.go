@@ -2,7 +2,7 @@ package types
 
 import (
 	"fmt"
-	
+
 	"github.com/awatercolorpen/olap-sql/api/proto"
 )
 
