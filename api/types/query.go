@@ -7,7 +7,7 @@ type Query struct {
 	Dimensions   []string      `json:"dimensions"`
 	Filters      []*Filter     `json:"filters"`
 	TimeInterval *TimeInterval `json:"time_interval"`
-	Dataset      string        `json:"dataset"`
+	DataSet      string        `json:"data_set"`
 }
 
 type TimeInterval struct {

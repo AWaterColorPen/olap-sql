@@ -1,4 +1,4 @@
-package olap_sql
+package olapsql
 
 import (
 	"github.com/awatercolorpen/olap-sql/api/models"
