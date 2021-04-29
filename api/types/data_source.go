@@ -6,11 +6,6 @@ import (
 	"github.com/awatercolorpen/olap-sql/api/proto"
 )
 
-var (
-	ErrInvalidDataSource          = fmt.Errorf("invalid data source")
-	ErrNotSupportedDataSourceType = fmt.Errorf("not supported data source type")
-)
-
 type DataSourceType string
 
 func (d DataSourceType) ToEnum() proto.DATA_SOURCE_TYPE {

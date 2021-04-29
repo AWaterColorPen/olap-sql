@@ -241,7 +241,7 @@ func (t *dataDictionaryTranslator) getFilter(name string) (*filterStruct, error)
 
 	d, err := t.getDimension(name)
 	if err == nil {
-		return &filterStruct{ValueType: d.ValueType, Name: d.FieldName, DataSourceID: m.DataSourceID}, nil
+		return &filterStruct{ValueType: d.ValueType, Name: d.FieldName, DataSourceID: d.DataSourceID}, nil
 	}
 	if strings.Contains(err.Error(), "duplicate") {
 		return nil, fmt.Errorf("duplicate filter name %v", name)

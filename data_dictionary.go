@@ -114,11 +114,11 @@ func (d *DataDictionary) Delete(item interface{}, id uint64) error {
 
 func (d *DataDictionary) Translator(query *types.Query) (Translator, error) {
 	t := &dataDictionaryTranslator{db: d.db}
-	if err := d.db.Take(t.set, "name = ?", query.DataSet).Error; err != nil {
+	if err := d.db.Take(&t.set, "name = ?", query.DataSet).Error; err != nil {
 		return nil, err
 	}
 
-	if t.set.Schema != nil {
+	if t.set.Schema == nil {
 		return nil, fmt.Errorf("schema is nil for data_set %v", query.DataSet)
 	}
 

@@ -6,11 +6,6 @@ import (
 	"github.com/awatercolorpen/olap-sql/api/proto"
 )
 
-var (
-	ErrNotSupportedMetricType      = fmt.Errorf("not supported MetricType")
-	ErrInvalidMetricTypeExpression = fmt.Errorf("invalid metric type expression")
-)
-
 type MetricType string
 
 func (m MetricType) ToEnum() proto.METRIC_TYPE {
@@ -59,11 +54,11 @@ func (m *Metric) column() (Column, error) {
 	case MetricTypeExpression:
 		expression, ok := m.ExtensionValue.(string)
 		if !ok {
-			return nil, ErrInvalidMetricTypeExpression
+			return nil, fmt.Errorf("invalid metric type expression %v", m.ExtensionValue)
 		}
 		return &ExpressionCol{Expression: expression, Alias: m.Name}, nil
 	default:
-		return nil, ErrNotSupportedMetricType
+		return nil, fmt.Errorf("not supported metric type %v", m.Type)
 	}
 }
 

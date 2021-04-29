@@ -7,11 +7,6 @@ import (
 	"github.com/awatercolorpen/olap-sql/api/proto"
 )
 
-var (
-	ErrNotSupportedFilterOperatorType = fmt.Errorf("not supported FilterOperatorType")
-	ErrNotSupportedValueType          = fmt.Errorf("not supported value type")
-)
-
 type FilterOperatorType string
 
 func (f FilterOperatorType) ToEnum() proto.FILTER_OPERATOR_TYPE {
@@ -26,35 +21,35 @@ func EnumToFilterOperatorType(f proto.FILTER_OPERATOR_TYPE) FilterOperatorType {
 }
 
 const (
-	FilterOperatorUnknown       FilterOperatorType = "FILTER_OPERATOR_UNKNOWN"
-	FilterOperatorIn            FilterOperatorType = "FILTER_OPERATOR_IN"
-	FilterOperatorNotIn         FilterOperatorType = "FILTER_OPERATOR_NOT_IN"
-	FilterOperatorLessEquals    FilterOperatorType = "FILTER_OPERATOR_LESS_EQUALS"
-	FilterOperatorLess          FilterOperatorType = "FILTER_OPERATOR_LESS"
-	FilterOperatorGreaterEquals FilterOperatorType = "FILTER_OPERATOR_GREATER_EQUALS"
-	FilterOperatorGreater       FilterOperatorType = "FILTER_OPERATOR_GREATER"
-	FilterOperatorLike          FilterOperatorType = "FILTER_OPERATOR_LIKE"
-	FilterOperatorExpression    FilterOperatorType = "FILTER_OPERATOR_EXTENSION"
+	FilterOperatorTypeUnknown       FilterOperatorType = "FILTER_OPERATOR_UNKNOWN"
+	FilterOperatorTypeIn            FilterOperatorType = "FILTER_OPERATOR_IN"
+	FilterOperatorTypeNotIn         FilterOperatorType = "FILTER_OPERATOR_NOT_IN"
+	FilterOperatorTypeLessEquals    FilterOperatorType = "FILTER_OPERATOR_LESS_EQUALS"
+	FilterOperatorTypeLess          FilterOperatorType = "FILTER_OPERATOR_LESS"
+	FilterOperatorTypeGreaterEquals FilterOperatorType = "FILTER_OPERATOR_GREATER_EQUALS"
+	FilterOperatorTypeGreater       FilterOperatorType = "FILTER_OPERATOR_GREATER"
+	FilterOperatorTypeLike          FilterOperatorType = "FILTER_OPERATOR_LIKE"
+	FilterOperatorTypeExpression    FilterOperatorType = "FILTER_OPERATOR_EXTENSION"
 )
 
 type ValueType string
 
-func (f ValueType) ToEnum() proto.VALUE_TYPE {
-	if v, ok := proto.VALUE_TYPE_value[string(f)]; ok {
-		return proto.VALUE_TYPE(v)
+func (v ValueType) ToEnum() proto.VALUE_TYPE {
+	if u, ok := proto.VALUE_TYPE_value[string(v)]; ok {
+		return proto.VALUE_TYPE(u)
 	}
 	return proto.VALUE_TYPE_VALUE_UNKNOWN
 }
 
-func EnumToValueType(f proto.VALUE_TYPE) ValueType {
-	return ValueType(f.String())
+func EnumToValueType(v proto.VALUE_TYPE) ValueType {
+	return ValueType(v.String())
 }
 
 const (
-	FilterValueUnknown ValueType = "FILTER_VALUE_UNKNOWN"
-	FilterValueString  ValueType = "FILTER_VALUE_STRING"
-	FilterValueInteger ValueType = "FILTER_VALUE_INTEGER"
-	FilterValueFloat   ValueType = "FILTER_VALUE_FLOAT"
+	ValueTypeUnknown ValueType = "FILTER_VALUE_UNKNOWN"
+	ValueTypeString  ValueType = "FILTER_VALUE_STRING"
+	ValueTypeInteger ValueType = "FILTER_VALUE_INTEGER"
+	ValueTypeFloat   ValueType = "FILTER_VALUE_FLOAT"
 )
 
 type Filter struct {
@@ -70,30 +65,30 @@ func (f *Filter) Statement() (string, error) {
 		return "", err
 	}
 	switch f.OperatorType {
-	case FilterOperatorIn:
+	case FilterOperatorTypeIn:
 		return fmt.Sprintf("%v IN (%v)", f.Name, strings.Join(value, ", ")), nil
-	case FilterOperatorNotIn:
+	case FilterOperatorTypeNotIn:
 		return fmt.Sprintf("%v NOT IN (%v)", f.Name, strings.Join(value, ", ")), nil
-	case FilterOperatorLessEquals:
+	case FilterOperatorTypeLessEquals:
 		v := value[0]
 		return fmt.Sprintf("%v <= %v", f.Name, v), nil
-	case FilterOperatorLess:
+	case FilterOperatorTypeLess:
 		v := value[0]
 		return fmt.Sprintf("%v < %v", f.Name, v), nil
-	case FilterOperatorGreaterEquals:
+	case FilterOperatorTypeGreaterEquals:
 		v := value[0]
 		return fmt.Sprintf("%v >= %v", f.Name, v), nil
-	case FilterOperatorGreater:
+	case FilterOperatorTypeGreater:
 		v := value[0]
 		return fmt.Sprintf("%v > %v", f.Name, v), nil
-	case FilterOperatorLike:
+	case FilterOperatorTypeLike:
 		v := value[0]
 		return fmt.Sprintf("%v LIKE %v", f.Name, v), nil
-	case FilterOperatorExpression:
+	case FilterOperatorTypeExpression:
 		v := value[0]
 		return v, nil
 	default:
-		return "", ErrNotSupportedFilterOperatorType
+		return "", fmt.Errorf("not supported filter operator type %v", f.OperatorType)
 	}
 }
 
@@ -101,12 +96,12 @@ func (f *Filter) valueToStringSlice() ([]string, error) {
 	var out []string
 	for _, v := range f.Value {
 		switch f.ValueType {
-		case FilterValueString:
+		case ValueTypeString:
 			out = append(out, fmt.Sprintf("'%v'", v))
-		case FilterValueInteger, FilterValueFloat:
+		case ValueTypeInteger, ValueTypeFloat:
 			out = append(out, fmt.Sprintf("%v", v))
 		default:
-			return nil, ErrNotSupportedValueType
+			return nil, fmt.Errorf("not supported value type %v", f.ValueType)
 		}
 	}
 	return out, nil

@@ -14,11 +14,11 @@ type Metric struct {
 	CreatedAt    time.Time        `gorm:"column:created_at"                                             json:"created_at,omitempty"`
 	UpdatedAt    time.Time        `gorm:"column:updated_at"                                             json:"updated_at,omitempty"`
 	DeletedAt    gorm.DeletedAt   `gorm:"column:delete_at;index"                                        json:"-"`
+	Type         types.MetricType `gorm:"column:type"                                                   json:"type"`
 	Name         string           `gorm:"column:name;index:idx_olap_sql_model_metrics,unique"           json:"name"`
 	FieldName    string           `gorm:"column:field_name"                                             json:"field_name"`
 	ValueType    types.ValueType  `gorm:"column:value_type"                                             json:"value_type"`
 	DataSourceID uint64           `gorm:"column:data_source_id;index:idx_olap_sql_model_metrics,unique" json:"data_source_id"`
-	Type         types.MetricType `gorm:"column:type"                                                   json:"type"`
 	Description  string           `gorm:"column:description"                                            json:"description"`
 }
 
