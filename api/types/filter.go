@@ -9,7 +9,7 @@ import (
 
 var (
 	ErrNotSupportedFilterOperatorType = fmt.Errorf("not supported FilterOperatorType")
-	ErrNotSupportedFilterValueType    = fmt.Errorf("not supported FilterValueType")
+	ErrNotSupportedValueType          = fmt.Errorf("not supported value type")
 )
 
 type FilterOperatorType string
@@ -37,34 +37,32 @@ const (
 	FilterOperatorExpression    FilterOperatorType = "FILTER_OPERATOR_EXTENSION"
 )
 
-type FilterValueType string
+type ValueType string
 
-func (f FilterValueType) ToEnum() proto.FILTER_VALUE_TYPE {
-	if v, ok := proto.FILTER_VALUE_TYPE_value[string(f)]; ok {
-		return proto.FILTER_VALUE_TYPE(v)
+func (f ValueType) ToEnum() proto.VALUE_TYPE {
+	if v, ok := proto.VALUE_TYPE_value[string(f)]; ok {
+		return proto.VALUE_TYPE(v)
 	}
-	return proto.FILTER_VALUE_TYPE_FILTER_VALUE_UNKNOWN
+	return proto.VALUE_TYPE_VALUE_UNKNOWN
 }
 
-func EnumToFilterValueType(f proto.FILTER_VALUE_TYPE) FilterValueType {
-	return FilterValueType(f.String())
+func EnumToValueType(f proto.VALUE_TYPE) ValueType {
+	return ValueType(f.String())
 }
 
 const (
-	FilterValueUnknown FilterValueType = "FILTER_VALUE_UNKNOWN"
-	FilterValueString  FilterValueType = "FILTER_VALUE_STRING"
-	FilterValueInteger FilterValueType = "FILTER_VALUE_INTEGER"
-	FilterValueFloat   FilterValueType = "FILTER_VALUE_FLOAT"
+	FilterValueUnknown ValueType = "FILTER_VALUE_UNKNOWN"
+	FilterValueString  ValueType = "FILTER_VALUE_STRING"
+	FilterValueInteger ValueType = "FILTER_VALUE_INTEGER"
+	FilterValueFloat   ValueType = "FILTER_VALUE_FLOAT"
 )
 
 type Filter struct {
 	OperatorType FilterOperatorType `json:"operator_type"`
-	ValueType    FilterValueType    `json:"value_type"`
+	ValueType    ValueType          `json:"value_type"`
 	Name         string             `json:"name"`
 	Value        []interface{}      `json:"value"`
 }
-
-type Filters []*Filter
 
 func (f *Filter) Statement() (string, error) {
 	value, err := f.valueToStringSlice()
@@ -108,8 +106,16 @@ func (f *Filter) valueToStringSlice() ([]string, error) {
 		case FilterValueInteger, FilterValueFloat:
 			out = append(out, fmt.Sprintf("%v", v))
 		default:
-			return nil, ErrNotSupportedFilterValueType
+			return nil, ErrNotSupportedValueType
 		}
 	}
 	return out, nil
+}
+
+func (f *Filter) ToProto() *proto.Filter {
+	return &proto.Filter{}
+}
+
+func ProtoToFilter(m *proto.Filter) *Filter {
+	return &Filter{}
 }

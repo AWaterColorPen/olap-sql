@@ -86,10 +86,10 @@ func (r *Request) joinStatement() ([]string, error) {
 	}
 
 	var statement []string
-	for _, v := range r.Joins {
+	for range r.Joins {
 		switch r.DataSource.Type {
 		case DataSourceTypeKylin, DataSourceTypePresto, DataSourceTypeClickHouse:
-			statement = append(statement, fmt.Sprintf("LEFT JOIN %v ON %v.%v = %v.%v", v.Table2, v.Table1, v.Key1, v.Table2, v.Key2))
+			// statement = append(statement, fmt.Sprintf("LEFT JOIN %v ON %v.%v = %v.%v", v.Table2, v.Table1, v.Key1, v.Table2, v.Key2))
 		// case DataSourceTypeClickHouse:
 		// 	statement = append(statement, fmt.Sprintf("t1 LEFT JOIN %v ON t1.%v = %v.%v", v.Table2, v.Key1, v.Table2, v.Key2))
 		default:

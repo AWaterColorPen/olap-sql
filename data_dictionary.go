@@ -3,6 +3,7 @@ package olapsql
 import (
 	"fmt"
 	"github.com/awatercolorpen/olap-sql/api/models"
+	"github.com/awatercolorpen/olap-sql/api/types"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -80,28 +81,28 @@ func (d *DataDictionary) GetDataSources() ([]*models.DataSource, error) {
 
 func (d *DataDictionary) GetDataSets() ([]*models.DataSet, error) {
 	var out []*models.DataSet
-	return out, d.db.
-		Preload("Primary").
-		Preload("Primary.Metrics").
-		Preload("Primary.Dimension").
-		Preload("Secondary").
-		Preload("Secondary.Metrics").
-		Preload("Secondary.Dimension").Find(&out).Error
+	return out, d.db.Find(&out).Error
 }
 
 func (d *DataDictionary) Create(item interface{}) error {
-	return d.db.Create(item).Error
+	switch v := item.(type) {
+	case *models.DataSet:
+		if err := d.isValidDataSetSchema(v.Schema); err != nil {
+			return err
+		}
+		return d.db.Create(item).Error
+	default:
+		return d.db.Create(item).Error
+	}
 }
 
 func (d *DataDictionary) Update(item interface{}) error {
 	switch v := item.(type) {
 	case *models.DataSet:
-		return d.db.Transaction(func(tx *gorm.DB) error {
-			if err := d.db.Updates(item).Error; err != nil {
-				return err
-			}
-			return d.db.Model(item).Association("Secondary").Replace(v.Secondary)
-		})
+		if err := d.isValidDataSetSchema(v.Schema); err != nil {
+			return err
+		}
+		return d.db.Updates(item).Error
 	default:
 		return d.db.Updates(item).Error
 	}
@@ -111,13 +112,43 @@ func (d *DataDictionary) Delete(item interface{}, id uint64) error {
 	return d.db.Delete(item, id).Error
 }
 
+func (d *DataDictionary) Translator(query *types.Query) (Translator, error) {
+	t := &translator{db: d.db}
+	if err := d.db.Take(t.set, "name = ?", query.DataSet).Error; err != nil {
+		return nil, err
+	}
+
+	if t.set.Schema != nil {
+		return nil, fmt.Errorf("schema is nil for data_set %v", query.DataSet)
+	}
+
+	id := t.set.Schema.DataSourceID()
+	if err := d.db.Find(&t.sources, "id IN ?", id).Error; err != nil {
+		return nil, err
+	}
+
+	if err := d.db.Find(&t.metrics, "data_source_id IN ?", id).Error; err != nil {
+		return nil, err
+	}
+
+	if err := d.db.Find(&t.dimensions, "data_source_id IN ?", id).Error; err != nil {
+		return nil, err
+	}
+
+	return t, nil
+}
+
+func (d *DataDictionary) isValidDataSetSchema(schema *models.DataSetSchema) error {
+	return nil
+}
+
 func NewDataDictionary(option *DataDictionaryOption) (*DataDictionary, error) {
 	db, err := option.NewDB()
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.AutoMigrate(&models.DataSet{}, &models.DataSource{}, &models.Metric{}, &models.Dimension{});
+	err = db.AutoMigrate(&models.DataSet{}, &models.DataSource{}, &models.Metric{}, &models.Dimension{})
 	if err != nil {
 		return nil, err
 	}
