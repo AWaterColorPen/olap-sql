@@ -113,7 +113,7 @@ func (d *DataDictionary) Delete(item interface{}, id uint64) error {
 }
 
 func (d *DataDictionary) Translator(query *types.Query) (Translator, error) {
-	t := &translator{db: d.db}
+	t := &dataDictionaryTranslator{db: d.db}
 	if err := d.db.Take(t.set, "name = ?", query.DataSet).Error; err != nil {
 		return nil, err
 	}
@@ -139,6 +139,7 @@ func (d *DataDictionary) Translator(query *types.Query) (Translator, error) {
 }
 
 func (d *DataDictionary) isValidDataSetSchema(schema *models.DataSetSchema) error {
+	// TODO
 	return nil
 }
 
