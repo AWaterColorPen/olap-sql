@@ -60,15 +60,15 @@ func ParseSync(rows *sql.Rows) interface{} {
 	return nil
 }
 
-func ParseOneRow(columns []string, values []interface{}) types.Item {
-	item := map[string]string{}
+func ParseOneRow(columns []string, values []interface{}) *types.Item {
+	item := &types.Item{Values: map[string]string{}}
 	for i := range values {
 		k := columns[i]
 		switch w := values[i].(type) {
 		case *[]byte:
-			item[k] = string(*w)
+			item.Values[k] = string(*w)
 		default:
-			item[k] = fmt.Sprint(w)
+			item.Values[k] = fmt.Sprint(w)
 		}
 	}
 	return item

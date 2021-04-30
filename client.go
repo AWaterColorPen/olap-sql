@@ -2,6 +2,8 @@ package olapsql
 
 import (
 	"fmt"
+
+	"github.com/ahmetb/go-linq/v3"
 	"github.com/awatercolorpen/olap-sql/api/types"
 	"gorm.io/gorm"
 )
@@ -43,6 +45,28 @@ func (c Clients) key(dataSourceType types.DataSourceType, dataset string) string
 		return fmt.Sprintf("%v", dataSourceType)
 	}
 	return fmt.Sprintf("%v/%v", dataSourceType, dataset)
+}
+
+func (c Clients) SubmitRequest(request *types.Request) (*types.Response, error) {
+	client, err := c.Get(request.DataSource.Type, request.DataSource.Name)
+	if err != nil {
+		return nil, err
+	}
+	db, err := request.Clause(client)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := db.Rows()
+	if err != nil {
+		return nil, err
+	}
+	ch := ParseChan(rows)
+	response := &types.Response{}
+	linq.From(ch).ForEach(func(v interface{}) {
+		u := v.(*types.Item)
+		response.Rows = append(response.Rows, u)
+	})
+	return response, nil
 }
 
 func NewClients(option ClientsOption) (Clients, error) {

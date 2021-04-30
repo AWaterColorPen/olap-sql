@@ -1,12 +1,12 @@
 package olapsql_test
 
 import (
-	"github.com/awatercolorpen/olap-sql/api/models"
-	"github.com/awatercolorpen/olap-sql/api/types"
 	"path/filepath"
 	"testing"
 
 	"github.com/awatercolorpen/olap-sql"
+	"github.com/awatercolorpen/olap-sql/api/models"
+	"github.com/awatercolorpen/olap-sql/api/types"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"

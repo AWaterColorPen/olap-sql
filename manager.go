@@ -1,12 +1,26 @@
 package olapsql
 
+import (
+	"fmt"
+)
+
 type Manager struct {
-	clients     Clients
+	clients    Clients
 	dictionary *DataDictionary
 }
 
-func (m *Manager) Get() (interface{}, error) {
-	return nil, nil
+func (m *Manager) GetClients() (Clients, error) {
+	if m.clients == nil {
+		return nil, fmt.Errorf("it is no initialization")
+	}
+	return m.clients, nil
+}
+
+func (m *Manager) GetDataDictionary() (*DataDictionary, error) {
+	if m.dictionary == nil {
+		return nil, fmt.Errorf("it is no initialization")
+	}
+	return m.dictionary, nil
 }
 
 func NewManager(configuration *Configuration) (*Manager, error) {

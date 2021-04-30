@@ -113,5 +113,5 @@ func NewDataDictionary(option *DataDictionaryOption) (*DataDictionary, error) {
 		return nil, err
 	}
 
-	return &DataDictionary{db: option.DB}, nil
+	return &DataDictionary{db: db}, nil
 }
