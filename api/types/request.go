@@ -19,8 +19,7 @@ type Request struct {
 func (r *Request) Clause(tx *gorm.DB) (*gorm.DB, error) {
 	// tx.Select()
 	// tx.Where()
-	rows, err := tx.Rows()
-	return nil, nil
+	return tx, nil
 }
 
 

@@ -45,6 +45,14 @@ func (c Clients) key(dataSourceType types.DataSourceType, dataset string) string
 	return fmt.Sprintf("%v/%v", dataSourceType, dataset)
 }
 
+func NewClients(option ClientsOption) (Clients, error) {
+	c := Clients{}
+	if err := c.RegisterByOption(option); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
 
 
 
