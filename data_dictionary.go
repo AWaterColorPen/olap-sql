@@ -4,60 +4,19 @@ import (
 	"fmt"
 	"github.com/awatercolorpen/olap-sql/api/models"
 	"github.com/awatercolorpen/olap-sql/api/types"
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
-type DBType string
-
-const (
-	DBTypeSQLite  DBType = "sqlite"
-	DBTypeMySQL   DBType = "mysql"
-	DBTypePostgre DBType = "postgres"
-)
-
 type DataDictionaryOption struct {
-	Debug bool     `json:"debug"`
-	DSN   string   `json:"dsn"`
-	Type  DBType   `json:"type"`
-	DB    *gorm.DB `json:"-"`
+	DBOption
+	DB *gorm.DB `json:"-"`
 }
 
 func (d *DataDictionaryOption) NewDB() (*gorm.DB, error) {
 	if d.DB != nil {
 		return d.DB, nil
 	}
-
-	dialect, err := getDialect(d.Type, d.DSN)
-	if err != nil {
-		return nil, err
-	}
-
-	db, err := gorm.Open(dialect, &gorm.Config{})
-	if err != nil {
-		return nil, err
-	}
-
-	if d.Debug {
-		db = db.Debug()
-	}
-
-	return db, nil
-}
-
-func getDialect(ty DBType, dsn string) (gorm.Dialector, error) {
-	switch ty {
-	case DBTypeSQLite:
-		return sqlite.Open(dsn), nil
-	case DBTypeMySQL:
-		return mysql.Open(dsn), nil
-	case DBTypePostgre:
-		return postgres.Open(dsn), nil
-	default:
-		return nil, fmt.Errorf("unsupported db type: %v", ty)
-	}
+	return d.DBOption.NewDB()
 }
 
 type DataDictionary struct {
