@@ -74,3 +74,21 @@ func ParseOneRow(columns []string, values []interface{}) *types.Item {
 	return item
 }
 
+func BuildResult(query *types.Query, response *types.Response) (*types.Result, error) {
+	result := &types.Result{}
+	result.Header = append(result.Header, query.Dimensions...)
+	result.Header = append(result.Header, query.Metrics...)
+	for _, v := range response.Rows {
+		row := make([]interface{}, len(result.Header))
+		for _, u := range result.Header {
+			w, ok := v.Values[u]
+			if !ok {
+				return nil, nil
+			}
+			row = append(row, w)
+		}
+		result.Rows = append(result.Rows, row)
+	}
+
+	return result, nil
+}

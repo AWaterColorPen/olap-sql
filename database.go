@@ -3,6 +3,7 @@ package olapsql
 import (
 	"fmt"
 
+	"gorm.io/driver/clickhouse"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -12,9 +13,10 @@ import (
 type DBType string
 
 const (
-	DBTypeSQLite  DBType = "sqlite"
-	DBTypeMySQL   DBType = "mysql"
-	DBTypePostgre DBType = "postgres"
+	DBTypeSQLite     DBType = "sqlite"
+	DBTypeMySQL      DBType = "mysql"
+	DBTypePostgre    DBType = "postgres"
+	DBTypeClickHouse DBType = "clickhouse"
 )
 
 type DBOption struct {
@@ -49,6 +51,8 @@ func getDialect(ty DBType, dsn string) (gorm.Dialector, error) {
 		return mysql.Open(dsn), nil
 	case DBTypePostgre:
 		return postgres.Open(dsn), nil
+	case DBTypeClickHouse:
+		return clickhouse.Open(dsn), nil
 	default:
 		return nil, fmt.Errorf("unsupported db type: %v", ty)
 	}

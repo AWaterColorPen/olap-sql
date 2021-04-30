@@ -2,6 +2,20 @@ package types
 
 import "github.com/awatercolorpen/olap-sql/api/proto"
 
+type Item struct {
+	Values map[string]string `json:"values"`
+}
+
+func (item *Item) ToProto() *proto.Item {
+	return &proto.Item{
+		Values: item.Values,
+	}
+}
+
+func ProtoToItem(item *proto.Item) *Item {
+	return &Item{item.Values}
+}
+
 type Response struct {
 	Rows []*Item `json:"rows"`
 }
@@ -20,18 +34,4 @@ func ProtoToResponse(response *proto.Response) *Response {
 		r.Rows = append(r.Rows, ProtoToItem(v))
 	}
 	return r
-}
-
-type Item struct {
-	Values map[string]string `json:"values"`
-}
-
-func (item *Item) ToProto() *proto.Item {
-	return &proto.Item{
-		Values: item.Values,
-	}
-}
-
-func ProtoToItem(item *proto.Item) *Item {
-	return &Item{item.Values}
 }
