@@ -36,8 +36,8 @@ const (
 type Metric struct {
 	Type           MetricType  `json:"type"`
 	Table          string      `json:"table"`
-	FieldName      string      `json:"field_name"`
 	Name           string      `json:"name"`
+	FieldName      string      `json:"field_name"`
 	ExtensionValue interface{} `json:"extension_value"`
 }
 
@@ -82,8 +82,9 @@ func (m *Metric) column() (Column, error) {
 func (m *Metric) ToProto() *proto.Metric {
 	return &proto.Metric{
 		Type:           m.Type.ToEnum(),
-		FieldName:      m.FieldName,
+		Table:          m.Table,
 		Name:           m.Name,
+		FieldName:      m.FieldName,
 		ExtensionValue: fmt.Sprint(m.ExtensionValue),
 	}
 }

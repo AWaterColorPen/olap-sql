@@ -7,27 +7,30 @@ import (
 )
 
 type Dimension struct {
-	FieldName string `json:"field_name"`
+	Table     string `json:"table"`
 	Name      string `json:"name"`
+	FieldName string `json:"field_name"`
 }
 
 func (d *Dimension) Statement() (string, error) {
 	if d.Name == "" {
 		return d.FieldName, nil
 	}
-	return fmt.Sprintf("%v AS %v", d.FieldName, d.Name), nil
+	return fmt.Sprintf("%v.%v AS %v", d.Table, d.FieldName, d.Name), nil
 }
 
 func (d *Dimension) ToProto() *proto.Dimension {
 	return &proto.Dimension{
-		FieldName: d.FieldName,
+		Table:     d.Table,
 		Name:      d.Name,
+		FieldName: d.FieldName,
 	}
 }
 
 func ProtoToDimension(d *proto.Dimension) *Dimension {
 	return &Dimension{
-		FieldName: d.FieldName,
+		Table:     d.Table,
 		Name:      d.Name,
+		FieldName: d.FieldName,
 	}
 }

@@ -23,19 +23,19 @@ type DataDictionary struct {
 	db *gorm.DB
 }
 
-func (d *DataDictionary) GetMetrics() ([]*models.Metric, error) {
+func (d *DataDictionary) GetMetrics(cond ...interface{}) ([]*models.Metric, error) {
 	var out []*models.Metric
-	return out, d.db.Find(&out).Error
+	return out, d.db.Find(&out, cond...).Error
 }
 
-func (d *DataDictionary) GetDimensions() ([]*models.Dimension, error) {
+func (d *DataDictionary) GetDimensions(cond ...interface{}) ([]*models.Dimension, error) {
 	var out []*models.Dimension
-	return out, d.db.Find(&out).Error
+	return out, d.db.Find(&out, cond...).Error
 }
 
-func (d *DataDictionary) GetDataSources() ([]*models.DataSource, error) {
+func (d *DataDictionary) GetDataSources(cond ...interface{}) ([]*models.DataSource, error) {
 	var out []*models.DataSource
-	return out, d.db.Find(&out).Error
+	return out, d.db.Find(&out, cond...).Error
 }
 
 func (d *DataDictionary) GetDataSets() ([]*models.DataSet, error) {

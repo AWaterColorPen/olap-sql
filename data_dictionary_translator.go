@@ -104,11 +104,14 @@ func (t *dataDictionaryTranslator) buildMetrics(query *types.Query) ([]*types.Me
 			t.joinedID = append(t.joinedID, m.DataSourceID)
 		}
 
+		source := t.sourceMap[m.DataSourceID]
+
 		// TODO ExtensionValue
 		tm := &types.Metric{
 			Type:      m.Type,
-			FieldName: m.FieldName,
+			Table:     source.Name,
 			Name:      m.Name,
+			FieldName: m.FieldName,
 		}
 
 		metrics = append(metrics, tm)
@@ -128,9 +131,12 @@ func (t *dataDictionaryTranslator) buildDimensions(query *types.Query) ([]*types
 			t.joinedID = append(t.joinedID, d.DataSourceID)
 		}
 
+		source := t.sourceMap[d.DataSourceID]
+
 		td := &types.Dimension{
-			FieldName: d.FieldName,
+			Table:     source.Name,
 			Name:      d.Name,
+			FieldName: d.FieldName,
 		}
 
 		dimensions = append(dimensions, td)
