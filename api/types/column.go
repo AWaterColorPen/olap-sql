@@ -27,10 +27,10 @@ type Column interface {
 }
 
 type SingleCol struct {
-	Table string `json:"table"`
-	Name  string `json:"name"`
-	Alias string `json:"alias"`
-	Type   ColumnType `json:"type"`
+	Table string     `json:"table"`
+	Name  string     `json:"name"`
+	Alias string     `json:"alias"`
+	Type  ColumnType `json:"type"`
 }
 
 func (col *SingleCol) Sql() string {

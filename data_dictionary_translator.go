@@ -20,6 +20,7 @@ type dataDictionaryTranslator struct {
 	primaryID        uint64
 	joinedID         []uint64
 	sourceMap        map[uint64]*models.DataSource
+	metricMap        map[uint64]*models.Metric
 	dimensionMap     map[uint64]*models.Dimension
 	secondaryMap     map[uint64]*models.Secondary
 	metricNameMap    map[string][]*models.Metric
@@ -73,6 +74,10 @@ func (t *dataDictionaryTranslator) init() error {
 	for _, v := range t.sources {
 		t.sourceMap[v.ID] = v
 	}
+	t.metricMap = map[uint64]*models.Metric{}
+	for _, v := range t.metrics {
+		t.metricMap[v.ID] = v
+	}
 	t.dimensionMap = map[uint64]*models.Dimension{}
 	for _, v := range t.dimensions {
 		t.dimensionMap[v.ID] = v
@@ -93,17 +98,15 @@ func (t *dataDictionaryTranslator) init() error {
 }
 
 func (t *dataDictionaryTranslator) buildMetrics(query *types.Query) ([]*types.Metric, error) {
+	queue, err := t.sortMetrics(query)
+	if err != nil {
+		return nil, err
+	}
+
 	var metrics []*types.Metric
-	for _, v := range query.Metrics {
-		m, err := t.getMetric(v)
-		if err != nil {
-			return nil, err
-		}
-
-		if m.DataSourceID != t.primaryID {
-			t.joinedID = append(t.joinedID, m.DataSourceID)
-		}
-
+	metricsMap := map[uint64]*types.Metric{}
+	for _, v := range queue {
+		m := t.metricMap[v]
 		source := t.sourceMap[m.DataSourceID]
 
 		// TODO ExtensionValue
@@ -114,7 +117,15 @@ func (t *dataDictionaryTranslator) buildMetrics(query *types.Query) ([]*types.Me
 			FieldName: m.FieldName,
 		}
 
+		if m.Composite != nil {
+			for _, u := range m.Composite.MetricID {
+				mm := metricsMap[u]
+				tm.Metrics = append(tm.Metrics, mm)
+			}
+		}
+
 		metrics = append(metrics, tm)
+		metricsMap[v] = tm
 	}
 	return metrics, nil
 }
@@ -268,6 +279,52 @@ func (t *dataDictionaryTranslator) getSecondary(id uint64) (*models.Secondary, e
 		return v, nil
 	}
 	return nil, fmt.Errorf("not found secondary data source id %v", id)
+}
+
+func (t *dataDictionaryTranslator) sortMetrics(query *types.Query) ([]uint64, error) {
+	inDegree := map[uint64]int{}
+	graph := map[uint64][]uint64{}
+
+	for _, v := range query.Metrics {
+		m, err := t.getMetric(v)
+		if err != nil {
+			return nil, err
+		}
+
+		if m.DataSourceID != t.primaryID {
+			t.joinedID = append(t.joinedID, m.DataSourceID)
+		}
+
+		inDegree[m.ID] = 0
+		if m.Composite != nil {
+			for _, u := range m.Composite.MetricID {
+				graph[u] = append(graph[u], m.ID)
+				inDegree[m.ID]++
+				if _, ok := inDegree[u]; !ok {
+					inDegree[u] = 0
+				}
+			}
+		}
+	}
+
+	var queue []uint64
+	for k, v := range inDegree {
+		if v == 0 {
+			queue = append(queue, k)
+		}
+	}
+
+	for i := 0; i < len(queue); i++ {
+		node := queue[i]
+		for _, v := range graph[node] {
+			inDegree[v]--
+			if inDegree[v] == 0 {
+				queue = append(queue, v)
+			}
+		}
+	}
+
+	return queue, nil
 }
 
 type filterStruct struct {

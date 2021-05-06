@@ -66,24 +66,24 @@ func (f *Filter) Statement() (string, error) {
 	}
 	switch f.OperatorType {
 	case FilterOperatorTypeIn:
-		return fmt.Sprintf("%v IN (%v)", f.Name, strings.Join(value, ", ")), nil
+		return fmt.Sprintf("`%v` IN (%v)", f.Name, strings.Join(value, ", ")), nil
 	case FilterOperatorTypeNotIn:
-		return fmt.Sprintf("%v NOT IN (%v)", f.Name, strings.Join(value, ", ")), nil
+		return fmt.Sprintf("`%v` NOT IN (%v)", f.Name, strings.Join(value, ", ")), nil
 	case FilterOperatorTypeLessEquals:
 		v := value[0]
-		return fmt.Sprintf("%v <= %v", f.Name, v), nil
+		return fmt.Sprintf("`%v` <= %v", f.Name, v), nil
 	case FilterOperatorTypeLess:
 		v := value[0]
-		return fmt.Sprintf("%v < %v", f.Name, v), nil
+		return fmt.Sprintf("`%v` < %v", f.Name, v), nil
 	case FilterOperatorTypeGreaterEquals:
 		v := value[0]
-		return fmt.Sprintf("%v >= %v", f.Name, v), nil
+		return fmt.Sprintf("`%v` >= %v", f.Name, v), nil
 	case FilterOperatorTypeGreater:
 		v := value[0]
-		return fmt.Sprintf("%v > %v", f.Name, v), nil
+		return fmt.Sprintf("`%v` > %v", f.Name, v), nil
 	case FilterOperatorTypeLike:
 		v := value[0]
-		return fmt.Sprintf("%v LIKE %v", f.Name, v), nil
+		return fmt.Sprintf("`%v` LIKE %v", f.Name, v), nil
 	case FilterOperatorTypeExpression:
 		v := value[0]
 		return v, nil

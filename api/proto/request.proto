@@ -23,6 +23,7 @@ message Metric {
     string name = 3;
     string field_name = 4;
     string extension_value = 5;
+    repeated Metric metrics = 6;
 }
 
 message Dimension {

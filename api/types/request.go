@@ -16,17 +16,17 @@ type Request struct {
 }
 
 func (r *Request) Clause(tx *gorm.DB) (*gorm.DB, error) {
-	select1, err := r.metricStatement()
+	select1, err := r.dimensionStatement()
 	if err != nil {
 		return nil, err
 	}
-	tx = tx.Select(select1)
-
-	select2, err := r.dimensionStatement()
+	select2, err := r.metricStatement()
 	if err != nil {
 		return nil, err
 	}
-	tx = tx.Select(select2)
+	select3 := append([]string{}, select1...)
+	select3 = append(select3, select2...)
+	tx = tx.Select(select3)
 
 	where1, err := r.filterStatement()
 	if err != nil {
@@ -60,7 +60,6 @@ func (r *Request) Clause(tx *gorm.DB) (*gorm.DB, error) {
 
 	return tx, nil
 }
-
 
 func (r *Request) Statement() (string, error) {
 	statement1, err := r.metricStatement()

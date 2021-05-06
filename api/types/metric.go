@@ -39,6 +39,7 @@ type Metric struct {
 	Name           string      `json:"name"`
 	FieldName      string      `json:"field_name"`
 	ExtensionValue interface{} `json:"extension_value"`
+	Metrics        []*Metric   `json:"metrics"`
 }
 
 func (m *Metric) Statement() (string, error) {
@@ -49,7 +50,23 @@ func (m *Metric) Statement() (string, error) {
 	return fmt.Sprintf("%v AS %v", col.Sql(), col.GetAlias()), nil
 }
 
+func (m *Metric) columns() ([]Column, error) {
+	var column []Column
+	for _, v := range m.Metrics {
+		col, err := v.column()
+		if err != nil {
+			return nil, err
+		}
+		column = append(column, col)
+	}
+	return column, nil
+}
+
 func (m *Metric) column() (Column, error) {
+	column, err := m.columns()
+	if err != nil {
+		return nil, err
+	}
 	switch m.Type {
 	case MetricTypeValue:
 		return &SingleCol{Table: m.Table, Name: m.FieldName, Alias: m.Name, Type: ColumnTypeValue}, nil
@@ -58,16 +75,16 @@ func (m *Metric) column() (Column, error) {
 	case MetricTypeDistinctCount:
 		return &SingleCol{Table: m.Table, Name: m.FieldName, Alias: m.Name, Type: ColumnTypeDistinctCount}, nil
 	case MetricTypeSum:
-		return &SingleCol{Table: m.Table, Name: m.FieldName, Alias: m.Name, Type: ColumnTypeMultiply}, nil
+		return &SingleCol{Table: m.Table, Name: m.FieldName, Alias: m.Name, Type: ColumnTypeSum}, nil
 	case MetricTypeAdd:
 		// todo column
-		return &ArithmeticCol{Column: []Column{}, Alias: m.Name, Type: ColumnTypeAdd}, nil
+		return &ArithmeticCol{Column: column, Alias: m.Name, Type: ColumnTypeAdd}, nil
 	case MetricTypeSubtract:
-		return &ArithmeticCol{Column: []Column{}, Alias: m.Name, Type: ColumnTypeSubtract}, nil
+		return &ArithmeticCol{Column: column, Alias: m.Name, Type: ColumnTypeSubtract}, nil
 	case MetricTypeMultiply:
-		return &ArithmeticCol{Column: []Column{}, Alias: m.Name, Type: ColumnTypeMultiply}, nil
+		return &ArithmeticCol{Column: column, Alias: m.Name, Type: ColumnTypeMultiply}, nil
 	case MetricTypeDivide:
-		return &ArithmeticCol{Column: []Column{}, Alias: m.Name, Type: ColumnTypeDivide}, nil
+		return &ArithmeticCol{Column: column, Alias: m.Name, Type: ColumnTypeDivide}, nil
 	case MetricTypeExpression:
 		expression, ok := m.ExtensionValue.(string)
 		if !ok {
@@ -80,12 +97,17 @@ func (m *Metric) column() (Column, error) {
 }
 
 func (m *Metric) ToProto() *proto.Metric {
+	var metrics []*proto.Metric
+	for _, v := range m.Metrics {
+		metrics = append(metrics, v.ToProto())
+	}
 	return &proto.Metric{
 		Type:           m.Type.ToEnum(),
 		Table:          m.Table,
 		Name:           m.Name,
 		FieldName:      m.FieldName,
 		ExtensionValue: fmt.Sprint(m.ExtensionValue),
+		Metrics:        metrics,
 	}
 }
 

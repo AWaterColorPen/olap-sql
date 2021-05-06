@@ -19,7 +19,7 @@ func TestClients_Translator(t *testing.T) {
 	assert.NoError(t, dataDictionaryMockData(d))
 
 	query := &types.Query{
-		Metrics: []string{"cost", "click"},
+		Metrics:    []string{"cost", "click"},
 		Dimensions: []string{"account_id", "account_name"},
 		Filters: []*types.Filter{
 			{OperatorType: types.FilterOperatorTypeIn, Name: "partition_time", Value: []interface{}{"2021-04-29", "2021-04-30"}},
