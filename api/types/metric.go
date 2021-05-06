@@ -21,15 +21,21 @@ func EnumToMetricType(m proto.METRIC_TYPE) MetricType {
 
 const (
 	MetricTypeUnknown       MetricType = "METRIC_TYPE_UNKNOWN"
+	MetricTypeValue         MetricType = "METRIC_TYPE_VALUE"
 	MetricTypeCount         MetricType = "METRIC_TYPE_COUNT"
 	MetricTypeDistinctCount MetricType = "METRIC_TYPE_DISTINCT_COUNT"
 	MetricTypeSum           MetricType = "METRIC_TYPE_SUM"
+	MetricTypeAdd           MetricType = "METRIC_TYPE_ADD"
+	MetricTypeSubtract      MetricType = "METRIC_TYPE_SUBTRACT"
+	MetricTypeMultiply      MetricType = "METRIC_TYPE_MULTIPLY"
+	MetricTypeDivide        MetricType = "METRIC_TYPE_DIVIDE"
 	MetricTypePost          MetricType = "METRIC_TYPE_POST"
 	MetricTypeExpression    MetricType = "METRIC_TYPE_EXTENSION"
 )
 
 type Metric struct {
 	Type           MetricType  `json:"type"`
+	Table          string      `json:"table"`
 	FieldName      string      `json:"field_name"`
 	Name           string      `json:"name"`
 	ExtensionValue interface{} `json:"extension_value"`
@@ -45,12 +51,23 @@ func (m *Metric) Statement() (string, error) {
 
 func (m *Metric) column() (Column, error) {
 	switch m.Type {
+	case MetricTypeValue:
+		return &SingleCol{Table: m.Table, Name: m.FieldName, Alias: m.Name, Type: ColumnTypeValue}, nil
 	case MetricTypeCount:
-		return &CountCol{Name: m.FieldName, Alias: m.Name}, nil
+		return &SingleCol{Table: m.Table, Name: m.FieldName, Alias: m.Name, Type: ColumnTypeCount}, nil
 	case MetricTypeDistinctCount:
-		return &DistinctCol{Name: m.FieldName, Alias: m.Name}, nil
+		return &SingleCol{Table: m.Table, Name: m.FieldName, Alias: m.Name, Type: ColumnTypeDistinctCount}, nil
 	case MetricTypeSum:
-		return &SumCol{Name: m.FieldName, Alias: m.Name}, nil
+		return &SingleCol{Table: m.Table, Name: m.FieldName, Alias: m.Name, Type: ColumnTypeMultiply}, nil
+	case MetricTypeAdd:
+		// todo column
+		return &ArithmeticCol{Column: []Column{}, Alias: m.Name, Type: ColumnTypeAdd}, nil
+	case MetricTypeSubtract:
+		return &ArithmeticCol{Column: []Column{}, Alias: m.Name, Type: ColumnTypeSubtract}, nil
+	case MetricTypeMultiply:
+		return &ArithmeticCol{Column: []Column{}, Alias: m.Name, Type: ColumnTypeMultiply}, nil
+	case MetricTypeDivide:
+		return &ArithmeticCol{Column: []Column{}, Alias: m.Name, Type: ColumnTypeDivide}, nil
 	case MetricTypeExpression:
 		expression, ok := m.ExtensionValue.(string)
 		if !ok {

@@ -2,12 +2,18 @@ package types
 
 import (
 	"fmt"
+	"strings"
 )
 
 const (
+	ColumnTypeValue         ColumnType = "value"
 	ColumnTypeCount         ColumnType = "count"
 	ColumnTypeDistinctCount ColumnType = "distinct_count"
 	ColumnTypeSum           ColumnType = "sum"
+	ColumnTypeAdd           ColumnType = "add"
+	ColumnTypeSubtract      ColumnType = "subtract"
+	ColumnTypeMultiply      ColumnType = "multiply"
+	ColumnTypeDivide        ColumnType = "divide"
 	ColumnTypePost          ColumnType = "post"
 	ColumnTypeExpression    ColumnType = "expression"
 )
@@ -20,55 +26,76 @@ type Column interface {
 	GetType() ColumnType
 }
 
-type CountCol struct {
+type SingleCol struct {
+	Table string `json:"table"`
 	Name  string `json:"name"`
 	Alias string `json:"alias"`
+	Type   ColumnType `json:"type"`
 }
 
-func (col *CountCol) Sql() string {
-	return fmt.Sprintf("COUNT( %s )", col.Name)
+func (col *SingleCol) Sql() string {
+	switch col.Type {
+	case ColumnTypeValue:
+		return fmt.Sprintf("%v.%v", col.Table, col.Name)
+	case ColumnTypeCount:
+		return fmt.Sprintf("COUNT( %v.%v )", col.Table, col.Name)
+	case ColumnTypeDistinctCount:
+		return fmt.Sprintf("1.0 * COUNT(DISTINCT %v.%v )", col.Table, col.Name)
+	case ColumnTypeSum:
+		return fmt.Sprintf("1.0 * SUM( %v.%v )", col.Table, col.Name)
+	default:
+		return fmt.Sprintf("unsupported type: %v", col.Type)
+	}
 }
 
-func (col *CountCol) GetAlias() string {
+func (col *SingleCol) GetAlias() string {
 	return col.Alias
 }
 
-func (col *CountCol) GetType() ColumnType {
-	return ColumnTypeCount
+func (col *SingleCol) GetType() ColumnType {
+	return col.Type
 }
 
-type DistinctCol struct {
-	Name  string `json:"name"`
-	Alias string `json:"alias"`
+type ArithmeticOperatorType string
+
+const (
+	ArithmeticOperatorTypeAdd      ArithmeticOperatorType = "+"
+	ArithmeticOperatorTypeSubtract ArithmeticOperatorType = "-"
+	ArithmeticOperatorTypeMultiply ArithmeticOperatorType = "*"
+	ArithmeticOperatorTypeDivide   ArithmeticOperatorType = "/"
+)
+
+type ArithmeticCol struct {
+	Column []Column   `json:"column"`
+	Alias  string     `json:"alias"`
+	Type   ColumnType `json:"type"`
 }
 
-func (col *DistinctCol) Sql() string {
-	return fmt.Sprintf("1.0 * COUNT(DISTINCT %s )", col.Name)
+func (col *ArithmeticCol) Sql() string {
+	var son []string
+	for _, v := range col.Column {
+		son = append(son, v.Sql())
+	}
+	operator := ArithmeticOperatorType("")
+	switch col.Type {
+	case ColumnTypeAdd:
+		operator = ArithmeticOperatorTypeAdd
+	case ColumnTypeSubtract:
+		operator = ArithmeticOperatorTypeSubtract
+	case ColumnTypeMultiply:
+		operator = ArithmeticOperatorTypeMultiply
+	case ColumnTypeDivide:
+		operator = ArithmeticOperatorTypeDivide
+	}
+	return fmt.Sprintf("( %v )", strings.Join(son, fmt.Sprintf(" %v ", operator)))
 }
 
-func (col *DistinctCol) GetAlias() string {
+func (col *ArithmeticCol) GetAlias() string {
 	return col.Alias
 }
 
-func (col *DistinctCol) GetType() ColumnType {
-	return ColumnTypeDistinctCount
-}
-
-type SumCol struct {
-	Name  string `json:"name"`
-	Alias string `json:"alias"`
-}
-
-func (col *SumCol) Sql() string {
-	return fmt.Sprintf("1.0 * SUM( %v )", col.Name)
-}
-
-func (col *SumCol) GetAlias() string {
-	return col.Alias
-}
-
-func (col *SumCol) GetType() ColumnType {
-	return ColumnTypeSum
+func (col *ArithmeticCol) GetType() ColumnType {
+	return col.Type
 }
 
 type ExpressionCol struct {

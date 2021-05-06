@@ -15,10 +15,49 @@ type Request struct {
 	DataSource *DataSource  `json:"data_source"`
 }
 
-
 func (r *Request) Clause(tx *gorm.DB) (*gorm.DB, error) {
-	// tx.Select()
-	// tx.Where()
+	select1, err := r.metricStatement()
+	if err != nil {
+		return nil, err
+	}
+	tx = tx.Select(select1)
+
+	select2, err := r.dimensionStatement()
+	if err != nil {
+		return nil, err
+	}
+	tx = tx.Select(select2)
+
+	where1, err := r.filterStatement()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range where1 {
+		tx = tx.Where(v)
+	}
+
+	join1, err := r.joinStatement()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range join1 {
+		tx = tx.Joins(v)
+	}
+
+	group1, err := r.groupStatement()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range group1 {
+		tx = tx.Group(v)
+	}
+
+	table1, err := r.tableStatement()
+	if err != nil {
+		return nil, err
+	}
+	tx = tx.Table(table1)
+
 	return tx, nil
 }
 

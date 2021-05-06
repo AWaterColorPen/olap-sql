@@ -69,6 +69,28 @@ func (c Clients) SubmitRequest(request *types.Request) (*types.Response, error) 
 	return response, nil
 }
 
+func (c Clients) SubmitSql(request *types.Request) (*types.Response, error) {
+	client, err := c.Get(request.DataSource.Type, request.DataSource.Name)
+	if err != nil {
+		return nil, err
+	}
+	db, err := request.Clause(client)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := db.Rows()
+	if err != nil {
+		return nil, err
+	}
+	ch := ParseChan(rows)
+	response := &types.Response{}
+	linq.From(ch).ForEach(func(v interface{}) {
+		u := v.(*types.Item)
+		response.Rows = append(response.Rows, u)
+	})
+	return response, nil
+}
+
 func NewClients(option ClientsOption) (Clients, error) {
 	c := Clients{}
 	if err := c.RegisterByOption(option); err != nil {

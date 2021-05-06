@@ -12,6 +12,10 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	mockDataSet = "mock-dataset"
+)
+
 func TestNewDataDictionary(t *testing.T) {
 	d, err := newDataDictionary(t.TempDir())
 	assert.NoError(t, err)
@@ -29,7 +33,7 @@ func TestDataDictionary_Translator(t *testing.T) {
 		Filters: []*types.Filter{
 			{OperatorType: types.FilterOperatorTypeIn, Name: "partition_time", Value: []interface{}{"2021-04-29", "2021-04-30"}},
 		},
-		DataSet: "account-cost",
+		DataSet: mockDataSet,
 	}
 
 	translator, err := d.Translator(query)
@@ -59,8 +63,8 @@ func newDataDictionary(sqlitePath string) (*olapsql.DataDictionary, error) {
 
 func dataDictionaryMockData(dictionary *olapsql.DataDictionary) error {
 	if err := dictionary.Create([]*models.DataSource{
-		{Type: types.DataSourceTypeClickHouse, Name: "mock-table"},
-		{Type: types.DataSourceTypeClickHouse, Name: "mock-secondary-table-account"},
+		{Type: types.DataSourceTypeClickHouse, Name: "mock_table"},
+		{Type: types.DataSourceTypeClickHouse, Name: "mock_secondary_table_account"},
 	}); err != nil {
 		return err
 	}
@@ -83,7 +87,7 @@ func dataDictionaryMockData(dictionary *olapsql.DataDictionary) error {
 
 	if err := dictionary.Create([]*models.DataSet{
 		{
-			Name: "account-cost",
+			Name: mockDataSet,
 			Schema: &models.DataSetSchema{PrimaryID: 1, Secondary: []*models.Secondary{
 				{DataSourceID: 2, JoinOn: []*models.JoinOn{{DimensionID1: 2, DimensionID2: 3}}},
 			}},
