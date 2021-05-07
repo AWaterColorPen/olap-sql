@@ -98,6 +98,11 @@ func (t *dataDictionaryTranslator) init() error {
 }
 
 func (t *dataDictionaryTranslator) buildMetrics(query *types.Query) ([]*types.Metric, error) {
+	originMetrics := map[string]bool{}
+	for _, v := range query.Metrics {
+		originMetrics[v] = true
+	}
+
 	queue, err := t.sortMetrics(query)
 	if err != nil {
 		return nil, err
@@ -124,8 +129,11 @@ func (t *dataDictionaryTranslator) buildMetrics(query *types.Query) ([]*types.Me
 			}
 		}
 
-		metrics = append(metrics, tm)
 		metricsMap[v] = tm
+
+		if _, ok := originMetrics[m.Name]; ok {
+			metrics = append(metrics, tm)
+		}
 	}
 	return metrics, nil
 }

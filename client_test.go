@@ -44,7 +44,6 @@ func TestClients_SubmitClause(t *testing.T) {
 	assert.Equal(t, float64(10244), table.Rows[0][3])
 	assert.Equal(t, 0.013861772745021476, table.Rows[0][5])
 	assert.Equal(t, 2.52971, table.Rows[0][6])
-	t.Log(table)
 }
 
 func newClients(sqlitePath string) (olapsql.Clients, error) {

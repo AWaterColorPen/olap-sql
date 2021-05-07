@@ -27,5 +27,5 @@ jobs:
           bash ./scripts/clickhouse.sh
 
       - name: Test
-        run: go test -v -covermode=atomic ./... -bench . -benchmem --arg clickhouse
+        run: go test -v -covermode=atomic ./... -bench . -benchmem --args clickhouse
 
