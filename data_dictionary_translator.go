@@ -167,9 +167,12 @@ func (t *dataDictionaryTranslator) buildFilters(query *types.Query) ([]*types.Fi
 			t.joinedID = append(t.joinedID, f.DataSourceID)
 		}
 
+		source := t.sourceMap[f.DataSourceID]
+
 		tf := &types.Filter{
 			OperatorType: v.OperatorType,
 			ValueType:    f.ValueType,
+			Table:        source.Name,
 			Name:         f.Name,
 			Value:        v.Value,
 		}

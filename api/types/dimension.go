@@ -13,10 +13,7 @@ type Dimension struct {
 }
 
 func (d *Dimension) Statement() (string, error) {
-	if d.Name == "" {
-		return d.FieldName, nil
-	}
-	return fmt.Sprintf("%v.%v AS %v", d.Table, d.FieldName, d.Name), nil
+	return fmt.Sprintf("`%v`.`%v` AS %v", d.Table, d.FieldName, d.Name), nil
 }
 
 func (d *Dimension) ToProto() *proto.Dimension {

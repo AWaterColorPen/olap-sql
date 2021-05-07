@@ -10,20 +10,30 @@ import (
 )
 
 func TestNewManager(t *testing.T) {
+	m, err := newManager(t)
+	assert.NoError(t, err)
+	_, err = m.GetDataDictionary()
+	assert.NoError(t, err)
+	_, err = m.GetClients()
+	assert.NoError(t, err)
+}
+
+func newManager(tb testing.TB) (*olapsql.Manager, error) {
 	configuration := &olapsql.Configuration{
 		ClientsOption: map[string]*olapsql.DBOption{
-			string(types.DataSourceTypeClickHouse): {DSN: filepath.Join(t.TempDir(), "sqlite"), Type: olapsql.DBTypeSQLite},
+			string(types.DataSourceTypeClickHouse): getOlapDBOption(tb),
 		},
 		DataDictionaryOption: &olapsql.DataDictionaryOption{
-			DBOption: olapsql.DBOption{DSN: filepath.Join(t.TempDir(), "sqlite"), Type: olapsql.DBTypeSQLite},
+			DBOption: olapsql.DBOption{DSN: filepath.Join(tb.TempDir(), "sqlite"), Type: olapsql.DBTypeSQLite},
 		},
 	}
-	m, err := olapsql.NewManager(configuration)
-	assert.NoError(t, err)
-	dictionary, err := m.GetDataDictionary()
-	assert.NoError(t, err)
-	assert.NoError(t, dataDictionaryMockData(dictionary))
-	clients, err := m.GetClients()
-	assert.NoError(t, err)
-	assert.Len(t, clients, 1)
+
+	return olapsql.NewManager(configuration)
+}
+
+func getOlapDBOption(tb testing.TB) *olapsql.DBOption {
+	if DataWithClickhouse() {
+		return &olapsql.DBOption{DSN: "tcp://localhost:9000?database=default", Type: olapsql.DBTypeClickHouse}
+	}
+	return &olapsql.DBOption{DSN: filepath.Join(tb.TempDir(), "sqlite"), Type: olapsql.DBTypeSQLite}
 }

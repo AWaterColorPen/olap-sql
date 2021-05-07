@@ -36,13 +36,16 @@ type SingleCol struct {
 func (col *SingleCol) Sql() string {
 	switch col.Type {
 	case ColumnTypeValue:
-		return fmt.Sprintf("%v.%v", col.Table, col.Name)
+		return fmt.Sprintf("`%v`.`%v`", col.Table, col.Name)
 	case ColumnTypeCount:
-		return fmt.Sprintf("COUNT( %v.%v )", col.Table, col.Name)
+		if col.Name == "*" {
+			return fmt.Sprintf("COUNT(*)")
+		}
+		return fmt.Sprintf("COUNT( `%v`.`%v` )", col.Table, col.Name)
 	case ColumnTypeDistinctCount:
-		return fmt.Sprintf("1.0 * COUNT(DISTINCT %v.%v )", col.Table, col.Name)
+		return fmt.Sprintf("1.0 * COUNT(DISTINCT `%v`.`%v` )", col.Table, col.Name)
 	case ColumnTypeSum:
-		return fmt.Sprintf("1.0 * SUM( %v.%v )", col.Table, col.Name)
+		return fmt.Sprintf("1.0 * SUM( `%v`.`%v` )", col.Table, col.Name)
 	default:
 		return fmt.Sprintf("unsupported type: %v", col.Type)
 	}
@@ -74,7 +77,7 @@ type ArithmeticCol struct {
 func (col *ArithmeticCol) Sql() string {
 	var son []string
 	for _, v := range col.Column {
-		son = append(son, v.Sql())
+		son = append(son, fmt.Sprintf("( %v )", v.Sql()))
 	}
 	operator := ArithmeticOperatorType("")
 	switch col.Type {
@@ -87,7 +90,7 @@ func (col *ArithmeticCol) Sql() string {
 	case ColumnTypeDivide:
 		operator = ArithmeticOperatorTypeDivide
 	}
-	return fmt.Sprintf("( %v )", strings.Join(son, fmt.Sprintf(" %v ", operator)))
+	return fmt.Sprintf("( %v )", strings.Join(son, fmt.Sprintf(" %v  ", operator)))
 }
 
 func (col *ArithmeticCol) GetAlias() string {
