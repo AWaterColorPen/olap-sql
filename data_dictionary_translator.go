@@ -117,8 +117,8 @@ func (t *dataDictionaryTranslator) buildMetrics(query *types.Query) ([]*types.Me
 			FieldName: m.FieldName,
 		}
 
-		if m.Composite != nil {
-			for _, u := range m.Composite.MetricID {
+		if m.Composition != nil {
+			for _, u := range m.Composition.MetricID {
 				mm := metricsMap[u]
 				tm.Metrics = append(tm.Metrics, mm)
 			}
@@ -296,8 +296,8 @@ func (t *dataDictionaryTranslator) sortMetrics(query *types.Query) ([]uint64, er
 		}
 
 		inDegree[m.ID] = 0
-		if m.Composite != nil {
-			for _, u := range m.Composite.MetricID {
+		if m.Composition != nil {
+			for _, u := range m.Composition.MetricID {
 				graph[u] = append(graph[u], m.ID)
 				inDegree[m.ID]++
 				if _, ok := inDegree[u]; !ok {

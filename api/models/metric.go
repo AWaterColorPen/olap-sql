@@ -21,7 +21,7 @@ type Metric struct {
 	Name         string           `gorm:"column:name;index:idx_olap_sql_model_metrics,unique"           json:"name"`
 	FieldName    string           `gorm:"column:field_name"                                             json:"field_name"`
 	ValueType    types.ValueType  `gorm:"column:value_type"                                             json:"value_type"`
-	Composite    *Composite       `gorm:"column:composite"                                              json:"composite"`
+	Composition  *Composition     `gorm:"column:composition"                                            json:"composition"`
 	DataSourceID uint64           `gorm:"column:data_source_id;index:idx_olap_sql_model_metrics,unique" json:"data_source_id"`
 	Description  string           `gorm:"column:description"                                            json:"description"`
 }
@@ -30,17 +30,17 @@ func (Metric) TableName() string {
 	return DefaultOlapSqlModelMetricTableName
 }
 
-type Composite struct {
+type Composition struct {
 	MetricID []uint64 `json:"metric_id"`
 }
 
 // Scan scan value into Jsonb, implements sql.Scanner interface
-func (c *Composite) Scan(value interface{}) error {
+func (c *Composition) Scan(value interface{}) error {
 	return scan(value, c)
 }
 
 // Value return json value, implement driver.Valuer interface
-func (c Composite) Value() (driver.Value, error) {
+func (c Composition) Value() (driver.Value, error) {
 	return value(c)
 }
 

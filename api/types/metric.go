@@ -20,17 +20,17 @@ func EnumToMetricType(m proto.METRIC_TYPE) MetricType {
 }
 
 const (
-	MetricTypeUnknown       MetricType = "METRIC_TYPE_UNKNOWN"
-	MetricTypeValue         MetricType = "METRIC_TYPE_VALUE"
-	MetricTypeCount         MetricType = "METRIC_TYPE_COUNT"
-	MetricTypeDistinctCount MetricType = "METRIC_TYPE_DISTINCT_COUNT"
-	MetricTypeSum           MetricType = "METRIC_TYPE_SUM"
-	MetricTypeAdd           MetricType = "METRIC_TYPE_ADD"
-	MetricTypeSubtract      MetricType = "METRIC_TYPE_SUBTRACT"
-	MetricTypeMultiply      MetricType = "METRIC_TYPE_MULTIPLY"
-	MetricTypeDivide        MetricType = "METRIC_TYPE_DIVIDE"
-	MetricTypePost          MetricType = "METRIC_TYPE_POST"
-	MetricTypeExpression    MetricType = "METRIC_TYPE_EXTENSION"
+	MetricTypeUnknown       MetricType = "METRIC_TYPE_UNKNOWN"        // invalid type.
+	MetricTypeValue         MetricType = "METRIC_TYPE_VALUE"          // single type. eg: 原始值指标
+	MetricTypeCount         MetricType = "METRIC_TYPE_COUNT"          // single type. eg: 计数指标
+	MetricTypeDistinctCount MetricType = "METRIC_TYPE_DISTINCT_COUNT" // single type. eg: 去重计数指标
+	MetricTypeSum           MetricType = "METRIC_TYPE_SUM"            // single type. eg: 求和指标
+	MetricTypeAdd           MetricType = "METRIC_TYPE_ADD"            // composition type eg: 相加指标
+	MetricTypeSubtract      MetricType = "METRIC_TYPE_SUBTRACT"       // composition type eg: 相乘指标
+	MetricTypeMultiply      MetricType = "METRIC_TYPE_MULTIPLY"       // composition type eg: 相减指标
+	MetricTypeDivide        MetricType = "METRIC_TYPE_DIVIDE"         // composition type.eg: 相除指标
+	MetricTypePost          MetricType = "METRIC_TYPE_POST"           // composition type, unsupported now
+	MetricTypeExpression    MetricType = "METRIC_TYPE_EXTENSION"      // single type, unsupported now
 )
 
 type Metric struct {
