@@ -41,7 +41,9 @@ enum FILTER_OPERATOR_TYPE {
     FILTER_OPERATOR_GREATER_EQUALS = 5;
     FILTER_OPERATOR_GREATER = 6;
     FILTER_OPERATOR_LIKE = 7;
-    FILTER_OPERATOR_EXTENSION = 20;
+    FILTER_OPERATOR_EXTENSION = 10;
+    FILTER_OPERATOR_AND = 101;
+    FILTER_OPERATOR_OR = 102;
 }
 
 enum VALUE_TYPE {
@@ -56,6 +58,7 @@ message Filter {
     VALUE_TYPE value_type = 2;
     string name = 3;
     repeated string value = 4;
+    repeated Filter filters = 5;
 }
 
 message JoinOn {
@@ -81,7 +84,7 @@ enum DATA_SOURCE_TYPE {
 message DataSource {
     DATA_SOURCE_TYPE type = 1;
     string name = 2;
-    Request sub_request = 3;
+//    Request sub_request = 3;
 }
 
 message Request {

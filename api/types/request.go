@@ -61,10 +61,10 @@ func (r *Request) Clause(tx *gorm.DB) (*gorm.DB, error) {
 	return tx, nil
 }
 
-func (r *Request) Statement() (string, error) {
-	// TODO
-	return "", nil
-}
+// func (r *Request) Statement() (string, error) {
+// 	// TODO
+// 	return "", nil
+// }
 
 func (r *Request) metricStatement() ([]string, error) {
 	var statement []string

@@ -18,6 +18,17 @@ func TestNewManager(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestManager_RunChan(t *testing.T) {
+	m, err := newManager(t)
+	assert.NoError(t, err)
+	assert.NoError(t, MockLoad(m))
+
+	query := MockQuery1()
+	result, err := m.RunChan(query)
+	assert.NoError(t, err)
+	MockQuery1ResultAssert(t, result)
+}
+
 func newManager(tb testing.TB) (*olapsql.Manager, error) {
 	configuration := &olapsql.Configuration{
 		ClientsOption: map[string]*olapsql.DBOption{

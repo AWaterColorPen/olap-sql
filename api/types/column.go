@@ -23,7 +23,6 @@ type ColumnType string
 type Column interface {
 	Sql() string
 	GetAlias() string
-	GetType() ColumnType
 }
 
 type SingleCol struct {
@@ -53,10 +52,6 @@ func (col *SingleCol) Sql() string {
 
 func (col *SingleCol) GetAlias() string {
 	return col.Alias
-}
-
-func (col *SingleCol) GetType() ColumnType {
-	return col.Type
 }
 
 type ArithmeticOperatorType string
@@ -97,10 +92,6 @@ func (col *ArithmeticCol) GetAlias() string {
 	return col.Alias
 }
 
-func (col *ArithmeticCol) GetType() ColumnType {
-	return col.Type
-}
-
 type ExpressionCol struct {
 	Expression string `json:"expression"`
 	Alias      string `json:"alias"`
@@ -112,8 +103,4 @@ func (col *ExpressionCol) Sql() string {
 
 func (col *ExpressionCol) GetAlias() string {
 	return col.Alias
-}
-
-func (col *ExpressionCol) GetType() ColumnType {
-	return ColumnTypeExpression
 }

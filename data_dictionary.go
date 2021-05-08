@@ -73,12 +73,12 @@ func (d *DataDictionary) Delete(item interface{}, id uint64) error {
 
 func (d *DataDictionary) Translator(query *types.Query) (Translator, error) {
 	t := &dataDictionaryTranslator{db: d.db}
-	if err := d.db.Take(&t.set, "name = ?", query.DataSet).Error; err != nil {
+	if err := d.db.Take(&t.set, "name = ?", query.DataSetName).Error; err != nil {
 		return nil, err
 	}
 
 	if t.set.Schema == nil {
-		return nil, fmt.Errorf("schema is nil for data_set %v", query.DataSet)
+		return nil, fmt.Errorf("schema is nil for data_set %v", query.DataSetName)
 	}
 
 	id := t.set.Schema.DataSourceID()
@@ -95,6 +95,14 @@ func (d *DataDictionary) Translator(query *types.Query) (Translator, error) {
 	}
 
 	return t, nil
+}
+
+func (d *DataDictionary) Translate(query *types.Query) (*types.Request, error) {
+	translator, err := d.Translator(query)
+	if err != nil {
+		return nil, err
+	}
+	return translator.Translate(query)
 }
 
 func (d *DataDictionary) isValidDataSetSchema(schema *models.DataSetSchema) error {

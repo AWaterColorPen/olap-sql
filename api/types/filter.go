@@ -30,6 +30,8 @@ const (
 	FilterOperatorTypeGreater       FilterOperatorType = "FILTER_OPERATOR_GREATER"
 	FilterOperatorTypeLike          FilterOperatorType = "FILTER_OPERATOR_LIKE"
 	FilterOperatorTypeExpression    FilterOperatorType = "FILTER_OPERATOR_EXTENSION"
+	FilterOperatorTypeAnd           FilterOperatorType = "FILTER_OPERATOR_AND"
+	FilterOperatorTypeOr            FilterOperatorType = "FILTER_OPERATOR_OR"
 )
 
 type ValueType string
@@ -58,6 +60,7 @@ type Filter struct {
 	Table        string             `json:"table"`
 	Name         string             `json:"name"`
 	Value        []interface{}      `json:"value"`
+	Filters      []*Filter          `json:"filter"`
 }
 
 func (f *Filter) Statement() (string, error) {
@@ -88,6 +91,10 @@ func (f *Filter) Statement() (string, error) {
 	case FilterOperatorTypeExpression:
 		v := value[0]
 		return v, nil
+	case FilterOperatorTypeAnd:
+		return f.treeStatement(" AND ")
+	case FilterOperatorTypeOr:
+		return f.treeStatement(" OR ")
 	default:
 		return "", fmt.Errorf("not supported filter operator type %v", f.OperatorType)
 	}
@@ -108,8 +115,22 @@ func (f *Filter) valueToStringSlice() ([]string, error) {
 	return out, nil
 }
 
+func (f *Filter) treeStatement(sep string) (string, error) {
+	var filter []string
+	for _, v := range f.Filters {
+		statement, err := v.Statement()
+		if err != nil {
+			return "", err
+		}
+		filter = append(filter, statement)
+	}
+	return fmt.Sprintf("( %v )", strings.Join(filter, sep)), nil
+}
+
 func (f *Filter) ToProto() *proto.Filter {
-	return &proto.Filter{}
+	return &proto.Filter{
+
+	}
 }
 
 func ProtoToFilter(m *proto.Filter) *Filter {

@@ -1,31 +1,16 @@
 package types
 
-import "fmt"
-
-type TableResult struct {
-	Header []string        `json:"header"`
-	Rows   [][]interface{} `json:"rows"`
+type Result struct {
+	Dimensions []string                 `json:"dimensions"`
+	Source     []map[string]interface{} `json:"source"`
 }
 
-func (t *TableResult) SetHeader(query *Query) {
-	t.Header = append([]string{}, query.Dimensions...)
-	t.Header = append(t.Header, query.Metrics...)
+func (r *Result) SetDimensions(query *Query) {
+	r.Dimensions = append([]string{}, query.Dimensions...)
+	r.Dimensions = append(r.Dimensions, query.Metrics...)
 }
 
-func (t *TableResult) AddRow( in map[string]interface{}) error {
-	row := make([]interface{}, len(t.Header))
-	for i, u := range t.Header {
-		w, ok := in[u]
-		if !ok {
-			return fmt.Errorf("found no column %v", u)
-		}
-		row[i] = w
-	}
-	t.Rows = append(t.Rows, row)
+func (r *Result) AddSource(in map[string]interface{}) error {
+	r.Source = append(r.Source, in)
 	return nil
-}
-
-type SeriesResult struct {
-	Header []string        `json:"header"`
-	Rows   [][]interface{} `json:"rows"`
 }

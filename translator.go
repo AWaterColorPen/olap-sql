@@ -1,5 +1,7 @@
 package olapsql
 
+import "github.com/awatercolorpen/olap-sql/api/types"
+
 type Translator interface {
-	Translate(interface{}) (interface{}, error)
+	Translate(*types.Query) (*types.Request, error)
 }

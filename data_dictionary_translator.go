@@ -27,12 +27,7 @@ type dataDictionaryTranslator struct {
 	dimensionNameMap map[string][]*models.Dimension
 }
 
-func (t *dataDictionaryTranslator) Translate(in interface{}) (interface{}, error) {
-	query, ok := in.(*types.Query)
-	if !ok {
-		return nil, fmt.Errorf("not supported type %T", in)
-	}
-
+func (t *dataDictionaryTranslator) Translate(query *types.Query) (*types.Request, error) {
 	if err := t.init(); err != nil {
 		return nil, err
 	}
