@@ -28,6 +28,11 @@ func (c Clients) RegisterByOption(option ClientsOption) error {
 			return err
 		}
 		c[k] = db
+
+		switch DBType(k) {
+		case DBTypeClickHouse:
+			c[string(types.DataSourceTypeClickHouse)] = db
+		}
 	}
 	return nil
 }
