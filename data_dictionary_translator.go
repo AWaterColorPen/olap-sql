@@ -161,26 +161,11 @@ func (t *dataDictionaryTranslator) buildDimensions(query *types.Query) ([]*types
 func (t *dataDictionaryTranslator) buildFilters(query *types.Query) ([]*types.Filter, error) {
 	var filters []*types.Filter
 	for _, v := range query.Filters {
-		f, err := t.getFilter(v.Name)
+		filter, err := t.treeFilter(v)
 		if err != nil {
 			return nil, err
 		}
-
-		if f.DataSourceID != t.primaryID {
-			t.joinedID = append(t.joinedID, f.DataSourceID)
-		}
-
-		source := t.sourceMap[f.DataSourceID]
-
-		tf := &types.Filter{
-			OperatorType: v.OperatorType,
-			ValueType:    f.ValueType,
-			Table:        source.Name,
-			Name:         f.Name,
-			Value:        v.Value,
-		}
-
-		filters = append(filters, tf)
+		filters = append(filters, filter)
 	}
 	return filters, nil
 }
@@ -332,6 +317,40 @@ func (t *dataDictionaryTranslator) sortMetrics(query *types.Query) ([]uint64, er
 
 	return queue, nil
 }
+
+func (t *dataDictionaryTranslator) treeFilter(in *types.Filter) (*types.Filter, error) {
+	out := &types.Filter{
+		OperatorType: in.OperatorType,
+		Value:        in.Value,
+	}
+
+	if !out.OperatorType.IsTree() {
+		f, err := t.getFilter(in.Name)
+		if err != nil {
+			return nil, err
+		}
+		if f.DataSourceID != t.primaryID {
+			t.joinedID = append(t.joinedID, f.DataSourceID)
+		}
+
+		source := t.sourceMap[f.DataSourceID]
+		out.ValueType = f.ValueType
+		out.Name = f.Name
+		out.Table = source.Name
+		return out, nil
+	}
+
+	for _, v := range in.Filters {
+		current, err := t.treeFilter(v)
+		if err != nil {
+			return nil, err
+		}
+		out.Filters = append(out.Filters, current)
+	}
+
+	return out, nil
+}
+
 
 type filterStruct struct {
 	ValueType    types.ValueType `json:"value_type"`

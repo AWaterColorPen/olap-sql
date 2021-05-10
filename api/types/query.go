@@ -24,7 +24,9 @@ type Query struct {
 }
 
 func (q *Query) TranslateTimeIntervalToFilter() {
-	q.Filters = append(q.Filters, q.TimeInterval.ToFilter())
+	if q.TimeInterval != nil && q.TimeInterval.Name != "" && q.TimeInterval.Start != "" && q.TimeInterval.End != "" {
+		q.Filters = append(q.Filters, q.TimeInterval.ToFilter())
+	}
 }
 
 

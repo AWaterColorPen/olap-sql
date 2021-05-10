@@ -9,6 +9,15 @@ import (
 
 type FilterOperatorType string
 
+func (f FilterOperatorType) IsTree() bool {
+	switch f {
+	case FilterOperatorTypeAnd, FilterOperatorTypeOr:
+		return true
+	default:
+		return false
+	}
+}
+
 func (f FilterOperatorType) ToEnum() proto.FILTER_OPERATOR_TYPE {
 	if v, ok := proto.FILTER_OPERATOR_TYPE_value[string(f)]; ok {
 		return proto.FILTER_OPERATOR_TYPE(v)

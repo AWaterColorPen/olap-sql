@@ -51,6 +51,7 @@ func (m *Manager) RunChan(query *types.Query) (*types.Result, error) {
 }
 
 func (m *Manager) BuildTransaction(query *types.Query) (*gorm.DB, error) {
+	query.TranslateTimeIntervalToFilter()
 	dictionary, err := m.GetDataDictionary()
 	if err != nil {
 		return nil, err
