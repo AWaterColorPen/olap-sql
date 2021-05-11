@@ -205,9 +205,15 @@ func MockQuery2ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Equal(t,"source_avg", result.Dimensions[6])
 	assert.Len(t, result.Source, 7)
 	assert.Len(t, result.Source[0], 7)
-	assert.Equal(t, float64(10086), result.Source[0]["size_sum"])
-	assert.Equal(t, 0.013781479278207416, result.Source[0]["hits_per_size"])
-	assert.Equal(t, 4.872, result.Source[0]["source_avg"])
+	var source map[string]interface{}
+	for _, v := range result.Source {
+		if v["class"] == int64(1) && v["time_by_hour"] == "2021-05-07 12" {
+			source = v
+		}
+	}
+	assert.Equal(t, float64(1024), source["size_sum"])
+	assert.Equal(t, 0.01953125, source["hits_per_size"])
+	assert.Equal(t, 4.872, source["source_avg"])
 }
 
 func DataWithClickhouse() bool {
