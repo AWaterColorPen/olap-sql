@@ -1,14 +1,15 @@
 package olapsql_test
 
 import (
+	"fmt"
+	"os"
+	"time"
+
 	"github.com/awatercolorpen/olap-sql"
 	"github.com/awatercolorpen/olap-sql/api/models"
 	"github.com/awatercolorpen/olap-sql/api/types"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
-
-	"os"
-	"time"
 )
 
 const mockWikiStatDataSet = "wikistat"
@@ -44,8 +45,19 @@ func timeParseDate(in string) time.Time {
 }
 
 func timeParseTime(in string) time.Time {
-	t, _ := time.Parse("2006-01-02T15:04:05.000Z", in)
+	t, _ := time.Parse("2006-01-02T15:04:05Z", in)
 	return t
+}
+
+func mockTimeGroupDimension(name, fieldName string, dataSourceID uint64) *models.Dimension {
+	dimension := &models.Dimension{Name: name, ValueType: types.ValueTypeString, DataSourceID: dataSourceID}
+	if DataWithClickhouse() {
+		dimension.FieldName = fmt.Sprintf("formatDateTime(%v, '%%Y-%%m-%%d %%H:00:00')", fieldName)
+		return dimension
+	}
+
+	dimension.FieldName = fmt.Sprintf("strftime('%%Y-%%m-%%d %%H', %v)", fieldName)
+	return dimension
 }
 
 func MockWikiStatData(db *gorm.DB) error {
@@ -108,7 +120,7 @@ func MockWikiStatDataDictionary(dictionary *olapsql.DataDictionary) error {
 
 	if err := dictionary.Create([]*models.Dimension{
 		{Name: "date", FieldName: "date", ValueType: types.ValueTypeString, DataSourceID: 1},
-		{Name: "time", FieldName: "time", ValueType: types.ValueTypeString, DataSourceID: 1},
+		mockTimeGroupDimension("time_by_hour", "time", 1),
 		{Name: "project", FieldName: "project", ValueType: types.ValueTypeString, DataSourceID: 1},
 		{Name: "sub_project", FieldName: "subproject", ValueType: types.ValueTypeString, DataSourceID: 1},
 		{Name: "path", FieldName: "path", ValueType: types.ValueTypeString, DataSourceID: 1},
@@ -171,6 +183,31 @@ func MockQuery1ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Equal(t, float64(10244), result.Source[0]["size_sum"])
 	assert.Equal(t, 0.013861772745021476, result.Source[0]["hits_per_size"])
 	assert.Equal(t, 2.52971, result.Source[0]["source_avg"])
+}
+
+func MockQuery2() *types.Query {
+	query := &types.Query{
+		DataSetName: mockWikiStatDataSet,
+		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
+		Metrics:    []string{"hits_sum", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
+		Dimensions: []string{"time_by_hour", "class"},
+		Filters: []*types.Filter{
+			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
+			{OperatorType: types.FilterOperatorTypeIn, Name: "class", Value: []interface{}{1, 2, 3, 4}},
+		},
+	}
+	return query
+}
+
+func MockQuery2ResultAssert(t assert.TestingT, result *types.Result) {
+	assert.Len(t, result.Dimensions, 7)
+	assert.Equal(t,"time_by_hour", result.Dimensions[0])
+	assert.Equal(t,"source_avg", result.Dimensions[6])
+	assert.Len(t, result.Source, 7)
+	assert.Len(t, result.Source[0], 7)
+	assert.Equal(t, float64(10086), result.Source[0]["size_sum"])
+	assert.Equal(t, 0.013781479278207416, result.Source[0]["hits_per_size"])
+	assert.Equal(t, 4.872, result.Source[0]["source_avg"])
 }
 
 func DataWithClickhouse() bool {

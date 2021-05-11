@@ -2,8 +2,13 @@ package types
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/awatercolorpen/olap-sql/api/proto"
+)
+
+var (
+	reg = regexp.MustCompile(`^[0-9A-Za-z]+$`)
 )
 
 type Dimension struct {
@@ -13,7 +18,14 @@ type Dimension struct {
 }
 
 func (d *Dimension) Statement() (string, error) {
-	return fmt.Sprintf("`%v`.`%v` AS %v", d.Table, d.FieldName, d.Name), nil
+	if d.expression() {
+		return fmt.Sprintf("%v AS %v", d.FieldName, d.Name), nil
+	}
+	return fmt.Sprintf("%v.%v AS %v", d.Table, d.FieldName, d.Name), nil
+}
+
+func (d *Dimension) expression () bool {
+	return !reg.MatchString(d.FieldName)
 }
 
 func (d *Dimension) ToProto() *proto.Dimension {

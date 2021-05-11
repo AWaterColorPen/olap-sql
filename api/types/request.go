@@ -130,8 +130,11 @@ func (r *Request) joinStatement() ([]string, error) {
 func (r *Request) groupStatement() ([]string, error) {
 	var statement []string
 	for _, v := range r.Dimensions {
-		group := fmt.Sprintf("%v.%v", v.Table, v.FieldName)
-		statement = append(statement, group)
+		if v.expression() {
+			statement = append(statement, fmt.Sprintf("%v", v.FieldName))
+		} else {
+			statement = append(statement, fmt.Sprintf("%v.%v", v.Table, v.FieldName))
+		}
 	}
 
 	return statement, nil
