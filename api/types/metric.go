@@ -29,8 +29,8 @@ const (
 	MetricTypeSubtract      MetricType = "METRIC_TYPE_SUBTRACT"       // composition type eg: 相乘指标
 	MetricTypeMultiply      MetricType = "METRIC_TYPE_MULTIPLY"       // composition type eg: 相减指标
 	MetricTypeDivide        MetricType = "METRIC_TYPE_DIVIDE"         // composition type.eg: 相除指标
+	MetricTypeExpression    MetricType = "METRIC_TYPE_EXPRESSION"     // single type. eg: 表达式
 	MetricTypePost          MetricType = "METRIC_TYPE_POST"           // composition type, unsupported now
-	MetricTypeExpression    MetricType = "METRIC_TYPE_EXTENSION"      // single type, unsupported now
 )
 
 type Metric struct {
