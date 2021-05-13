@@ -77,7 +77,6 @@ func (m *Metric) column() (Column, error) {
 	case MetricTypeSum:
 		return &SingleCol{Table: m.Table, Name: m.FieldName, Alias: m.Name, Type: ColumnTypeSum}, nil
 	case MetricTypeAdd:
-		// todo column
 		return &ArithmeticCol{Column: column, Alias: m.Name, Type: ColumnTypeAdd}, nil
 	case MetricTypeSubtract:
 		return &ArithmeticCol{Column: column, Alias: m.Name, Type: ColumnTypeSubtract}, nil
@@ -86,11 +85,7 @@ func (m *Metric) column() (Column, error) {
 	case MetricTypeDivide:
 		return &ArithmeticCol{Column: column, Alias: m.Name, Type: ColumnTypeDivide}, nil
 	case MetricTypeExpression:
-		expression, ok := m.ExtensionValue.(string)
-		if !ok {
-			return nil, fmt.Errorf("invalid metric type expression %v", m.ExtensionValue)
-		}
-		return &ExpressionCol{Expression: expression, Alias: m.Name}, nil
+		return &ExpressionCol{Expression: m.FieldName, Alias: m.Name}, nil
 	default:
 		return nil, fmt.Errorf("not supported metric type %v", m.Type)
 	}
@@ -106,7 +101,6 @@ func (m *Metric) ToProto() *proto.Metric {
 		Table:          m.Table,
 		Name:           m.Name,
 		FieldName:      m.FieldName,
-		ExtensionValue: fmt.Sprint(m.ExtensionValue),
 		Metrics:        metrics,
 	}
 }

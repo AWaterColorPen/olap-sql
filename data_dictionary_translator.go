@@ -109,7 +109,6 @@ func (t *dataDictionaryTranslator) buildMetrics(query *types.Query) ([]*types.Me
 		m := t.metricMap[v]
 		source := t.sourceMap[m.DataSourceID]
 
-		// TODO ExtensionValue
 		tm := &types.Metric{
 			Type:      m.Type,
 			Table:     source.Name,

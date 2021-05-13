@@ -106,7 +106,7 @@ func MockWikiStatDataDictionary(dictionary *olapsql.DataDictionary) error {
 	}
 
 	if err := dictionary.Create([]*models.Metric{
-		{Type: types.MetricTypeSum, Name: "hits_sum", FieldName: "hits", ValueType: types.ValueTypeInteger, DataSourceID: 1},
+		{Type: types.MetricTypeSum, Name: "hits", FieldName: "hits", ValueType: types.ValueTypeInteger, DataSourceID: 1},
 		{Type: types.MetricTypeSum, Name: "size_sum", FieldName: "size", ValueType: types.ValueTypeInteger, DataSourceID: 1},
 		{Type: types.MetricTypeCount, Name: "count", FieldName: "*", ValueType: types.ValueTypeInteger, DataSourceID: 1},
 		{Type: types.MetricTypeDivide, Name: "hits_avg", Composition: &models.Composition{MetricID: []uint64{1, 3}}, ValueType: types.ValueTypeFloat, DataSourceID: 1},
@@ -165,7 +165,7 @@ func MockQuery1() *types.Query {
 	query := &types.Query{
 		DataSetName: mockWikiStatDataSet,
 		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
-		Metrics:    []string{"hits_sum", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
+		Metrics:    []string{"hits", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
 		Dimensions: []string{"date", "class"},
 		Filters: []*types.Filter{
 			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
@@ -190,7 +190,7 @@ func MockQuery2() *types.Query {
 	query := &types.Query{
 		DataSetName: mockWikiStatDataSet,
 		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
-		Metrics:    []string{"hits_sum", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
+		Metrics:    []string{"hits", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
 		Dimensions: []string{"time_by_hour", "class"},
 		Filters: []*types.Filter{
 			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
