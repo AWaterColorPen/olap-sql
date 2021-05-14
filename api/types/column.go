@@ -85,6 +85,11 @@ func (col *ArithmeticCol) Sql() string {
 	case ColumnTypeDivide:
 		operator = ArithmeticOperatorTypeDivide
 	}
+	if operator == ArithmeticOperatorTypeDivide {
+		for i := 1; i < len(children); i++ {
+			children[i] = fmt.Sprintf("NULLIF(%v, 0)", children[i])
+		}
+	}
 	return fmt.Sprintf("( %v )", strings.Join(children, fmt.Sprintf(" %v  ", operator)))
 }
 

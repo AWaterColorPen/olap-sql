@@ -70,6 +70,7 @@ func mockTimeGroupDimension(name, fieldName string, dataSourceID uint64) *models
 }
 
 func DataWithClickhouse() bool {
+	return true
 	args := os.Args
 	for _, arg := range args {
 		if arg == "clickhouse" {
