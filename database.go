@@ -39,7 +39,6 @@ func (o *DBOption) NewDB() (*gorm.DB, error) {
 	if o.Debug {
 		db = db.Debug()
 	}
-
 	return db, nil
 }
 

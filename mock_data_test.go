@@ -91,7 +91,7 @@ func MockWikiStatData(db *gorm.DB) error {
 		return nil
 	}
 
-	if err := db.AutoMigrate(&WikiStat{}, &WikiStatRelate{}, &ClassRelate{}); err != nil {
+	if err := db.Debug().AutoMigrate(&WikiStat{}, &WikiStatRelate{}, &ClassRelate{}); err != nil {
 		return err
 	}
 	if err := db.Debug().Create([]*WikiStat{
