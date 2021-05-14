@@ -322,14 +322,16 @@ func (t *dataDictionaryTranslator) treeFilter(in *types.Filter) (*types.Filter, 
 		if err != nil {
 			return nil, err
 		}
-		if f.DataSourceID != t.primaryID {
-			t.joinedSourceID = append(t.joinedSourceID, f.DataSourceID)
+		path, err := t.joinTree.Path(f.DataSourceID)
+		if err != nil {
+			return nil, err
 		}
+		t.joinedSourceID = append(t.joinedSourceID, path...)
 
 		source := t.sourceMap[f.DataSourceID]
 		out.ValueType = f.ValueType
 		out.Name = f.Name
-		out.Table = source.Name
+		out.Table = source.GetTableName()
 		return out, nil
 	}
 
