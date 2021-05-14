@@ -28,6 +28,9 @@ func (d *DataSource) GetTableName() string {
 }
 
 func (d *DataSource) GetDatabaseName() string {
+	if !strings.Contains(d.Name, ".") {
+		return ""
+	}
 	out := strings.Split(d.Name, ".")
 	return out[0]
 }
