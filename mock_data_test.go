@@ -257,20 +257,20 @@ func MockQuery3() *types.Query {
 }
 
 func MockQuery3ResultAssert(t assert.TestingT, result *types.Result) {
-	assert.Len(t, result.Dimensions, 7)
-	assert.Equal(t, "time_by_hour", result.Dimensions[0])
-	assert.Equal(t, "source_avg", result.Dimensions[6])
-	assert.Len(t, result.Source, 7)
-	assert.Len(t, result.Source[0], 7)
+	assert.Len(t, result.Dimensions, 3)
+	assert.Equal(t, "project", result.Dimensions[0])
+	assert.Equal(t, "source_avg", result.Dimensions[2])
+	assert.Len(t, result.Source, 3)
+	assert.Len(t, result.Source[0], 3)
 
 	sort.Slice(result.Source, func(i, j int) bool {
-		if result.Source[i]["time_by_hour"].(string) != result.Source[j]["time_by_hour"].(string) {
-			return result.Source[i]["time_by_hour"].(string) < result.Source[j]["time_by_hour"].(string)
+		if result.Source[i]["project"].(string) != result.Source[j]["project"].(string) {
+			return result.Source[i]["project"].(string) < result.Source[j]["project"].(string)
 		}
-		return result.Source[i]["class"].(string) < result.Source[j]["class"].(string)
+		return result.Source[i]["class_name"].(string) < result.Source[j]["class_name"].(string)
 	})
-	assert.Equal(t, float64(10086), result.Source[0]["size_sum"])
-	assert.Equal(t, 0.013781479278207416, result.Source[0]["hits_per_size"])
+	assert.Equal(t, "city", result.Source[0]["project"])
+	assert.Equal(t, "location", result.Source[0]["class_name"])
 	assert.Equal(t, 4.872, result.Source[0]["source_avg"])
 }
 

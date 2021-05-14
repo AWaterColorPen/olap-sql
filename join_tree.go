@@ -182,13 +182,7 @@ func (j *JoinTreeBuilder) dfs(current uint64) (*joinNode, error) {
 		return nil, fmt.Errorf("can't find %v in source map", current)
 	}
 	node := newJoinNode(source)
-
-	children, ok := j.tree[current]
-	if !ok {
-		return nil, fmt.Errorf("can't find %v in tree", current)
-	}
-
-	for _, v := range children {
+	for _, v := range j.tree[current] {
 		child, err := j.dfs(v)
 		if err != nil {
 			return nil, err

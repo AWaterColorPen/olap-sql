@@ -11,7 +11,7 @@ func (t *TimeInterval) ToFilter() *Filter {
 	filter2 := &Filter{OperatorType: FilterOperatorTypeLess, Name: t.Name, Value: []interface{}{t.End}}
 	return &Filter{
 		OperatorType: FilterOperatorTypeAnd,
-		Filters: []*Filter{filter1, filter2},
+		Children: []*Filter{filter1, filter2},
 	}
 }
 

@@ -188,6 +188,9 @@ func (t *dataDictionaryTranslator) buildJoins() ([]*types.Join, error) {
 	var joins []*types.Join
 	linq.From(t.joinedSourceID).Distinct().ToSlice(&t.joinedSourceID)
 	for _, v := range t.joinedSourceID {
+		if v == t.primaryID {
+			continue
+		}
 		s, err := t.getSecondary(v)
 		if err != nil {
 			return nil, err
