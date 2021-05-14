@@ -14,7 +14,7 @@ clickhouse-client --query "INSERT INTO wikistat VALUES ('2021-05-06','2021-05-06
 clickhouse-client --query "INSERT INTO wikistat VALUES ('2021-05-07','2021-05-07 09:28:27','music','pop','',4783,37291);"
 clickhouse-client --query "INSERT INTO wikistat VALUES ('2021-05-07','2021-05-07 09:31:23','music','pop','ancient',391,2531);"
 clickhouse-client --query "INSERT INTO wikistat VALUES ('2021-05-07','2021-05-07 09:33:59','music','rap','',1842,12942);"
-clickhouse-client --query "INSERT INTO wikistat VALUES ('2021-05-07','2021-05-07 09:34:12','music','rock','',1093,9023);"
+clickhouse-client --query "INSERT INTO wikistat VALUES ('2021-05-07','2021-05-07 09:34:12','music','rock','',0,0);"
 
 ## INSERT DATA TO wikistat_relate TABLE
 clickhouse-client --query "INSERT INTO wikistat_relate VALUES ('city',1,4.872000);"

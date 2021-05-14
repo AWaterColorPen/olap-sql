@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	reg = regexp.MustCompile(`^[0-9A-Za-z]+$`)
+	reg = regexp.MustCompile(`^[0-9A-Za-z_]+$`)
 )
 
 type Dimension struct {

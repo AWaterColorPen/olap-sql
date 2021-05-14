@@ -2,6 +2,7 @@ package olapsql
 
 import (
 	"fmt"
+	"github.com/ahmetb/go-linq/v3"
 
 	"github.com/awatercolorpen/olap-sql/api/models"
 )
@@ -124,6 +125,7 @@ func (j *joinTree) Path(current uint64) ([]uint64, error) {
 		}
 		current = u
 	}
+	linq.From(out).Reverse().ToSlice(&out)
 	return out, nil
 }
 

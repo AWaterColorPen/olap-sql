@@ -69,6 +69,23 @@ func mockTimeGroupDimension(name, fieldName string, dataSourceID uint64) *models
 	return dimension
 }
 
+func DataWithClickhouse() bool {
+	args := os.Args
+	for _, arg := range args {
+		if arg == "clickhouse" {
+			return true
+		}
+	}
+	return false
+}
+
+func DataSourceType() types.DataSourceType {
+	if DataWithClickhouse() {
+		return types.DataSourceTypeClickHouse
+	}
+	return types.DataSourceTypeUnknown
+}
+
 func MockWikiStatData(db *gorm.DB) error {
 	if DataWithClickhouse() {
 		return nil
@@ -88,7 +105,7 @@ func MockWikiStatData(db *gorm.DB) error {
 		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T09:28:27Z"), Project: "music", SubProject: "pop", Path: "", Hits: 4783, Size: 37291},
 		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T09:31:23Z"), Project: "music", SubProject: "pop", Path: "ancient", Hits: 391, Size: 2531},
 		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T09:33:59Z"), Project: "music", SubProject: "rap", Path: "", Hits: 1842, Size: 12942},
-		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T09:34:12Z"), Project: "music", SubProject: "rock", Path: "", Hits: 1093, Size: 9023},
+		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T09:34:12Z"), Project: "music", SubProject: "rock", Path: "", Hits: 0, Size: 0},
 	}).Error; err != nil {
 		return err
 	}
@@ -116,9 +133,9 @@ func MockWikiStatData(db *gorm.DB) error {
 
 func MockWikiStatDataDictionary(dictionary *olapsql.DataDictionary) error {
 	if err := dictionary.Create([]*models.DataSource{
-		{Type: types.DataSourceTypeClickHouse, Name: mockWikiStatDataSet},
-		{Type: types.DataSourceTypeClickHouse, Name: mockWikiStatDataSet + "_relate"},
-		{Type: types.DataSourceTypeClickHouse, Name: mockWikiStatDataSet + "_class"},
+		{Type: DataSourceType(), Name: mockWikiStatDataSet},
+		{Type: DataSourceType(), Name: mockWikiStatDataSet + "_relate"},
+		{Type: DataSourceType(), Name: mockWikiStatDataSet + "_class"},
 	}); err != nil {
 		return err
 	}
@@ -173,7 +190,7 @@ func MockLoad(manager *olapsql.Manager) error {
 	}
 
 	client, _ := manager.GetClients()
-	if db, err := client.Get(types.DataSourceTypeClickHouse, ""); err == nil {
+	if db, err := client.Get(DataSourceType(), ""); err == nil {
 		if err := MockWikiStatData(db); err != nil {
 			return err
 		}
@@ -274,12 +291,26 @@ func MockQuery3ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Equal(t, 4.872, result.Source[0]["source_avg"])
 }
 
-func DataWithClickhouse() bool {
-	args := os.Args
-	for _, arg := range args {
-		if arg == "clickhouse" {
-			return true
-		}
+// MockQuery4 mock query for nan/ inf case
+func MockQuery4() *types.Query {
+	query := &types.Query{
+		DataSetName:  mockWikiStatDataSet,
+		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
+		Metrics:      []string{"hits_per_size"},
+		Dimensions:   []string{"class_name"},
+		Filters: []*types.Filter{
+			{OperatorType: types.FilterOperatorTypeIn, Name: "sub_project", Value: []interface{}{"rock"}},
+		},
 	}
-	return false
+	return query
+}
+
+func MockQuery4ResultAssert(t assert.TestingT, result *types.Result) {
+	assert.Len(t, result.Dimensions, 2)
+	assert.Equal(t, "class_name", result.Dimensions[0])
+	assert.Equal(t, "hits_per_size", result.Dimensions[1])
+	assert.Len(t, result.Source, 1)
+	assert.Len(t, result.Source[0], 2)
+	assert.Equal(t, "entertainment", result.Source[0]["class_name"])
+	assert.Equal(t, nil, result.Source[0]["hits_per_size"])
 }

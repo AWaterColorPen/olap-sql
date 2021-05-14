@@ -23,9 +23,10 @@ func TestManager_RunChan(t *testing.T) {
 }
 
 func newManager(tb testing.TB) (*olapsql.Manager, error) {
+	k, v := getOlapDBOption(tb)
 	configuration := &olapsql.Configuration{
 		ClientsOption: map[string]*olapsql.DBOption{
-			string(types.DataSourceTypeClickHouse): getOlapDBOption(tb),
+			k: v,
 		},
 		DataDictionaryOption: &olapsql.DataDictionaryOption{
 			DBOption: olapsql.DBOption{DSN: filepath.Join(tb.TempDir(), "sqlite"), Type: olapsql.DBTypeSQLite},
@@ -35,9 +36,9 @@ func newManager(tb testing.TB) (*olapsql.Manager, error) {
 	return olapsql.NewManager(configuration)
 }
 
-func getOlapDBOption(tb testing.TB) *olapsql.DBOption {
+func getOlapDBOption(tb testing.TB) (string, *olapsql.DBOption) {
 	if DataWithClickhouse() {
-		return &olapsql.DBOption{DSN: "tcp://localhost:9000?database=default", Type: olapsql.DBTypeClickHouse}
+		return string(types.DataSourceTypeClickHouse), &olapsql.DBOption{DSN: "tcp://localhost:9000?database=default", Type: olapsql.DBTypeClickHouse}
 	}
-	return &olapsql.DBOption{DSN: filepath.Join(tb.TempDir(), "sqlite"), Type: olapsql.DBTypeSQLite}
+	return string(types.DataSourceTypeUnknown), &olapsql.DBOption{DSN: filepath.Join(tb.TempDir(), "sqlite"), Type: olapsql.DBTypeSQLite, Debug: true}
 }

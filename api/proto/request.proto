@@ -66,10 +66,12 @@ message JoinOn {
 }
 
 message Join {
-    string table1 = 1;
-    string table2 = 2;
-    repeated JoinOn on = 3;
-    repeated Filter filters = 4;
+    string database1 = 1;
+    string database2 = 2;
+    string table1 = 3;
+    string table2 = 4;
+    repeated JoinOn on = 5;
+    repeated Filter filters = 6;
 }
 
 enum DATA_SOURCE_TYPE {
