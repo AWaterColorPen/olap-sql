@@ -1,6 +1,7 @@
 package models
 
 import (
+	"strings"
 	"time"
 
 	"github.com/awatercolorpen/olap-sql/api/types"
@@ -19,6 +20,16 @@ type DataSource struct {
 	Description string               `gorm:"column:description"      json:"description"`
 	Metrics     []*Metric            `gorm:"foreignKey:DataSourceID" json:"metrics,omitempty"`
 	Dimensions  []*Dimension         `gorm:"foreignKey:DataSourceID" json:"dimensions,omitempty"`
+}
+
+func (d *DataSource) GetTableName() string {
+	out := strings.Split(d.Name, ".")
+	return out[len(out) - 1]
+}
+
+func (d *DataSource) GetDatabaseName() string {
+	out := strings.Split(d.Name, ".")
+	return out[0]
 }
 
 func (DataSource) TableName() string {

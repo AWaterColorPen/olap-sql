@@ -64,8 +64,6 @@ func (m *Manager) BuildTransaction(query *types.Query) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	// TODO
-	request.DefaultDatabaseName = DefaultDatabaseName
 	return clients.SubmitClause(request)
 }
 
@@ -73,9 +71,6 @@ func NewManager(configuration *Configuration) (*Manager, error) {
 	// set default olap-sql option
 	if configuration.DefaultParallelNumber != 0 {
 		DefaultParallelNumber = configuration.DefaultParallelNumber
-	}
-	if configuration.DefaultDatabaseName != "" {
-		DefaultDatabaseName = configuration.DefaultDatabaseName
 	}
 
 	m := &Manager{}

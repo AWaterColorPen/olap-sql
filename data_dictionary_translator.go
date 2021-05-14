@@ -127,7 +127,7 @@ func (t *dataDictionaryTranslator) buildMetrics(query *types.Query) ([]*types.Me
 
 		tm := &types.Metric{
 			Type:      m.Type,
-			Table:     source.Name,
+			Table:     source.GetTableName(),
 			Name:      m.Name,
 			FieldName: m.FieldName,
 		}
@@ -162,7 +162,7 @@ func (t *dataDictionaryTranslator) buildDimensions(query *types.Query) ([]*types
 
 		source := t.sourceMap[dimension.DataSourceID]
 		d := &types.Dimension{
-			Table:     source.Name,
+			Table:     source.GetTableName(),
 			Name:      dimension.Name,
 			FieldName: dimension.FieldName,
 		}
@@ -213,10 +213,10 @@ func (t *dataDictionaryTranslator) buildJoins() ([]*types.Join, error) {
 		s2 := t.sourceMap[s.DataSourceID2]
 
 		tj := &types.Join{
-			Database1: "",
-			Database2: "",
-			Table1:    s1.Name,
-			Table2:    s2.Name,
+			Database1: s1.GetDatabaseName(),
+			Database2: s2.GetDatabaseName(),
+			Table1:    s1.GetTableName(),
+			Table2:    s2.GetTableName(),
 			On:        on,
 		}
 

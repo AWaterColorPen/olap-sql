@@ -13,9 +13,6 @@ type Request struct {
 	Filters    []*Filter    `json:"filters"`
 	Joins      []*Join      `json:"jsons"`
 	DataSource *DataSource  `json:"data_source"`
-
-	// TODO
-	DefaultDatabaseName  string
 }
 
 func (r *Request) Clause(tx *gorm.DB) (*gorm.DB, error) {
@@ -63,11 +60,6 @@ func (r *Request) Clause(tx *gorm.DB) (*gorm.DB, error) {
 
 	return tx, nil
 }
-
-// func (r *Request) Statement() (string, error) {
-// 	// TODO
-// 	return "", nil
-// }
 
 func (r *Request) metricStatement() ([]string, error) {
 	var statement []string
@@ -123,8 +115,6 @@ func (r *Request) joinStatement() ([]string, error) {
 		case DataSourceTypeUnknown:
 			statement = append(statement, fmt.Sprintf("LEFT JOIN `%v` ON %v", v.Table2, strings.Join(on, " AND ")))
 		case DataSourceTypeClickHouse:
-			// TODO
-			v.Database2 = r.DefaultDatabaseName
 			statement = append(statement, fmt.Sprintf("LEFT JOIN `%v`.`%v` ON %v", v.Database2, v.Table2, strings.Join(on, " AND ")))
 		default:
 			return nil, fmt.Errorf("not supported data source type %v", r.DataSource.Type)
