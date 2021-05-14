@@ -39,7 +39,7 @@ type Metric struct {
 	Name           string      `json:"name"`
 	FieldName      string      `json:"field_name"`
 	ExtensionValue interface{} `json:"extension_value"`
-	Metrics        []*Metric   `json:"metrics"`
+	Children       []*Metric   `json:"children"`
 }
 
 func (m *Metric) Statement() (string, error) {
@@ -52,7 +52,7 @@ func (m *Metric) Statement() (string, error) {
 
 func (m *Metric) columns() ([]Column, error) {
 	var column []Column
-	for _, v := range m.Metrics {
+	for _, v := range m.Children {
 		col, err := v.column()
 		if err != nil {
 			return nil, err
@@ -92,16 +92,16 @@ func (m *Metric) column() (Column, error) {
 }
 
 func (m *Metric) ToProto() *proto.Metric {
-	var metrics []*proto.Metric
-	for _, v := range m.Metrics {
-		metrics = append(metrics, v.ToProto())
+	var children []*proto.Metric
+	for _, v := range m.Children {
+		children = append(children, v.ToProto())
 	}
 	return &proto.Metric{
 		Type:           m.Type.ToEnum(),
 		Table:          m.Table,
 		Name:           m.Name,
 		FieldName:      m.FieldName,
-		Metrics:        metrics,
+		Children:       children,
 	}
 }
 

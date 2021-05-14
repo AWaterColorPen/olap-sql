@@ -82,7 +82,7 @@ func (d *DataDictionary) Translator(query *types.Query) (Translator, error) {
 	}
 
 	id := t.set.Schema.DataSourceID()
-	if err := d.db.Find(&t.sources, "id IN ?", id).Error; err != nil {
+	if err := d.db.Preload("Metrics").Preload("Dimensions").Find(&t.sources, "id IN ?", id).Error; err != nil {
 		return nil, err
 	}
 

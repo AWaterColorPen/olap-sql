@@ -70,9 +70,9 @@ type ArithmeticCol struct {
 }
 
 func (col *ArithmeticCol) Sql() string {
-	var son []string
+	var children []string
 	for _, v := range col.Column {
-		son = append(son, fmt.Sprintf("( %v )", v.Sql()))
+		children = append(children, fmt.Sprintf("( %v )", v.Sql()))
 	}
 	operator := ArithmeticOperatorType("")
 	switch col.Type {
@@ -85,7 +85,7 @@ func (col *ArithmeticCol) Sql() string {
 	case ColumnTypeDivide:
 		operator = ArithmeticOperatorTypeDivide
 	}
-	return fmt.Sprintf("( %v )", strings.Join(son, fmt.Sprintf(" %v  ", operator)))
+	return fmt.Sprintf("( %v )", strings.Join(children, fmt.Sprintf(" %v  ", operator)))
 }
 
 func (col *ArithmeticCol) GetAlias() string {

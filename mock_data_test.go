@@ -39,7 +39,15 @@ func (WikiStatRelate) TableName() string {
 	return mockWikiStatDataSet + "_relate"
 }
 
-// curl -sSL "https://dumps.wikimedia.org/other/pagecounts-raw/2016/2016-01/" | grep -oE 'pagecounts-[0-9]+-[0-9]+\.gz' | sort | uniq | tee links.txt
+type ClassRelate struct {
+	ID   uint64 `gorm:"column:id"   json:"id"`
+	Name string `gorm:"column:name" json:"name"`
+}
+
+func (ClassRelate) TableName() string {
+	return mockWikiStatDataSet + "_class"
+}
+
 func timeParseDate(in string) time.Time {
 	t, _ := time.Parse("2006-01-02", in)
 	return t
@@ -66,7 +74,7 @@ func MockWikiStatData(db *gorm.DB) error {
 		return nil
 	}
 
-	if err := db.AutoMigrate(&WikiStat{}, &WikiStatRelate{}); err != nil {
+	if err := db.AutoMigrate(&WikiStat{}, &WikiStatRelate{}, &ClassRelate{}); err != nil {
 		return err
 	}
 	if err := db.Debug().Create([]*WikiStat{
@@ -94,6 +102,15 @@ func MockWikiStatData(db *gorm.DB) error {
 	}).Error; err != nil {
 		return err
 	}
+	if err := db.Debug().Create([]*ClassRelate{
+		{ID: 1, Name: "location"},
+		{ID: 2, Name: "life"},
+		{ID: 3, Name: "culture"},
+		{ID: 4, Name: "entertainment"},
+		{ID: 5, Name: "social"},
+	}).Error; err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -101,6 +118,7 @@ func MockWikiStatDataDictionary(dictionary *olapsql.DataDictionary) error {
 	if err := dictionary.Create([]*models.DataSource{
 		{Type: types.DataSourceTypeClickHouse, Name: mockWikiStatDataSet},
 		{Type: types.DataSourceTypeClickHouse, Name: mockWikiStatDataSet + "_relate"},
+		{Type: types.DataSourceTypeClickHouse, Name: mockWikiStatDataSet + "_class"},
 	}); err != nil {
 		return err
 	}
@@ -126,7 +144,9 @@ func MockWikiStatDataDictionary(dictionary *olapsql.DataDictionary) error {
 		{Name: "sub_project", FieldName: "subproject", ValueType: types.ValueTypeString, DataSourceID: 1},
 		{Name: "path", FieldName: "path", ValueType: types.ValueTypeString, DataSourceID: 1},
 		{Name: "project", FieldName: "project", ValueType: types.ValueTypeString, DataSourceID: 2},
-		{Name: "class", FieldName: "class", ValueType: types.ValueTypeInteger, DataSourceID: 2},
+		{Name: "class_id", FieldName: "class", ValueType: types.ValueTypeInteger, DataSourceID: 2},
+		{Name: "class_id", FieldName: "id", ValueType: types.ValueTypeInteger, DataSourceID: 3},
+		{Name: "class_name", FieldName: "name", ValueType: types.ValueTypeString, DataSourceID: 3},
 	}); err != nil {
 		return err
 	}
@@ -135,7 +155,8 @@ func MockWikiStatDataDictionary(dictionary *olapsql.DataDictionary) error {
 		{
 			Name: mockWikiStatDataSet,
 			Schema: &models.DataSetSchema{PrimaryID: 1, Secondary: []*models.Secondary{
-				{DataSourceID: 2, JoinOn: []*models.JoinOn{{DimensionID1: 3, DimensionID2: 6}}},
+				{DataSourceID1: 1, DataSourceID2: 2, JoinOn: []*models.JoinOn{{DimensionID1: 3, DimensionID2: 6}}},
+				{DataSourceID1: 2, DataSourceID2: 3, JoinOn: []*models.JoinOn{{DimensionID1: 7, DimensionID2: 8}}},
 			}},
 		},
 	}); err != nil {
@@ -155,21 +176,22 @@ func MockLoad(manager *olapsql.Manager) error {
 	if db, err := client.Get(types.DataSourceTypeClickHouse, ""); err == nil {
 		if err := MockWikiStatData(db); err != nil {
 			return err
-		}	
+		}
 	}
 
 	return nil
 }
 
+// MockQuery1 mock query for normal case
 func MockQuery1() *types.Query {
 	query := &types.Query{
-		DataSetName: mockWikiStatDataSet,
+		DataSetName:  mockWikiStatDataSet,
 		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
-		Metrics:    []string{"hits", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
-		Dimensions: []string{"date", "class"},
+		Metrics:      []string{"hits", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
+		Dimensions:   []string{"date", "class_id"},
 		Filters: []*types.Filter{
 			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
-			{OperatorType: types.FilterOperatorTypeIn, Name: "class", Value: []interface{}{1, 2, 3, 4}},
+			{OperatorType: types.FilterOperatorTypeIn, Name: "class_id", Value: []interface{}{1, 2, 3, 4}},
 		},
 	}
 	return query
@@ -177,8 +199,8 @@ func MockQuery1() *types.Query {
 
 func MockQuery1ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Dimensions, 7)
-	assert.Equal(t,"date", result.Dimensions[0])
-	assert.Equal(t,"source_avg", result.Dimensions[6])
+	assert.Equal(t, "date", result.Dimensions[0])
+	assert.Equal(t, "source_avg", result.Dimensions[6])
 	assert.Len(t, result.Source, 3)
 	assert.Len(t, result.Source[0], 7)
 	assert.Equal(t, float64(10244), result.Source[0]["size_sum"])
@@ -186,15 +208,16 @@ func MockQuery1ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Equal(t, 2.52971, result.Source[0]["source_avg"])
 }
 
+// MockQuery2 mock query for group by time case
 func MockQuery2() *types.Query {
 	query := &types.Query{
-		DataSetName: mockWikiStatDataSet,
+		DataSetName:  mockWikiStatDataSet,
 		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
-		Metrics:    []string{"hits", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
-		Dimensions: []string{"time_by_hour", "class"},
+		Metrics:      []string{"hits", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
+		Dimensions:   []string{"time_by_hour", "class_id"},
 		Filters: []*types.Filter{
 			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
-			{OperatorType: types.FilterOperatorTypeIn, Name: "class", Value: []interface{}{1, 2, 3, 4}},
+			{OperatorType: types.FilterOperatorTypeIn, Name: "class_id", Value: []interface{}{1, 2, 3, 4}},
 		},
 	}
 	return query
@@ -202,8 +225,41 @@ func MockQuery2() *types.Query {
 
 func MockQuery2ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Dimensions, 7)
-	assert.Equal(t,"time_by_hour", result.Dimensions[0])
-	assert.Equal(t,"source_avg", result.Dimensions[6])
+	assert.Equal(t, "time_by_hour", result.Dimensions[0])
+	assert.Equal(t, "source_avg", result.Dimensions[6])
+	assert.Len(t, result.Source, 7)
+	assert.Len(t, result.Source[0], 7)
+
+	sort.Slice(result.Source, func(i, j int) bool {
+		if result.Source[i]["time_by_hour"].(string) != result.Source[j]["time_by_hour"].(string) {
+			return result.Source[i]["time_by_hour"].(string) < result.Source[j]["time_by_hour"].(string)
+		}
+		return result.Source[i]["class"].(string) < result.Source[j]["class"].(string)
+	})
+	assert.Equal(t, float64(10086), result.Source[0]["size_sum"])
+	assert.Equal(t, 0.013781479278207416, result.Source[0]["hits_per_size"])
+	assert.Equal(t, 4.872, result.Source[0]["source_avg"])
+}
+
+// MockQuery3 mock query for nested join case
+func MockQuery3() *types.Query {
+	query := &types.Query{
+		DataSetName:  mockWikiStatDataSet,
+		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
+		Metrics:      []string{"source_avg"},
+		Dimensions:   []string{"project", "class_name"},
+		Filters: []*types.Filter{
+			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
+			{OperatorType: types.FilterOperatorTypeIn, Name: "project", Value: []interface{}{"city", "school", "music"}},
+		},
+	}
+	return query
+}
+
+func MockQuery3ResultAssert(t assert.TestingT, result *types.Result) {
+	assert.Len(t, result.Dimensions, 7)
+	assert.Equal(t, "time_by_hour", result.Dimensions[0])
+	assert.Equal(t, "source_avg", result.Dimensions[6])
 	assert.Len(t, result.Source, 7)
 	assert.Len(t, result.Source[0], 7)
 

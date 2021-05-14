@@ -1,6 +1,7 @@
 ## CREATE TABLE
 clickhouse-client --query "CREATE TABLE wikistat ( date Date, time DateTime, project String, subproject String, path String, hits UInt64, size UInt64 ) ENGINE = MergeTree(date, (path, time), 8192);"
 clickhouse-client --query "CREATE TABLE wikistat_relate ( project String, class UInt64, source Float64 ) ENGINE = MergeTree() ORDER BY (project, class);"
+clickhouse-client --query "CREATE TABLE wikistat_class ( id UInt64, name String ) ENGINE = MergeTree() ORDER BY (id);"
 
 ## INSERT DATA TO wikistat TABLE
 clickhouse-client --query "INSERT INTO wikistat VALUES ('2021-05-07','2021-05-07 11:45:26','city','CHN','level1',121,4098);"
@@ -22,3 +23,10 @@ clickhouse-client --query "INSERT INTO wikistat_relate VALUES ('food',2,10.24840
 clickhouse-client --query "INSERT INTO wikistat_relate VALUES ('person',3,1.730000),;"
 clickhouse-client --query "INSERT INTO wikistat_relate VALUES ('music',4,93.200000);"
 clickhouse-client --query "INSERT INTO wikistat_relate VALUES ('company',5,0.028100);"
+
+## INSERT DATA TO wikistat_class TABLE
+clickhouse-client --query "INSERT INTO wikistat_class VALUES (1,'location');"
+clickhouse-client --query "INSERT INTO wikistat_class VALUES (2,'life');"
+clickhouse-client --query "INSERT INTO wikistat_class VALUES (3,'culture');"
+clickhouse-client --query "INSERT INTO wikistat_class VALUES (4,'entertainment');"
+clickhouse-client --query "INSERT INTO wikistat_class VALUES (5,'social');"

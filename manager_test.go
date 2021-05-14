@@ -19,14 +19,7 @@ func TestNewManager(t *testing.T) {
 }
 
 func TestManager_RunChan(t *testing.T) {
-	m, err := newManager(t)
-	assert.NoError(t, err)
-	assert.NoError(t, MockLoad(m))
-
-	query := MockQuery1()
-	result, err := m.RunChan(query)
-	assert.NoError(t, err)
-	MockQuery1ResultAssert(t, result)
+	testMockQuery(t, MockQuery1(), MockQuery1ResultAssert)
 }
 
 func newManager(tb testing.TB) (*olapsql.Manager, error) {

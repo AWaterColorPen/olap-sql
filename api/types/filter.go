@@ -69,7 +69,7 @@ type Filter struct {
 	Table        string             `json:"table"`
 	Name         string             `json:"name"`
 	Value        []interface{}      `json:"value"`
-	Filters      []*Filter          `json:"filter"`
+	Children     []*Filter          `json:"children"`
 }
 
 func (f *Filter) Statement() (string, error) {
@@ -126,7 +126,7 @@ func (f *Filter) valueToStringSlice() ([]string, error) {
 
 func (f *Filter) treeStatement(sep string) (string, error) {
 	var filter []string
-	for _, v := range f.Filters {
+	for _, v := range f.Children {
 		statement, err := v.Statement()
 		if err != nil {
 			return "", err

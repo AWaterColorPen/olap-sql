@@ -18,7 +18,7 @@ type DataSource struct {
 	Name        string               `gorm:"column:name;unique"      json:"name"`
 	Description string               `gorm:"column:description"      json:"description"`
 	Metrics     []*Metric            `gorm:"foreignKey:DataSourceID" json:"metrics,omitempty"`
-	Dimension   []*Dimension         `gorm:"foreignKey:DataSourceID" json:"dimensions,omitempty"`
+	Dimensions  []*Dimension         `gorm:"foreignKey:DataSourceID" json:"dimensions,omitempty"`
 }
 
 func (DataSource) TableName() string {

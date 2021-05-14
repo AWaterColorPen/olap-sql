@@ -22,7 +22,7 @@ message Metric {
     string table = 2;
     string name = 3;
     string field_name = 4;
-    repeated Metric metrics = 5;
+    repeated Metric children = 5;
 }
 
 message Dimension {
@@ -57,7 +57,7 @@ message Filter {
     VALUE_TYPE value_type = 2;
     string name = 3;
     repeated string value = 4;
-    repeated Filter filters = 5;
+    repeated Filter children = 5;
 }
 
 message JoinOn {
