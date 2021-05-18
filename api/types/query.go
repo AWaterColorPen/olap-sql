@@ -21,6 +21,8 @@ type Query struct {
 	Metrics      []string      `json:"metrics"`
 	Dimensions   []string      `json:"dimensions"`
 	Filters      []*Filter     `json:"filters"`
+	Orders       []*OrderBy    `json:"orders"`
+	Limit        *Limit        `json:"limit"`
 }
 
 func (q *Query) TranslateTimeIntervalToFilter() {

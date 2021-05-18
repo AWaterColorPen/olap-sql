@@ -12,7 +12,7 @@ func (m MetricType) ToEnum() proto.METRIC_TYPE {
 	if v, ok := proto.METRIC_TYPE_value[string(m)]; ok {
 		return proto.METRIC_TYPE(v)
 	}
-	return proto.METRIC_TYPE_METRIC_TYPE_UNKNOWN
+	return proto.METRIC_TYPE_METRIC_UNKNOWN
 }
 
 func EnumToMetricType(m proto.METRIC_TYPE) MetricType {
@@ -20,17 +20,17 @@ func EnumToMetricType(m proto.METRIC_TYPE) MetricType {
 }
 
 const (
-	MetricTypeUnknown       MetricType = "METRIC_TYPE_UNKNOWN"        // invalid type.
-	MetricTypeValue         MetricType = "METRIC_TYPE_VALUE"          // single type. eg: 原始值指标
-	MetricTypeCount         MetricType = "METRIC_TYPE_COUNT"          // single type. eg: 计数指标
-	MetricTypeDistinctCount MetricType = "METRIC_TYPE_DISTINCT_COUNT" // single type. eg: 去重计数指标
-	MetricTypeSum           MetricType = "METRIC_TYPE_SUM"            // single type. eg: 求和指标
-	MetricTypeAdd           MetricType = "METRIC_TYPE_ADD"            // composition type eg: 相加指标
-	MetricTypeSubtract      MetricType = "METRIC_TYPE_SUBTRACT"       // composition type eg: 相乘指标
-	MetricTypeMultiply      MetricType = "METRIC_TYPE_MULTIPLY"       // composition type eg: 相减指标
-	MetricTypeDivide        MetricType = "METRIC_TYPE_DIVIDE"         // composition type.eg: 相除指标
-	MetricTypeExpression    MetricType = "METRIC_TYPE_EXPRESSION"     // single type. eg: 表达式
-	MetricTypePost          MetricType = "METRIC_TYPE_POST"           // composition type, unsupported now
+	MetricTypeUnknown       MetricType = "METRIC_UNKNOWN"        // invalid type.
+	MetricTypeValue         MetricType = "METRIC_VALUE"          // single type. eg: 原始值指标
+	MetricTypeCount         MetricType = "METRIC_COUNT"          // single type. eg: 计数指标
+	MetricTypeDistinctCount MetricType = "METRIC_DISTINCT_COUNT" // single type. eg: 去重计数指标
+	MetricTypeSum           MetricType = "METRIC_SUM"            // single type. eg: 求和指标
+	MetricTypeAdd           MetricType = "METRIC_ADD"            // composition type eg: 相加指标
+	MetricTypeSubtract      MetricType = "METRIC_SUBTRACT"       // composition type eg: 相乘指标
+	MetricTypeMultiply      MetricType = "METRIC_MULTIPLY"       // composition type eg: 相减指标
+	MetricTypeDivide        MetricType = "METRIC_DIVIDE"         // composition type.eg: 相除指标
+	MetricTypeExpression    MetricType = "METRIC_EXPRESSION"     // single type. eg: 表达式
+	MetricTypePost          MetricType = "METRIC_POST"           // composition type, unsupported now
 )
 
 type Metric struct {

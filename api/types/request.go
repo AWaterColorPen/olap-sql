@@ -11,7 +11,9 @@ type Request struct {
 	Metrics    []*Metric    `json:"metrics"`
 	Dimensions []*Dimension `json:"dimensions"`
 	Filters    []*Filter    `json:"filters"`
-	Joins      []*Join      `json:"jsons"`
+	Joins      []*Join      `json:"joins"`
+	Orders     []*OrderBy   `json:"orders"`
+	Limit      *Limit       `json:"limit"`
 	DataSource *DataSource  `json:"data_source"`
 }
 

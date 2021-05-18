@@ -4,17 +4,17 @@ option go_package = " github.com/awatercolorpen/olap-sql/api/proto";
 package proto;
 
 enum METRIC_TYPE {
-    METRIC_TYPE_UNKNOWN = 0;
-    METRIC_TYPE_VALUE = 1;
-    METRIC_TYPE_COUNT = 2;
-    METRIC_TYPE_DISTINCT_COUNT = 3;
-    METRIC_TYPE_SUM = 4;
-    METRIC_TYPE_ADD = 5;
-    METRIC_TYPE_SUBTRACT = 6;
-    METRIC_TYPE_MULTIPLY = 7;
-    METRIC_TYPE_DIVIDE = 8;
-    METRIC_TYPE_EXPRESSION = 20;
-    METRIC_TYPE_POST = 99;
+    METRIC_UNKNOWN = 0;
+    METRIC_VALUE = 1;
+    METRIC_COUNT = 2;
+    METRIC_DISTINCT_COUNT = 3;
+    METRIC_SUM = 4;
+    METRIC_ADD = 5;
+    METRIC_SUBTRACT = 6;
+    METRIC_MULTIPLY = 7;
+    METRIC_DIVIDE = 8;
+    METRIC_EXPRESSION = 20;
+    METRIC_POST = 99;
 }
 
 message Metric {
@@ -74,6 +74,22 @@ message Join {
     repeated Filter filters = 6;
 }
 
+enum ORDER_DIRECTION_TYPE {
+    ORDER_DIRECTION_UNKNOWN = 0;
+    ORDER_DIRECTION_ASCENDING = 1;
+    ORDER_DIRECTION_DESCENDING = 2;
+}
+
+message OrderBy {
+    string name = 1;
+    ORDER_DIRECTION_TYPE direction = 2;
+}
+
+message Limit {
+    uint64 limit = 1;
+    uint64 offset = 2;
+}
+
 enum DATA_SOURCE_TYPE {
     DATA_SOURCE_UNKNOWN = 0;
     DATA_SOURCE_CLICKHOUSE = 1;
@@ -93,5 +109,7 @@ message Request {
     repeated Dimension dimensions = 2;
     repeated Filter filters = 3;
     repeated Join joins = 4;
-    DataSource data_source = 5;
+    repeated OrderBy orders = 5;
+    uint64 limit = 6;
+    DataSource data_source = 7;
 }

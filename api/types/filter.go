@@ -57,10 +57,10 @@ func EnumToValueType(v proto.VALUE_TYPE) ValueType {
 }
 
 const (
-	ValueTypeUnknown ValueType = "FILTER_VALUE_UNKNOWN"
-	ValueTypeString  ValueType = "FILTER_VALUE_STRING"
-	ValueTypeInteger ValueType = "FILTER_VALUE_INTEGER"
-	ValueTypeFloat   ValueType = "FILTER_VALUE_FLOAT"
+	ValueTypeUnknown ValueType = "VALUE_UNKNOWN"
+	ValueTypeString  ValueType = "VALUE_STRING"
+	ValueTypeInteger ValueType = "VALUE_INTEGER"
+	ValueTypeFloat   ValueType = "VALUE_FLOAT"
 )
 
 type Filter struct {
