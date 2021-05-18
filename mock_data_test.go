@@ -3,7 +3,6 @@ package olapsql_test
 import (
 	"fmt"
 	"os"
-	"sort"
 	"time"
 
 	"github.com/awatercolorpen/olap-sql"
@@ -65,7 +64,7 @@ func mockTimeGroupDimension(name, fieldName string, dataSourceID uint64) *models
 		return dimension
 	}
 
-	dimension.FieldName = fmt.Sprintf("strftime('%%Y-%%m-%%d %%H', %v)", fieldName)
+	dimension.FieldName = fmt.Sprintf("strftime('%%Y-%%m-%%d %%H:00:00', %v)", fieldName)
 	return dimension
 }
 
@@ -105,7 +104,7 @@ func MockWikiStatData(db *gorm.DB) error {
 		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T09:28:27Z"), Project: "music", SubProject: "pop", Path: "", Hits: 4783, Size: 37291},
 		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T09:31:23Z"), Project: "music", SubProject: "pop", Path: "ancient", Hits: 391, Size: 2531},
 		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T09:33:59Z"), Project: "music", SubProject: "rap", Path: "", Hits: 1842, Size: 12942},
-		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T09:34:12Z"), Project: "music", SubProject: "rock", Path: "", Hits: 0, Size: 0},
+		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T10:34:12Z"), Project: "music", SubProject: "rock", Path: "", Hits: 0, Size: 0},
 	}).Error; err != nil {
 		return err
 	}
@@ -210,6 +209,10 @@ func MockQuery1() *types.Query {
 			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
 			{OperatorType: types.FilterOperatorTypeIn, Name: "class_id", Value: []interface{}{1, 2, 3, 4}},
 		},
+		Orders: []*types.OrderBy{
+			{Name: "source_sum", Direction: types.OrderDirectionTypeDescending},
+		},
+		Limit: &types.Limit{Limit: 2, Offset: 1},
 	}
 	return query
 }
@@ -218,11 +221,11 @@ func MockQuery1ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Dimensions, 7)
 	assert.Equal(t, "date", result.Dimensions[0])
 	assert.Equal(t, "source_avg", result.Dimensions[6])
-	assert.Len(t, result.Source, 3)
+	assert.Len(t, result.Source, 2)
 	assert.Len(t, result.Source[0], 7)
-	assert.Equal(t, float64(10244), result.Source[0]["size_sum"])
-	assert.Equal(t, 0.013861772745021476, result.Source[0]["hits_per_size"])
-	assert.Equal(t, 2.52971, result.Source[0]["source_avg"])
+	assert.Equal(t, float64(7326), result.Source[0]["size_sum"])
+	assert.Equal(t, 0.022113022113022112, result.Source[0]["hits_per_size"])
+	assert.Equal(t, 3.700855, result.Source[0]["source_avg"])
 }
 
 // MockQuery2 mock query for group by time case
@@ -236,6 +239,10 @@ func MockQuery2() *types.Query {
 			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
 			{OperatorType: types.FilterOperatorTypeIn, Name: "class_id", Value: []interface{}{1, 2, 3, 4}},
 		},
+		Orders: []*types.OrderBy{
+			{Name: "time_by_hour", Direction: types.OrderDirectionTypeAscending},
+		},
+		Limit: &types.Limit{Limit: 10},
 	}
 	return query
 }
@@ -244,15 +251,9 @@ func MockQuery2ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Dimensions, 7)
 	assert.Equal(t, "time_by_hour", result.Dimensions[0])
 	assert.Equal(t, "source_avg", result.Dimensions[6])
-	assert.Len(t, result.Source, 7)
+	assert.Len(t, result.Source, 8)
 	assert.Len(t, result.Source[0], 7)
-
-	sort.Slice(result.Source, func(i, j int) bool {
-		if result.Source[i]["time_by_hour"].(string) != result.Source[j]["time_by_hour"].(string) {
-			return result.Source[i]["time_by_hour"].(string) < result.Source[j]["time_by_hour"].(string)
-		}
-		return result.Source[i]["class"].(string) < result.Source[j]["class"].(string)
-	})
+	assert.Equal(t, "2021-05-06 11:00:00", result.Source[0]["time_by_hour"])
 	assert.Equal(t, float64(10086), result.Source[0]["size_sum"])
 	assert.Equal(t, 0.013781479278207416, result.Source[0]["hits_per_size"])
 	assert.Equal(t, 4.872, result.Source[0]["source_avg"])
@@ -269,6 +270,9 @@ func MockQuery3() *types.Query {
 			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
 			{OperatorType: types.FilterOperatorTypeIn, Name: "project", Value: []interface{}{"city", "school", "music"}},
 		},
+		Orders: []*types.OrderBy{
+			{Name: "project", Direction: types.OrderDirectionTypeDescending},
+		},
 	}
 	return query
 }
@@ -279,19 +283,12 @@ func MockQuery3ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Equal(t, "source_avg", result.Dimensions[2])
 	assert.Len(t, result.Source, 3)
 	assert.Len(t, result.Source[0], 3)
-
-	sort.Slice(result.Source, func(i, j int) bool {
-		if result.Source[i]["project"].(string) != result.Source[j]["project"].(string) {
-			return result.Source[i]["project"].(string) < result.Source[j]["project"].(string)
-		}
-		return result.Source[i]["class_name"].(string) < result.Source[j]["class_name"].(string)
-	})
-	assert.Equal(t, "city", result.Source[0]["project"])
+	assert.Equal(t, "school", result.Source[0]["project"])
 	assert.Equal(t, "location", result.Source[0]["class_name"])
-	assert.Equal(t, 4.872, result.Source[0]["source_avg"])
+	assert.Equal(t, 0.18742, result.Source[0]["source_avg"])
 }
 
-// MockQuery4 mock query for nan/ inf case
+// MockQuery4 mock query for nan / inf case
 func MockQuery4() *types.Query {
 	query := &types.Query{
 		DataSetName:  mockWikiStatDataSet,
@@ -299,7 +296,7 @@ func MockQuery4() *types.Query {
 		Metrics:      []string{"hits_per_size"},
 		Dimensions:   []string{"class_name"},
 		Filters: []*types.Filter{
-			{OperatorType: types.FilterOperatorTypeIn, Name: "sub_project", Value: []interface{}{"rock"}},
+			{OperatorType: types.FilterOperatorTypeIn, Name: "time_by_hour", Value: []interface{}{"2021-05-07 10:00:00"}},
 		},
 	}
 	return query

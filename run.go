@@ -18,7 +18,7 @@ func RunChan(db *gorm.DB) (chan map[string]interface{}, error) {
 		cnt := 0
 		for rows.Next() {
 			cnt++
-			result := map[string]interface{} {}
+			result := map[string]interface{}{}
 			_ = db.ScanRows(rows, &result)
 			ch <- result
 		}

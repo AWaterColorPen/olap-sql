@@ -28,8 +28,8 @@ const (
 )
 
 type DataSource struct {
-	Type       DataSourceType `json:"type"`
-	Name       string         `json:"name"`
+	Type DataSourceType `json:"type"`
+	Name string         `json:"name"`
 	// SubRequest *Request       `json:"sub_request"`
 }
 

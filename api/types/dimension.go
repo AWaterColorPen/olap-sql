@@ -17,14 +17,26 @@ type Dimension struct {
 	FieldName string `json:"field_name"`
 }
 
-func (d *Dimension) Statement() (string, error) {
-	if d.expression() {
-		return fmt.Sprintf("%v AS %v", d.FieldName, d.Name), nil
+func (d *Dimension) Expression() (string, error) {
+	if !reg.MatchString(d.FieldName) {
+		return d.FieldName, nil
 	}
-	return fmt.Sprintf("%v.%v AS %v", d.Table, d.FieldName, d.Name), nil
+	return fmt.Sprintf("%v.%v", d.Table, d.FieldName), nil
 }
 
-func (d *Dimension) expression () bool {
+func (d *Dimension) Alias() (string, error) {
+	return d.Name, nil
+}
+
+func (d *Dimension) Statement() (string, error) {
+	expression, err := d.Expression()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%v AS %v", expression, d.Name), nil
+}
+
+func (d *Dimension) expression() bool {
 	return !reg.MatchString(d.FieldName)
 }
 

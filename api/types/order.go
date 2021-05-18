@@ -1,6 +1,10 @@
 package types
 
-import "github.com/awatercolorpen/olap-sql/api/proto"
+import (
+	"fmt"
+
+	"github.com/awatercolorpen/olap-sql/api/proto"
+)
 
 type OrderDirectionType string
 
@@ -24,6 +28,25 @@ const (
 type OrderBy struct {
 	Name      string             `json:"name"`
 	Direction OrderDirectionType `json:"direction"`
+}
+
+func (o *OrderBy) Expression() (string, error) {
+	switch o.Direction {
+	case OrderDirectionTypeAscending:
+		return fmt.Sprintf("%v ASC", o.Name), nil
+	case OrderDirectionTypeDescending:
+		return fmt.Sprintf("%v DESC", o.Name), nil
+	default:
+		return "", fmt.Errorf("not supported order direction type %v", o.Direction)
+	}
+}
+
+func (o *OrderBy) Alias() (string, error) {
+	return "", fmt.Errorf("order by is unsupported alias method")
+}
+
+func (o *OrderBy) Statement() (string, error) {
+	return o.Expression()
 }
 
 func (o *OrderBy) ToProto() *proto.OrderBy {

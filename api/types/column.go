@@ -21,7 +21,7 @@ const (
 type ColumnType string
 
 type Column interface {
-	Sql() string
+	GetExpression() string
 	GetAlias() string
 }
 
@@ -32,7 +32,7 @@ type SingleCol struct {
 	Type  ColumnType `json:"type"`
 }
 
-func (col *SingleCol) Sql() string {
+func (col *SingleCol) GetExpression() string {
 	switch col.Type {
 	case ColumnTypeValue:
 		return fmt.Sprintf("`%v`.`%v`", col.Table, col.Name)
@@ -69,10 +69,10 @@ type ArithmeticCol struct {
 	Type   ColumnType `json:"type"`
 }
 
-func (col *ArithmeticCol) Sql() string {
+func (col *ArithmeticCol) GetExpression() string {
 	var children []string
 	for _, v := range col.Column {
-		children = append(children, fmt.Sprintf("( %v )", v.Sql()))
+		children = append(children, fmt.Sprintf("( %v )", v.GetExpression()))
 	}
 	operator := ArithmeticOperatorType("")
 	switch col.Type {
@@ -102,7 +102,7 @@ type ExpressionCol struct {
 	Alias      string `json:"alias"`
 }
 
-func (col *ExpressionCol) Sql() string {
+func (col *ExpressionCol) GetExpression() string {
 	return col.Expression
 }
 

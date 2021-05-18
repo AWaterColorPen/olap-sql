@@ -23,10 +23,9 @@ type dataDictionaryTranslator struct {
 	metricMap        map[uint64]*models.Metric
 	dimensionMap     map[uint64]*models.Dimension
 	secondaryMap     map[uint64]*models.Secondary
-	metricNameMap    map[string][]*models.Metric
-	dimensionNameMap map[string][]*models.Dimension
 
-	joinTree JoinTree
+	joinTree    JoinTree
+	metricGraph MetricGraph
 }
 
 func (t *dataDictionaryTranslator) Translate(query *types.Query) (*types.Request, error) {
@@ -46,7 +45,15 @@ func (t *dataDictionaryTranslator) Translate(query *types.Query) (*types.Request
 	if err != nil {
 		return nil, err
 	}
+	orders, err := t.buildOrders(query)
+	if err != nil {
+		return nil, err
+	}
 	joins, err := t.buildJoins()
+	if err != nil {
+		return nil, err
+	}
+	limit, err := t.buildLimit(query)
 	if err != nil {
 		return nil, err
 	}
@@ -59,13 +66,15 @@ func (t *dataDictionaryTranslator) Translate(query *types.Query) (*types.Request
 		Dimensions: dimensions,
 		Filters:    filters,
 		Joins:      joins,
+		Orders:     orders,
+		Limit:      limit,
 		DataSource: datasource,
 	}
 
 	return request, nil
 }
 
-func (t *dataDictionaryTranslator) init() error {
+func (t *dataDictionaryTranslator) init() (err error) {
 	t.primaryID = t.set.Schema.PrimaryID
 	t.sourceMap = map[uint64]*models.DataSource{}
 	for _, v := range t.sources {
@@ -77,19 +86,14 @@ func (t *dataDictionaryTranslator) init() error {
 	for _, v := range t.set.Schema.Secondary {
 		t.secondaryMap[v.DataSourceID2] = v
 	}
-	t.metricNameMap = map[string][]*models.Metric{}
-	for _, v := range t.metrics {
-		t.metricNameMap[v.Name] = append(t.metricNameMap[v.Name], v)
-	}
-	t.dimensionNameMap = map[string][]*models.Dimension{}
-	for _, v := range t.dimensions {
-		t.dimensionNameMap[v.Name] = append(t.dimensionNameMap[v.Name], v)
-	}
-	tree, err := t.buildJoinTree()
+	t.joinTree, err = t.buildJoinTree()
 	if err != nil {
 		return err
 	}
-	t.joinTree = tree
+	t.metricGraph, err = t.buildMetricGraph()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -108,41 +112,29 @@ func (t *dataDictionaryTranslator) buildJoinTree() (JoinTree, error) {
 	return builder.Build()
 }
 
+func (t *dataDictionaryTranslator) buildMetricGraph() (MetricGraph, error) {
+	builder := &MetricGraphBuilder{sourceMap: t.sourceMap, metricMap: t.metricMap, joinTree: t.joinTree}
+	return builder.Build()
+}
+
 func (t *dataDictionaryTranslator) buildMetrics(query *types.Query) ([]*types.Metric, error) {
-	originMetrics := map[string]bool{}
-	for _, v := range query.Metrics {
-		originMetrics[v] = true
-	}
-
-	queue, err := t.sortMetrics(query)
-	if err != nil {
-		return nil, err
-	}
-
 	var metrics []*types.Metric
-	metricsMap := map[uint64]*types.Metric{}
-	for _, v := range queue {
-		m := t.metricMap[v]
-		source := t.sourceMap[m.DataSourceID]
-
-		tm := &types.Metric{
-			Type:      m.Type,
-			Table:     source.GetTableName(),
-			Name:      m.Name,
-			FieldName: m.FieldName,
+	for _, v := range query.Metrics {
+		hit, err := t.joinTree.FindMetric(v)
+		if err != nil {
+			return nil, err
 		}
-
-		if m.Composition != nil {
-			for _, u := range m.Composition.MetricID {
-				mm := metricsMap[u]
-				tm.Children = append(tm.Children, mm)
-			}
+		path, err := t.joinTree.Path(hit.DataSourceID)
+		if err != nil {
+			return nil, err
 		}
+		t.joinedSourceID = append(t.joinedSourceID, path...)
 
-		metricsMap[v] = tm
-		if _, ok := originMetrics[m.Name]; ok {
-			metrics = append(metrics, tm)
+		metric, err := t.metricGraph.GetByName(v)
+		if err != nil {
+			return nil, err
 		}
+		metrics = append(metrics, metric)
 	}
 	return metrics, nil
 }
@@ -184,6 +176,29 @@ func (t *dataDictionaryTranslator) buildFilters(query *types.Query) ([]*types.Fi
 	return filters, nil
 }
 
+func (t *dataDictionaryTranslator) buildOrders(query *types.Query) ([]*types.OrderBy, error) {
+	var orders []*types.OrderBy
+	for _, v := range query.Orders {
+		c, err := t.getColumn(v.Name)
+		if err != nil {
+			return nil, err
+		}
+		path, err := t.joinTree.Path(c.DataSourceID)
+		if err != nil {
+			return nil, err
+		}
+		t.joinedSourceID = append(t.joinedSourceID, path...)
+
+		o := &types.OrderBy{
+			Name:      c.Statement,
+			Direction: v.Direction,
+		}
+
+		orders = append(orders, o)
+	}
+	return orders, nil
+}
+
 func (t *dataDictionaryTranslator) buildJoins() ([]*types.Join, error) {
 	var joins []*types.Join
 	linq.From(t.joinedSourceID).Distinct().ToSlice(&t.joinedSourceID)
@@ -212,7 +227,7 @@ func (t *dataDictionaryTranslator) buildJoins() ([]*types.Join, error) {
 		s1 := t.sourceMap[s.DataSourceID1]
 		s2 := t.sourceMap[s.DataSourceID2]
 
-		tj := &types.Join{
+		j := &types.Join{
 			Database1: s1.GetDatabaseName(),
 			Database2: s2.GetDatabaseName(),
 			Table1:    s1.GetTableName(),
@@ -220,9 +235,16 @@ func (t *dataDictionaryTranslator) buildJoins() ([]*types.Join, error) {
 			On:        on,
 		}
 
-		joins = append(joins, tj)
+		joins = append(joins, j)
 	}
 	return joins, nil
+}
+
+func (t *dataDictionaryTranslator) buildLimit(query *types.Query) (*types.Limit, error) {
+	if query.Limit == nil {
+		return nil, nil
+	}
+	return &types.Limit{Limit: query.Limit.Limit, Offset: query.Limit.Offset}, nil
 }
 
 func (t *dataDictionaryTranslator) buildDataSource() (*types.DataSource, error) {
@@ -230,18 +252,27 @@ func (t *dataDictionaryTranslator) buildDataSource() (*types.DataSource, error) 
 	return &types.DataSource{Type: source.Type, Name: source.Name}, nil
 }
 
-func (t *dataDictionaryTranslator) getFilter(name string) (*filterStruct, error) {
-	m, err := t.joinTree.FindMetric(name)
+func (t *dataDictionaryTranslator) getColumn(name string) (*columnStruct, error) {
+	metric, err := t.joinTree.FindMetric(name)
 	if err == nil {
-		return &filterStruct{ValueType: m.ValueType, Name: m.FieldName, DataSourceID: m.DataSourceID}, nil
+		current, _ := t.metricGraph.GetByID(metric.ID)
+		statement, _ := current.Expression()
+		return &columnStruct{ValueType: metric.ValueType, Statement: statement, DataSourceID: metric.DataSourceID}, nil
 	}
 	if strings.Contains(err.Error(), "duplicate") {
 		return nil, fmt.Errorf("duplicate filter name %v", name)
 	}
 
-	d, err := t.joinTree.FindDimension(name)
+	dimension, err := t.joinTree.FindDimension(name)
 	if err == nil {
-		return &filterStruct{ValueType: d.ValueType, Name: d.FieldName, DataSourceID: d.DataSourceID}, nil
+		source := t.sourceMap[dimension.DataSourceID]
+		current := &types.Dimension{
+			Table:     source.GetTableName(),
+			Name:      dimension.Name,
+			FieldName: dimension.FieldName,
+		}
+		statement, _ := current.Expression()
+		return &columnStruct{ValueType: dimension.ValueType, Statement: statement, DataSourceID: dimension.DataSourceID}, nil
 	}
 	if strings.Contains(err.Error(), "duplicate") {
 		return nil, fmt.Errorf("duplicate filter name %v", name)
@@ -264,53 +295,6 @@ func (t *dataDictionaryTranslator) getSecondary(id uint64) (*models.Secondary, e
 	return nil, fmt.Errorf("not found secondary data source id %v", id)
 }
 
-func (t *dataDictionaryTranslator) sortMetrics(query *types.Query) ([]uint64, error) {
-	inDegree := map[uint64]int{}
-	graph := map[uint64][]uint64{}
-
-	for _, v := range query.Metrics {
-		metric, err := t.joinTree.FindMetric(v)
-		if err != nil {
-			return nil, err
-		}
-		path, err := t.joinTree.Path(metric.DataSourceID)
-		if err != nil {
-			return nil, err
-		}
-		t.joinedSourceID = append(t.joinedSourceID, path...)
-
-		inDegree[metric.ID] = 0
-		if metric.Composition != nil {
-			for _, u := range metric.Composition.MetricID {
-				graph[u] = append(graph[u], metric.ID)
-				inDegree[metric.ID]++
-				if _, ok := inDegree[u]; !ok {
-					inDegree[u] = 0
-				}
-			}
-		}
-	}
-
-	var queue []uint64
-	for k, v := range inDegree {
-		if v == 0 {
-			queue = append(queue, k)
-		}
-	}
-
-	for i := 0; i < len(queue); i++ {
-		node := queue[i]
-		for _, v := range graph[node] {
-			inDegree[v]--
-			if inDegree[v] == 0 {
-				queue = append(queue, v)
-			}
-		}
-	}
-
-	return queue, nil
-}
-
 func (t *dataDictionaryTranslator) treeFilter(in *types.Filter) (*types.Filter, error) {
 	out := &types.Filter{
 		OperatorType: in.OperatorType,
@@ -318,36 +302,34 @@ func (t *dataDictionaryTranslator) treeFilter(in *types.Filter) (*types.Filter, 
 	}
 
 	if !out.OperatorType.IsTree() {
-		f, err := t.getFilter(in.Name)
+		c, err := t.getColumn(in.Name)
 		if err != nil {
 			return nil, err
 		}
-		path, err := t.joinTree.Path(f.DataSourceID)
+		path, err := t.joinTree.Path(c.DataSourceID)
 		if err != nil {
 			return nil, err
 		}
 		t.joinedSourceID = append(t.joinedSourceID, path...)
 
-		source := t.sourceMap[f.DataSourceID]
-		out.ValueType = f.ValueType
-		out.Name = f.Name
-		out.Table = source.GetTableName()
+		out.ValueType = c.ValueType
+		out.Name = c.Statement
 		return out, nil
 	}
 
 	for _, v := range in.Children {
-		current, err := t.treeFilter(v)
+		child, err := t.treeFilter(v)
 		if err != nil {
 			return nil, err
 		}
-		out.Children = append(out.Children, current)
+		out.Children = append(out.Children, child)
 	}
 
 	return out, nil
 }
 
-type filterStruct struct {
+type columnStruct struct {
 	ValueType    types.ValueType `json:"value_type"`
-	Name         string          `json:"name"`
+	Statement    string          `json:"statement"`
 	DataSourceID uint64          `json:"data_source_id"`
 }

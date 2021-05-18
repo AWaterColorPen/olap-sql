@@ -24,7 +24,7 @@ type DataSource struct {
 
 func (d *DataSource) GetTableName() string {
 	out := strings.Split(d.Name, ".")
-	return out[len(out) - 1]
+	return out[len(out)-1]
 }
 
 func (d *DataSource) GetDatabaseName() string {

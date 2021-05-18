@@ -6,7 +6,7 @@ var (
 
 type Configuration struct {
 	// default olap-sql option
-	DefaultParallelNumber int    `json:"default_parallel_number"`
+	DefaultParallelNumber int `json:"default_parallel_number"`
 
 	// configurations for clients, data_dictionary
 	ClientsOption        ClientsOption         `json:"clients_option"`

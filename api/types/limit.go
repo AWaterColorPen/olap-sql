@@ -9,14 +9,14 @@ type Limit struct {
 
 func (l *Limit) ToProto() *proto.Limit {
 	return &proto.Limit{
-		Limit: l.Limit,
+		Limit:  l.Limit,
 		Offset: l.Offset,
 	}
 }
 
 func ProtoToLimit(l *proto.Limit) *Limit {
 	return &Limit{
-		Limit: l.Limit,
+		Limit:  l.Limit,
 		Offset: l.Offset,
 	}
 }

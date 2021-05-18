@@ -53,12 +53,28 @@ func (r *Request) Clause(tx *gorm.DB) (*gorm.DB, error) {
 	for _, v := range group1 {
 		tx = tx.Group(v)
 	}
+	order1, err := r.orderStatement()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range order1 {
+		tx = tx.Order(v)
+	}
 
 	table1, err := r.tableStatement()
 	if err != nil {
 		return nil, err
 	}
 	tx = tx.Table(table1)
+
+	if r.Limit != nil {
+		if r.Limit.Limit != 0 {
+			tx = tx.Limit(int(r.Limit.Limit))
+		}
+		if r.Limit.Offset != 0 {
+			tx = tx.Offset(int(r.Limit.Offset))
+		}
+	}
 
 	return tx, nil
 }
@@ -72,7 +88,6 @@ func (r *Request) metricStatement() ([]string, error) {
 		}
 		statement = append(statement, s)
 	}
-
 	return statement, nil
 }
 
@@ -85,7 +100,6 @@ func (r *Request) dimensionStatement() ([]string, error) {
 		}
 		statement = append(statement, s)
 	}
-
 	return statement, nil
 }
 
@@ -130,13 +144,24 @@ func (r *Request) joinStatement() ([]string, error) {
 func (r *Request) groupStatement() ([]string, error) {
 	var statement []string
 	for _, v := range r.Dimensions {
-		if v.expression() {
-			statement = append(statement, fmt.Sprintf("%v", v.FieldName))
-		} else {
-			statement = append(statement, fmt.Sprintf("%v.%v", v.Table, v.FieldName))
+		s, err := v.Expression()
+		if err != nil {
+			return nil, err
 		}
+		statement = append(statement, s)
 	}
+	return statement, nil
+}
 
+func (r *Request) orderStatement() ([]string, error) {
+	var statement []string
+	for _, v := range r.Orders {
+		s, err := v.Statement()
+		if err != nil {
+			return nil, err
+		}
+		statement = append(statement, s)
+	}
 	return statement, nil
 }
 

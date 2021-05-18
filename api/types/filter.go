@@ -66,37 +66,36 @@ const (
 type Filter struct {
 	OperatorType FilterOperatorType `json:"operator_type"`
 	ValueType    ValueType          `json:"value_type"`
-	Table        string             `json:"table"`
 	Name         string             `json:"name"`
 	Value        []interface{}      `json:"value"`
 	Children     []*Filter          `json:"children"`
 }
 
-func (f *Filter) Statement() (string, error) {
+func (f *Filter) Expression() (string, error) {
 	value, err := f.valueToStringSlice()
 	if err != nil {
 		return "", err
 	}
 	switch f.OperatorType {
 	case FilterOperatorTypeIn:
-		return fmt.Sprintf("`%v`.`%v` IN (%v)", f.Table, f.Name, strings.Join(value, ", ")), nil
+		return fmt.Sprintf("%v IN (%v)", f.Name, strings.Join(value, ", ")), nil
 	case FilterOperatorTypeNotIn:
-		return fmt.Sprintf("`%v`.`%v` NOT IN (%v)", f.Table, f.Name, strings.Join(value, ", ")), nil
+		return fmt.Sprintf("%v NOT IN (%v)", f.Name, strings.Join(value, ", ")), nil
 	case FilterOperatorTypeLessEquals:
 		v := value[0]
-		return fmt.Sprintf("`%v`.`%v` <= %v", f.Table, f.Name, v), nil
+		return fmt.Sprintf("%v <= %v", f.Name, v), nil
 	case FilterOperatorTypeLess:
 		v := value[0]
-		return fmt.Sprintf("`%v`.`%v` < %v", f.Table, f.Name, v), nil
+		return fmt.Sprintf("%v < %v", f.Name, v), nil
 	case FilterOperatorTypeGreaterEquals:
 		v := value[0]
-		return fmt.Sprintf("`%v`.`%v` >= %v", f.Table, f.Name, v), nil
+		return fmt.Sprintf("%v >= %v", f.Name, v), nil
 	case FilterOperatorTypeGreater:
 		v := value[0]
-		return fmt.Sprintf("`%v`.`%v` > %v", f.Table, f.Name, v), nil
+		return fmt.Sprintf("%v > %v", f.Name, v), nil
 	case FilterOperatorTypeLike:
 		v := value[0]
-		return fmt.Sprintf("`%v`.`%v` LIKE %v", f.Table, f.Name, v), nil
+		return fmt.Sprintf("%v LIKE %v", f.Name, v), nil
 	case FilterOperatorTypeExpression:
 		v := value[0]
 		return v, nil
@@ -107,6 +106,14 @@ func (f *Filter) Statement() (string, error) {
 	default:
 		return "", fmt.Errorf("not supported filter operator type %v", f.OperatorType)
 	}
+}
+
+func (f *Filter) Alias() (string, error) {
+	return "", fmt.Errorf("filter is unsupported alias method")
+}
+
+func (f *Filter) Statement() (string, error) {
+	return f.Expression()
 }
 
 func (f *Filter) valueToStringSlice() ([]string, error) {
@@ -137,9 +144,7 @@ func (f *Filter) treeStatement(sep string) (string, error) {
 }
 
 func (f *Filter) ToProto() *proto.Filter {
-	return &proto.Filter{
-
-	}
+	return &proto.Filter{}
 }
 
 func ProtoToFilter(m *proto.Filter) *Filter {

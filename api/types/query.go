@@ -11,7 +11,7 @@ func (t *TimeInterval) ToFilter() *Filter {
 	filter2 := &Filter{OperatorType: FilterOperatorTypeLess, Name: t.Name, Value: []interface{}{t.End}}
 	return &Filter{
 		OperatorType: FilterOperatorTypeAnd,
-		Children: []*Filter{filter1, filter2},
+		Children:     []*Filter{filter1, filter2},
 	}
 }
 
@@ -30,6 +30,3 @@ func (q *Query) TranslateTimeIntervalToFilter() {
 		q.Filters = append(q.Filters, q.TimeInterval.ToFilter())
 	}
 }
-
-
-

@@ -19,12 +19,11 @@ func TestMockQuery4(t *testing.T) {
 	testMockQuery(t, MockQuery4(), MockQuery4ResultAssert)
 }
 
-
 func testMockQuery(t *testing.T, query *types.Query, check func(t assert.TestingT, result *types.Result)) {
 	m, err := newManager(t)
 	assert.NoError(t, err)
 	assert.NoError(t, MockLoad(m))
-	result, err := m.RunChan(query)
+	result, err := m.RunSync(query)
 	assert.NoError(t, err)
 	check(t, result)
 }

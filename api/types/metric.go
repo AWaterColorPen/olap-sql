@@ -38,8 +38,23 @@ type Metric struct {
 	Table          string      `json:"table"`
 	Name           string      `json:"name"`
 	FieldName      string      `json:"field_name"`
-	ExtensionValue interface{} `json:"extension_value"`
 	Children       []*Metric   `json:"children"`
+}
+
+func (m *Metric) Expression() (string, error) {
+	col, err := m.column()
+	if err != nil {
+		return "", err
+	}
+	return col.GetExpression(), nil
+}
+
+func (m *Metric) Alias() (string, error) {
+	col, err := m.column()
+	if err != nil {
+		return "", err
+	}
+	return col.GetAlias(), nil
 }
 
 func (m *Metric) Statement() (string, error) {
@@ -47,7 +62,7 @@ func (m *Metric) Statement() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%v AS %v", col.Sql(), col.GetAlias()), nil
+	return fmt.Sprintf("%v AS %v", col.GetExpression(), col.GetAlias()), nil
 }
 
 func (m *Metric) columns() ([]Column, error) {
@@ -97,11 +112,11 @@ func (m *Metric) ToProto() *proto.Metric {
 		children = append(children, v.ToProto())
 	}
 	return &proto.Metric{
-		Type:           m.Type.ToEnum(),
-		Table:          m.Table,
-		Name:           m.Name,
-		FieldName:      m.FieldName,
-		Children:       children,
+		Type:      m.Type.ToEnum(),
+		Table:     m.Table,
+		Name:      m.Name,
+		FieldName: m.FieldName,
+		Children:  children,
 	}
 }
 
