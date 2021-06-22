@@ -15,6 +15,7 @@ type Request struct {
 	Orders     []*OrderBy   `json:"orders"`
 	Limit      *Limit       `json:"limit"`
 	DataSource *DataSource  `json:"data_source"`
+	Sql        string       `json:"sql"`
 }
 
 func (r *Request) Clause(tx *gorm.DB) (*gorm.DB, error) {

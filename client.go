@@ -61,6 +61,10 @@ func (c Clients) SubmitClause(request *types.Request) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	// 如果请求中有sql，则直接执行
+	if len(request.Sql) != 0 {
+		return client.Raw(request.Sql), nil
+	}
 	return request.Clause(client)
 }
 

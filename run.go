@@ -45,10 +45,6 @@ func BuildResultChan(query *types.Query, in chan map[string]interface{}) (*types
 func BuildResultSync(query *types.Query, in []map[string]interface{}) (*types.Result, error) {
 	result := &types.Result{}
 	result.SetDimensions(query)
-	for _, v := range in {
-		if err := result.AddSource(v); err != nil {
-			return nil, err
-		}
-	}
+	result.Source = in
 	return result, nil
 }
