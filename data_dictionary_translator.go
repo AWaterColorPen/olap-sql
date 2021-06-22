@@ -17,12 +17,12 @@ type dataDictionaryTranslator struct {
 	metrics    []*models.Metric
 	dimensions []*models.Dimension
 
-	primaryID        uint64
-	joinedSourceID   []uint64
-	sourceMap        map[uint64]*models.DataSource
-	metricMap        map[uint64]*models.Metric
-	dimensionMap     map[uint64]*models.Dimension
-	secondaryMap     map[uint64]*models.Secondary
+	primaryID      uint64
+	joinedSourceID []uint64
+	sourceMap      map[uint64]*models.DataSource
+	metricMap      map[uint64]*models.Metric
+	dimensionMap   map[uint64]*models.Dimension
+	secondaryMap   map[uint64]*models.Secondary
 
 	joinTree    JoinTree
 	metricGraph MetricGraph
@@ -69,6 +69,7 @@ func (t *dataDictionaryTranslator) Translate(query *types.Query) (*types.Request
 		Orders:     orders,
 		Limit:      limit,
 		DataSource: datasource,
+		Sql:        query.Sql,
 	}
 
 	return request, nil
