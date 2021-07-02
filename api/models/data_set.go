@@ -38,6 +38,11 @@ func (d *DataSetSchema) DataSourceID() []uint64 {
 }
 
 func (d *DataSetSchema) Tree() (map[uint64][]uint64, error) {
+	// 如果没有副数据源，则直接返回主数据源
+	if len(d.Secondary) == 0 {
+		return map[uint64][]uint64{d.PrimaryID: {}}, nil
+	}
+	// 校验副数据源关系是否正确，并返回关联关系
 	inDegree := map[uint64]int{}
 	for _, v := range d.Secondary {
 		if _, ok := inDegree[v.DataSourceID1]; !ok {
