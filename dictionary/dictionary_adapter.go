@@ -16,10 +16,7 @@ const (
 // Adapter Adapter适配器
 type Adapter interface {
 	// TODO 有待考虑
-	GetDataSetByName(string) (interface{}, error)
-	GetSourcesByIds([]interface{}) ([]interface{}, error)
-	GetMetricsByIds([]interface{}) ([]interface{}, error)
-	GetDimensionsByIds([]interface{}) ([]interface{}, error)
+	NewAdapter(interface{}) (interface{}, error)
 }
 
 // AdapterOption Adapter配置
