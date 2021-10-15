@@ -1,4 +1,4 @@
-package olapsql
+package dictionary
 
 import (
 	"fmt"

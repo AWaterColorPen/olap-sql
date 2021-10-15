@@ -1,4 +1,4 @@
-package olapsql
+package dictionary
 
 import (
 	"fmt"
@@ -7,11 +7,9 @@ import (
 	"github.com/ahmetb/go-linq/v3"
 	"github.com/awatercolorpen/olap-sql/api/models"
 	"github.com/awatercolorpen/olap-sql/api/types"
-	"gorm.io/gorm"
 )
 
-type dataDictionaryTranslator struct {
-	db         *gorm.DB
+type DictionaryTranslator struct {
 	set        *models.DataSet
 	sources    []*models.DataSource
 	metrics    []*models.Metric
@@ -28,7 +26,7 @@ type dataDictionaryTranslator struct {
 	metricGraph MetricGraph
 }
 
-func (t *dataDictionaryTranslator) Translate(query *types.Query) (*types.Request, error) {
+func (t *DictionaryTranslator) Translate(query *types.Query) (*types.Request, error) {
 	if err := t.init(); err != nil {
 		return nil, err
 	}
@@ -75,7 +73,7 @@ func (t *dataDictionaryTranslator) Translate(query *types.Query) (*types.Request
 	return request, nil
 }
 
-func (t *dataDictionaryTranslator) init() (err error) {
+func (t *DictionaryTranslator) init() (err error) {
 	t.primaryID = t.set.Schema.PrimaryID
 	t.sourceMap = map[uint64]*models.DataSource{}
 	for _, v := range t.sources {
@@ -98,12 +96,10 @@ func (t *dataDictionaryTranslator) init() (err error) {
 	return nil
 }
 
-func (t *dataDictionaryTranslator) buildJoinTree() (JoinTree, error) {
-	err := t.set.Schema.Valid(t.db)
-	if err != nil {
+func (t *DictionaryTranslator) buildJoinTree() (JoinTree, error) {
+	if err := isValidDataSetSchema(t.set.Schema); err != nil {
 		return nil, err
 	}
-
 	tree, err := t.set.Schema.Tree()
 	if err != nil {
 		return nil, err
@@ -113,12 +109,12 @@ func (t *dataDictionaryTranslator) buildJoinTree() (JoinTree, error) {
 	return builder.Build()
 }
 
-func (t *dataDictionaryTranslator) buildMetricGraph() (MetricGraph, error) {
+func (t *DictionaryTranslator) buildMetricGraph() (MetricGraph, error) {
 	builder := &MetricGraphBuilder{sourceMap: t.sourceMap, metricMap: t.metricMap, joinTree: t.joinTree}
 	return builder.Build()
 }
 
-func (t *dataDictionaryTranslator) buildMetrics(query *types.Query) ([]*types.Metric, error) {
+func (t *DictionaryTranslator) buildMetrics(query *types.Query) ([]*types.Metric, error) {
 	var metrics []*types.Metric
 	for _, v := range query.Metrics {
 		hit, err := t.joinTree.FindMetric(v)
@@ -140,7 +136,7 @@ func (t *dataDictionaryTranslator) buildMetrics(query *types.Query) ([]*types.Me
 	return metrics, nil
 }
 
-func (t *dataDictionaryTranslator) buildDimensions(query *types.Query) ([]*types.Dimension, error) {
+func (t *DictionaryTranslator) buildDimensions(query *types.Query) ([]*types.Dimension, error) {
 	var dimensions []*types.Dimension
 	for _, v := range query.Dimensions {
 		dimension, err := t.joinTree.FindDimension(v)
@@ -165,7 +161,7 @@ func (t *dataDictionaryTranslator) buildDimensions(query *types.Query) ([]*types
 	return dimensions, nil
 }
 
-func (t *dataDictionaryTranslator) buildFilters(query *types.Query) ([]*types.Filter, error) {
+func (t *DictionaryTranslator) buildFilters(query *types.Query) ([]*types.Filter, error) {
 	var filters []*types.Filter
 	for _, v := range query.Filters {
 		filter, err := t.treeFilter(v)
@@ -177,7 +173,7 @@ func (t *dataDictionaryTranslator) buildFilters(query *types.Query) ([]*types.Fi
 	return filters, nil
 }
 
-func (t *dataDictionaryTranslator) buildOrders(query *types.Query) ([]*types.OrderBy, error) {
+func (t *DictionaryTranslator) buildOrders(query *types.Query) ([]*types.OrderBy, error) {
 	var orders []*types.OrderBy
 	for _, v := range query.Orders {
 		c, err := t.getColumn(v.Name)
@@ -200,7 +196,7 @@ func (t *dataDictionaryTranslator) buildOrders(query *types.Query) ([]*types.Ord
 	return orders, nil
 }
 
-func (t *dataDictionaryTranslator) buildJoins() ([]*types.Join, error) {
+func (t *DictionaryTranslator) buildJoins() ([]*types.Join, error) {
 	var joins []*types.Join
 	linq.From(t.joinedSourceID).Distinct().ToSlice(&t.joinedSourceID)
 	for _, v := range t.joinedSourceID {
@@ -241,19 +237,19 @@ func (t *dataDictionaryTranslator) buildJoins() ([]*types.Join, error) {
 	return joins, nil
 }
 
-func (t *dataDictionaryTranslator) buildLimit(query *types.Query) (*types.Limit, error) {
+func (t *DictionaryTranslator) buildLimit(query *types.Query) (*types.Limit, error) {
 	if query.Limit == nil {
 		return nil, nil
 	}
 	return &types.Limit{Limit: query.Limit.Limit, Offset: query.Limit.Offset}, nil
 }
 
-func (t *dataDictionaryTranslator) buildDataSource() (*types.DataSource, error) {
+func (t *DictionaryTranslator) buildDataSource() (*types.DataSource, error) {
 	source := t.sourceMap[t.primaryID]
 	return &types.DataSource{Type: source.Type, Name: source.Name}, nil
 }
 
-func (t *dataDictionaryTranslator) getColumn(name string) (*columnStruct, error) {
+func (t *DictionaryTranslator) getColumn(name string) (*columnStruct, error) {
 	metric, err := t.joinTree.FindMetric(name)
 	if err == nil {
 		current, _ := t.metricGraph.GetByID(metric.ID)
@@ -282,21 +278,21 @@ func (t *dataDictionaryTranslator) getColumn(name string) (*columnStruct, error)
 	return nil, fmt.Errorf("not found filter name %v", name)
 }
 
-func (t *dataDictionaryTranslator) getDataSource(id uint64) (*models.DataSource, error) {
+func (t *DictionaryTranslator) getDataSource(id uint64) (*models.DataSource, error) {
 	if v, ok := t.sourceMap[id]; ok {
 		return v, nil
 	}
 	return nil, fmt.Errorf("not found data source id %v", id)
 }
 
-func (t *dataDictionaryTranslator) getSecondary(id uint64) (*models.Secondary, error) {
+func (t *DictionaryTranslator) getSecondary(id uint64) (*models.Secondary, error) {
 	if v, ok := t.secondaryMap[id]; ok {
 		return v, nil
 	}
 	return nil, fmt.Errorf("not found secondary data source id %v", id)
 }
 
-func (t *dataDictionaryTranslator) treeFilter(in *types.Filter) (*types.Filter, error) {
+func (t *DictionaryTranslator) treeFilter(in *types.Filter) (*types.Filter, error) {
 	out := &types.Filter{
 		OperatorType: in.OperatorType,
 		Value:        in.Value,

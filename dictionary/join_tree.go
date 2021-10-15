@@ -2,6 +2,7 @@ package olapsql
 
 import (
 	"fmt"
+
 	"github.com/ahmetb/go-linq/v3"
 
 	"github.com/awatercolorpen/olap-sql/api/models"
