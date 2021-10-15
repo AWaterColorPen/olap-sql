@@ -6,12 +6,31 @@ import (
 	"github.com/awatercolorpen/olap-sql/api/models"
 )
 
-// AdapterDataType Adapter数据类型
-type AdapterDataType string
+type AdapterType string
 
 const (
-	MetricsType AdapterDataType = "metrics"
+	dbAdapter   AdapterType = "DB"
+	fileAdapter AdapterType = "FILE"
 )
+
+// Adapter Dictionary适配器
+type Adapter interface {
+	GetDataSetByName(string) (interface{}, error)
+	GetSourcesByIds([]interface{}) ([]interface{}, error)
+	GetMetricsByIds([]interface{}) ([]interface{}, error)
+	GetDimensionsByIds([]interface{}) ([]interface{}, error)
+}
+
+func NewAdapter(adapterType AdapterType) (Adapter, error) {
+	// 根据不同的Type去实例化不同的Adapter
+	switch adapterType {
+	case dbAdapter:
+		// TODO
+	case fileAdapter:
+		// TODO
+	}
+	return nil, nil
+}
 
 // DataSaveCenter 用于保存指标的逻辑数据信息
 type DictionaryAdapter struct {
@@ -46,16 +65,30 @@ func (d *DictionaryAdapter) GetSourcesByIds(ids []uint64) ([]*models.DataSource,
 	for _, id := range ids {
 		idsMap[id] = true
 	}
-	// TODO
-	// d.db.Preload("Metrics").Preload("Dimensions").Find(&t.sources, "id IN ?", id).Error
-	// 满足sources的id在ids，且同时存在于metrics表和dimensions表中。
 
-	return nil, nil
+	metricsSourcesIdsMap := make(map[uint64]bool)
+	for _, metric := range d.metrics {
+		metricsSourcesIdsMap[metric.DataSourceID] = true
+	}
+
+	dimensionsSourcesIdsMap := make(map[uint64]bool)
+	for _, dimension := range d.dimensions {
+		dimensionsSourcesIdsMap[dimension.DataSourceID] = true
+	}
+
+	result := make([]*models.DataSource, 0)
+	for _, source := range d.sources {
+		_, ok := idsMap[source.ID]
+		_, ok2 := metricsSourcesIdsMap[source.ID]
+		_, ok3 := dimensionsSourcesIdsMap[source.ID]
+		if ok && ok2 && ok3 {
+			result = append(result, source)
+		}
+	}
+	return result, nil
 }
 
 func (d *DictionaryAdapter) GetMetricsByIds(ids []uint64) ([]*models.Metric, error) {
-	// TODO
-	// d.db.Find(&t.metrics, "data_source_id IN ?", id).Error
 	idsMap := make(map[uint64]bool)
 	for _, id := range ids {
 		idsMap[id] = true
@@ -70,8 +103,6 @@ func (d *DictionaryAdapter) GetMetricsByIds(ids []uint64) ([]*models.Metric, err
 }
 
 func (d *DictionaryAdapter) GetDimensionsByIds(ids []uint64) ([]*models.Dimension, error) {
-	// TODO
-	// d.db.Find(&t.dimensions, "data_source_id IN ?", id).Error
 	idsMap := make(map[uint64]bool)
 	for _, id := range ids {
 		idsMap[id] = true
