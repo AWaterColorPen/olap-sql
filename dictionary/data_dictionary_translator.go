@@ -97,9 +97,6 @@ func (t *DictionaryTranslator) init() (err error) {
 }
 
 func (t *DictionaryTranslator) buildJoinTree() (JoinTree, error) {
-	if err := isValidDataSetSchema(t.set.Schema); err != nil {
-		return nil, err
-	}
 	tree, err := t.set.Schema.Tree()
 	if err != nil {
 		return nil, err

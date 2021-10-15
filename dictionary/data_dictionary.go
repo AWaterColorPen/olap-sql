@@ -44,7 +44,7 @@ type Think struct {
 }
 
 type DictionaryOption struct {
-	DictionaryAdapterOption
+	AdapterOption
 }
 type Dictionary struct {
 	adapter *DictionaryAdapter
@@ -91,7 +91,7 @@ func (d *Dictionary) Translate(query *types.Query) (*types.Request, error) {
 
 func NewDictionary(option *DictionaryOption) (*Dictionary, error) {
 	// 初始化DictionaryAdapter
-	adapter, err := NewDictionaryAdapter(&option.DictionaryAdapterOption)
+	adapter, err := NewDictionaryAdapter(&option.AdapterOption)
 	if err != nil {
 		return nil, err
 	}

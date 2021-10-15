@@ -13,17 +13,24 @@ const (
 	fileAdapter AdapterType = "FILE"
 )
 
-// Adapter Dictionary适配器
+// Adapter Adapter适配器
 type Adapter interface {
+	// TODO 有待考虑
 	GetDataSetByName(string) (interface{}, error)
 	GetSourcesByIds([]interface{}) ([]interface{}, error)
 	GetMetricsByIds([]interface{}) ([]interface{}, error)
 	GetDimensionsByIds([]interface{}) ([]interface{}, error)
 }
 
-func NewAdapter(adapterType AdapterType) (Adapter, error) {
+// AdapterOption Adapter配置
+type AdapterOption struct {
+	adapterType AdapterType
+	dsn         string
+}
+
+func NewAdapter(option *AdapterOption) (Adapter, error) {
 	// 根据不同的Type去实例化不同的Adapter
-	switch adapterType {
+	switch option.adapterType {
 	case dbAdapter:
 		// TODO
 	case fileAdapter:
@@ -41,13 +48,10 @@ type DictionaryAdapter struct {
 	dimensions []*models.Dimension
 }
 
-type DictionaryAdapterOption struct {
+func NewDictionaryAdapter(option *AdapterOption) (*DictionaryAdapter, error) {
 	// TODO
-
-}
-
-func NewDictionaryAdapter(option *DictionaryAdapterOption) (*DictionaryAdapter, error) {
-	// TODO
+	// 1. 根据Option解析文件读入数据
+	// 2. CheckValid调用
 	return nil, nil
 }
 
@@ -61,10 +65,7 @@ func (d *DictionaryAdapter) GetDataSetByName(name string) (*models.DataSet, erro
 }
 
 func (d *DictionaryAdapter) GetSourcesByIds(ids []uint64) ([]*models.DataSource, error) {
-	idsMap := make(map[uint64]bool)
-	for _, id := range ids {
-		idsMap[id] = true
-	}
+	idsMap := getIdsMap(ids)
 
 	metricsSourcesIdsMap := make(map[uint64]bool)
 	for _, metric := range d.metrics {
@@ -89,10 +90,7 @@ func (d *DictionaryAdapter) GetSourcesByIds(ids []uint64) ([]*models.DataSource,
 }
 
 func (d *DictionaryAdapter) GetMetricsByIds(ids []uint64) ([]*models.Metric, error) {
-	idsMap := make(map[uint64]bool)
-	for _, id := range ids {
-		idsMap[id] = true
-	}
+	idsMap := getIdsMap(ids)
 	metrics := make([]*models.Metric, 0)
 	for _, metric := range d.metrics {
 		if _, ok := idsMap[metric.DataSourceID]; ok {
@@ -103,10 +101,7 @@ func (d *DictionaryAdapter) GetMetricsByIds(ids []uint64) ([]*models.Metric, err
 }
 
 func (d *DictionaryAdapter) GetDimensionsByIds(ids []uint64) ([]*models.Dimension, error) {
-	idsMap := make(map[uint64]bool)
-	for _, id := range ids {
-		idsMap[id] = true
-	}
+	idsMap := getIdsMap(ids)
 	dimensions := make([]*models.Dimension, 0)
 	for _, dimension := range d.dimensions {
 		if _, ok := idsMap[dimension.DataSourceID]; ok {
@@ -123,14 +118,23 @@ func checkDataSetActive(set *models.DataSet) (*models.DataSet, error) {
 	return set, nil
 }
 
-func isValidJoinOns(joinOns models.JoinOns) (id1, id2 uint64, err error) {
-	//in1, in2 := joinOns.ID()
+func (d *DictionaryAdapter) isValidJoinOns(joinOns models.JoinOns) (id1, id2 uint64, err error) {
+	in1, in2 := joinOns.ID()
 
-	var out1, out2 []uint64
+	in1Map := getIdsMap(in1)
+	in2Map := getIdsMap(in2)
 
-	// TODO get out1, out2
-	// db.Table(DefaultOlapSqlModelDimensionTableName).Select("data_source_id").Group("data_source_id").Find(&out1, "id IN ?", in1).Error; err != nil {
-	// db.Table(DefaultOlapSqlModelDimensionTableName).Select("data_source_id").Group("data_source_id").Find(&out2, "id IN ?", in2).Error; err != nil {
+	var out1, out2 map[uint64]bool
+
+	for _, dimension := range d.dimensions {
+		id := dimension.ID
+		if _, ok := in1Map[id]; ok {
+			out1[dimension.DataSourceID] = true
+		}
+		if _, ok := in2Map[id]; ok {
+			out2[dimension.DataSourceID] = true
+		}
+	}
 
 	if len(out1) != 1 {
 		return 0, 0, fmt.Errorf("invalid data_source_id=%v", out1)
@@ -138,13 +142,19 @@ func isValidJoinOns(joinOns models.JoinOns) (id1, id2 uint64, err error) {
 	if len(out2) != 1 {
 		return 0, 0, fmt.Errorf("invalid data_source_id=%v", out2)
 	}
-	id1 = out1[0]
-	id2 = out2[0]
+
+	for id := range out1 {
+		id1 = id
+	}
+
+	for id := range out2 {
+		id2 = id
+	}
 	return
 }
 
-func isValidSecondary(secondary *models.Secondary) error {
-	id1, id2, err := isValidJoinOns(models.JoinOns(secondary.JoinOn))
+func (d *DictionaryAdapter) isValidSecondary(secondary *models.Secondary) error {
+	id1, id2, err := d.isValidJoinOns(models.JoinOns(secondary.JoinOn))
 	if err != nil {
 		return err
 	}
@@ -157,15 +167,36 @@ func isValidSecondary(secondary *models.Secondary) error {
 	return nil
 }
 
-func isValidDataSetSchema(schema *models.DataSetSchema) error {
+func (d *DictionaryAdapter) isValidDataSetSchema(schema *models.DataSetSchema) error {
 	if _, err := schema.Tree(); err != nil {
 		return err
 	}
 
 	for _, v := range schema.Secondary {
-		if err := isValidSecondary(v); err != nil {
+		if err := d.isValidSecondary(v); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (d *DictionaryAdapter) isValidDataSet(set *models.DataSet) error {
+	return d.isValidDataSetSchema(set.Schema)
+}
+
+func (d *DictionaryAdapter) isValidAdapterCheck(adapter *Adapter) error {
+	for _, set := range d.set {
+		if err := d.isValidDataSet(set); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func getIdsMap(ids []uint64) map[interface{}]interface{} {
+	idsMap := make(map[interface{}]interface{})
+	for _, id := range ids {
+		idsMap[id] = true
+	}
+	return idsMap
 }
