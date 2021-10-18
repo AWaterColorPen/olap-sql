@@ -9,8 +9,8 @@ import (
 type AdapterType string
 
 const (
-	dbAdapter   AdapterType = "DB"
-	fileAdapter AdapterType = "FILE"
+	DBAdapter   AdapterType = "DB"
+	FileAdapter AdapterType = "FILE"
 )
 
 // Adapter Adapter适配器
@@ -21,16 +21,16 @@ type Adapter interface {
 
 // AdapterOption Adapter配置
 type AdapterOption struct {
-	adapterType AdapterType
-	dsn         string
+	Type AdapterType
+	Dsn  string
 }
 
 func NewAdapter(option *AdapterOption) (Adapter, error) {
 	// 根据不同的Type去实例化不同的Adapter
-	switch option.adapterType {
-	case dbAdapter:
+	switch option.Type {
+	case DBAdapter:
 		// TODO
-	case fileAdapter:
+	case FileAdapter:
 		// TODO
 	}
 	return nil, nil
@@ -43,6 +43,23 @@ type DictionaryAdapter struct {
 	sources    []*models.DataSource
 	metrics    []*models.Metric
 	dimensions []*models.Dimension
+}
+
+func (d *DictionaryAdapter) Create(item interface{}) error {
+	switch v := item.(type) {
+	case *models.DataSet:
+		if err := d.isValidDataSetSchema(v.Schema); err != nil {
+			return err
+		}
+		d.set = append(d.set, v)
+	case *models.DataSource:
+		d.sources = append(d.sources, v)
+	case *models.Metric:
+		d.metrics = append(d.metrics, v)
+	case *models.Dimension:
+		d.dimensions = append(d.dimensions, v)
+	}
+	return nil
 }
 
 func NewDictionaryAdapter(option *AdapterOption) (*DictionaryAdapter, error) {
@@ -63,7 +80,6 @@ func (d *DictionaryAdapter) GetDataSetByName(name string) (*models.DataSet, erro
 
 func (d *DictionaryAdapter) GetSourcesByIds(ids []uint64) ([]*models.DataSource, error) {
 	idsMap := getIdsMap(ids)
-
 	metricsSourcesIdsMap := make(map[uint64]bool)
 	for _, metric := range d.metrics {
 		metricsSourcesIdsMap[metric.DataSourceID] = true

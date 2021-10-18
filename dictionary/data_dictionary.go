@@ -50,6 +50,10 @@ type Dictionary struct {
 	adapter *DictionaryAdapter
 }
 
+func (d *Dictionary) Create(item interface{}) error {
+	return d.adapter.Create(item)
+}
+
 func (d *Dictionary) Translator(query *types.Query) (Translator, error) {
 	set, err := d.adapter.GetDataSetByName(query.DataSetName)
 	if err != nil {

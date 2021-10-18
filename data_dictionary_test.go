@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/awatercolorpen/olap-sql"
+	"github.com/awatercolorpen/olap-sql/dictionary"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -25,12 +25,7 @@ func getDB(path string) (*gorm.DB, error) {
 	return gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 }
 
-func newDataDictionary(sqlitePath string) (*olapsql.DataDictionary, error) {
-	db, err := getDB(sqlitePath)
-	if err != nil {
-		return nil, err
-	}
-
-	option := &olapsql.DataDictionaryOption{DB: db}
-	return olapsql.NewDataDictionary(option)
+func newDataDictionary(sqlitePath string) (*dictionary.Dictionary, error) {
+	option := &dictionary.DictionaryOption{}
+	return dictionary.NewDictionary(option)
 }

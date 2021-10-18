@@ -5,9 +5,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/awatercolorpen/olap-sql"
+	olapsql "github.com/awatercolorpen/olap-sql"
 	"github.com/awatercolorpen/olap-sql/api/models"
 	"github.com/awatercolorpen/olap-sql/api/types"
+	"github.com/awatercolorpen/olap-sql/dictionary"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )
@@ -130,7 +131,7 @@ func MockWikiStatData(db *gorm.DB) error {
 	return nil
 }
 
-func MockWikiStatDataDictionary(dictionary *olapsql.DataDictionary) error {
+func MockWikiStatDataDictionary(dictionary *dictionary.Dictionary) error {
 	if err := dictionary.Create([]*models.DataSource{
 		{Type: DataSourceType(), Name: mockWikiStatDataSet},
 		{Type: DataSourceType(), Name: mockWikiStatDataSet + "_relate"},
