@@ -4,8 +4,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/awatercolorpen/olap-sql"
+	olapsql "github.com/awatercolorpen/olap-sql"
 	"github.com/awatercolorpen/olap-sql/api/types"
+	"github.com/awatercolorpen/olap-sql/dictionary"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,8 +29,11 @@ func newManager(tb testing.TB) (*olapsql.Manager, error) {
 		ClientsOption: map[string]*olapsql.DBOption{
 			k: v,
 		},
-		DataDictionaryOption: &olapsql.DataDictionaryOption{
-			DBOption: olapsql.DBOption{DSN: filepath.Join(tb.TempDir(), "sqlite"), Type: olapsql.DBTypeSQLite},
+		DataDictionaryOption: &dictionary.DictionaryOption{
+			AdapterOption: dictionary.AdapterOption{
+				Type: dictionary.FILEadapter,
+				Dsn:  "filetest/test.yaml",
+			},
 		},
 	}
 

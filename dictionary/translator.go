@@ -1,4 +1,4 @@
-package olapsql
+package dictionary
 
 import "github.com/awatercolorpen/olap-sql/api/types"
 
