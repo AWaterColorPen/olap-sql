@@ -64,6 +64,9 @@ func newDictionaryAdapterByYaml(option *AdapterOption) (*FileAdapter, error) {
 	if err := yaml.Unmarshal(yamlFile, adapter); err != nil {
 		return nil, fmt.Errorf("yaml unmarshal failed")
 	}
+	if err := adapter.isValidAdapterCheck(); err != nil {
+		return nil, fmt.Errorf("data is not valid")
+	}
 	return adapter, nil
 }
 
