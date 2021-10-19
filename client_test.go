@@ -9,6 +9,7 @@ import (
 )
 
 func TestNewClients(t *testing.T) {
+	assert.NoError(t, MockWikiStatDataToJson())
 	_, err := newClients(t.TempDir())
 	assert.NoError(t, err)
 }

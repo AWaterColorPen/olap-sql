@@ -12,7 +12,6 @@ import (
 	"gorm.io/gorm"
 	"io/ioutil"
 	"os"
-	"testing"
 	"time"
 )
 
@@ -316,10 +315,11 @@ func MockWikiStatDataDictionary(dic *dictionary.Dictionary) error {
 	}
 	return nil
 }
-
+/*
 func TestMockData(t *testing.T) {
-	assert.NoError(t, MockWikiStatDataToJson())
+	//assert.NoError(t, MockWikiStatDataToJson())
 }
+*/
 
 func MockLoad(manager *olapsql.Manager) error {
 	dictionary, _ := manager.GetDataDictionary()
