@@ -3,16 +3,17 @@ package models
 import (
 	"database/sql/driver"
 	"fmt"
+
 	"gorm.io/gorm"
 )
 
 var DefaultOlapSqlModelDataSetTableName = "olap_sql_model_data_sets"
 
 type DataSet struct {
-	ID          uint64         `gorm:"column:id;primaryKey"   json:"id,omitempty"`
-	Name        string         `gorm:"column:name;unique"     json:"name"`
-	Description string         `gorm:"column:description"     json:"description"`
-	Schema      *DataSetSchema `gorm:"column:schema"          json:"schema"`
+	ID          uint64         `yaml:"id"   			json:"id,omitempty"`
+	Name        string         `yaml:"name"    			json:"name"`
+	Description string         `yaml:"description"      json:"description"`
+	Schema      *DataSetSchema `yaml:"schema"           json:"schema"`
 }
 
 func (DataSet) TableName() string {

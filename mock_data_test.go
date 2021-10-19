@@ -2,13 +2,16 @@ package olapsql_test
 
 import (
 	"fmt"
-	olapsql "github.com/awatercolorpen/olap-sql"
+	"github.com/awatercolorpen/olap-sql"
 	"github.com/awatercolorpen/olap-sql/api/models"
 	"github.com/awatercolorpen/olap-sql/api/types"
 	"github.com/awatercolorpen/olap-sql/dictionary"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 	"gorm.io/gorm"
+	"io/ioutil"
 	"os"
+	"testing"
 	"time"
 )
 
@@ -130,8 +133,76 @@ func MockWikiStatData(db *gorm.DB) error {
 	return nil
 }
 
-func MockWikiStatDataDictionary(dictionary *dictionary.Dictionary) error {
-	if err := dictionary.Create([]*models.DataSource{
+func MockWikiStatDataToYaml() error {
+	src := "filetest/test.yaml"
+	source := []*models.DataSource{
+		{ID: 1, Type: DataSourceType(), Name: mockWikiStatDataSet},
+		{ID: 2, Type: DataSourceType(), Name: mockWikiStatDataSet + "_relate"},
+		{ID: 3, Type: DataSourceType(), Name: mockWikiStatDataSet + "_class"},
+	}
+
+	metrics := []*models.Metric{
+		{ID: 1, Type: types.MetricTypeSum, Name: "hits", FieldName: "hits", ValueType: types.ValueTypeInteger, DataSourceID: 1},
+		{ID: 2, Type: types.MetricTypeSum, Name: "size_sum", FieldName: "size", ValueType: types.ValueTypeInteger, DataSourceID: 1},
+		{ID: 3, Type: types.MetricTypeCount, Name: "count", FieldName: "*", ValueType: types.ValueTypeInteger, DataSourceID: 1},
+		{ID: 4, Type: types.MetricTypeDivide, Name: "hits_avg", Composition: &models.Composition{MetricID: []uint64{1, 3}}, ValueType: types.ValueTypeFloat, DataSourceID: 1},
+		{ID: 5, Type: types.MetricTypeDivide, Name: "size_avg", Composition: &models.Composition{MetricID: []uint64{2, 3}}, ValueType: types.ValueTypeFloat, DataSourceID: 1},
+		{ID: 6, Type: types.MetricTypeDivide, Name: "hits_per_size", Composition: &models.Composition{MetricID: []uint64{1, 2}}, ValueType: types.ValueTypeFloat, DataSourceID: 1},
+		{ID: 7, Type: types.MetricTypeSum, Name: "source_sum", FieldName: "source", ValueType: types.ValueTypeFloat, DataSourceID: 2},
+		{ID: 8, Type: types.MetricTypeCount, Name: "count", FieldName: "*", ValueType: types.ValueTypeInteger, DataSourceID: 2},
+		{ID: 9, Type: types.MetricTypeDivide, Name: "source_avg", Composition: &models.Composition{MetricID: []uint64{7, 8}}, ValueType: types.ValueTypeFloat, DataSourceID: 2},
+	}
+
+	v := mockTimeGroupDimension("time_by_hour", "time", 1)
+	v.ID = 2
+	dimensions := []*models.Dimension{
+		{ID:1, Name: "date", FieldName: "date", ValueType: types.ValueTypeString, DataSourceID: 1},
+		v,
+		{ID:3, Name: "project", FieldName: "project", ValueType: types.ValueTypeString, DataSourceID: 1},
+		{ID:4,Name: "sub_project", FieldName: "subproject", ValueType: types.ValueTypeString, DataSourceID: 1},
+		{ID:5,Name: "path", FieldName: "path", ValueType: types.ValueTypeString, DataSourceID: 1},
+		{ID:6,Name: "project", FieldName: "project", ValueType: types.ValueTypeString, DataSourceID: 2},
+		{ID:7,Name: "class_id", FieldName: "class", ValueType: types.ValueTypeInteger, DataSourceID: 2},
+		{ID:8,Name: "class_id", FieldName: "id", ValueType: types.ValueTypeInteger, DataSourceID: 3},
+		{ID:9,Name: "class_name", FieldName: "name", ValueType: types.ValueTypeString, DataSourceID: 3},
+	}
+
+	datasets := []*models.DataSet{
+		{
+			ID:1,
+			Name: mockWikiStatDataSet,
+			Schema: &models.DataSetSchema{PrimaryID: 1, Secondary: []*models.Secondary{
+				{DataSourceID1: 1, DataSourceID2: 2, JoinOn: []*models.JoinOn{{DimensionID1: 3, DimensionID2: 6}}},
+				{DataSourceID1: 2, DataSourceID2: 3, JoinOn: []*models.JoinOn{{DimensionID1: 7, DimensionID2: 8}}},
+			}},
+		},
+	}
+	adapter := dictionary.FileAdapter{
+		Sets:       datasets,
+		Sources:    source,
+		Metrics:    metrics,
+		Dimensions: dimensions,
+	}
+	data, err := yaml.Marshal(adapter)
+	if err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(src, data, 0777); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
+func MockWikiStatDataDictionary(dic *dictionary.Dictionary) error {
+	adapter := dic.GetAdapter()
+	switch adapter.(type) {
+	case *dictionary.FileAdapter:
+		return nil
+	}
+
+	if err := dic.Create([]*models.DataSource{
 		{ID: 1, Type: DataSourceType(), Name: mockWikiStatDataSet},
 		{ID: 2, Type: DataSourceType(), Name: mockWikiStatDataSet + "_relate"},
 		{ID: 3, Type: DataSourceType(), Name: mockWikiStatDataSet + "_class"},
@@ -139,7 +210,7 @@ func MockWikiStatDataDictionary(dictionary *dictionary.Dictionary) error {
 		return err
 	}
 
-	if err := dictionary.Create([]*models.Metric{
+	if err := dic.Create([]*models.Metric{
 		{ID:1, Type: types.MetricTypeSum, Name: "hits", FieldName: "hits", ValueType: types.ValueTypeInteger, DataSourceID: 1},
 		{ID:2, Type: types.MetricTypeSum, Name: "size_sum", FieldName: "size", ValueType: types.ValueTypeInteger, DataSourceID: 1},
 		{ID:3, Type: types.MetricTypeCount, Name: "count", FieldName: "*", ValueType: types.ValueTypeInteger, DataSourceID: 1},
@@ -154,7 +225,7 @@ func MockWikiStatDataDictionary(dictionary *dictionary.Dictionary) error {
 	}
 	v := mockTimeGroupDimension("time_by_hour", "time", 1)
 	v.ID = 2
-	if err := dictionary.Create([]*models.Dimension{
+	if err := dic.Create([]*models.Dimension{
 		{ID:1, Name: "date", FieldName: "date", ValueType: types.ValueTypeString, DataSourceID: 1},
 		v,
 		{ID:3, Name: "project", FieldName: "project", ValueType: types.ValueTypeString, DataSourceID: 1},
@@ -168,7 +239,7 @@ func MockWikiStatDataDictionary(dictionary *dictionary.Dictionary) error {
 		return err
 	}
 
-	if err := dictionary.Create([]*models.DataSet{
+	if err := dic.Create([]*models.DataSet{
 		{
 			ID:1,
 			Name: mockWikiStatDataSet,
@@ -181,6 +252,10 @@ func MockWikiStatDataDictionary(dictionary *dictionary.Dictionary) error {
 		return err
 	}
 	return nil
+}
+
+func TestMockData(t *testing.T) {
+	assert.NoError(t, MockWikiStatDataToYaml())
 }
 
 func MockLoad(manager *olapsql.Manager) error {
@@ -312,3 +387,5 @@ func MockQuery4ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Equal(t, "entertainment", result.Source[0]["class_name"])
 	assert.Equal(t, nil, result.Source[0]["hits_per_size"])
 }
+
+

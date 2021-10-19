@@ -26,6 +26,11 @@ func getDB(path string) (*gorm.DB, error) {
 }
 
 func newDataDictionary(sqlitePath string) (*dictionary.Dictionary, error) {
-	option := &dictionary.DictionaryOption{}
+	option := &dictionary.DictionaryOption{
+		dictionary.AdapterOption{
+			Type: dictionary.FILEadapter,
+			Dsn: "filetest/test.yaml",
+		},
+	}
 	return dictionary.NewDictionary(option)
 }

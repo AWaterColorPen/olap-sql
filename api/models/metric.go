@@ -10,14 +10,14 @@ import (
 var DefaultOlapSqlModelMetricTableName = "olap_sql_model_metrics"
 
 type Metric struct {
-	ID           uint64           `gorm:"column:id;primaryKey"                                          json:"id,omitempty"`
-	Type         types.MetricType `gorm:"column:type"                                                   json:"type"`
-	Name         string           `gorm:"column:name;index:idx_olap_sql_model_metrics,unique"           json:"name"`
-	FieldName    string           `gorm:"column:field_name"                                             json:"field_name"`
-	ValueType    types.ValueType  `gorm:"column:value_type"                                             json:"value_type"`
-	Composition  *Composition     `gorm:"column:composition"                                            json:"composition"`
-	DataSourceID uint64           `gorm:"column:data_source_id;index:idx_olap_sql_model_metrics,unique" json:"data_source_id"`
-	Description  string           `gorm:"column:description"                                            json:"description"`
+	ID           uint64           `yaml:"id"             json:"id,omitempty"`
+	Type         types.MetricType `yaml:"type"           json:"type"`
+	Name         string           `yaml:"name"           json:"name"`
+	FieldName    string           `yaml:"field_name"     json:"field_name"`
+	ValueType    types.ValueType  `yaml:"value_type"     json:"value_type"`
+	Composition  *Composition     `yaml:"composition"    json:"composition"`
+	DataSourceID uint64           `yaml:"data_source_id" json:"data_source_id"`
+	Description  string           `yaml:"description"    json:"description"`
 }
 
 func (Metric) TableName() string {

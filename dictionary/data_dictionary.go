@@ -47,15 +47,19 @@ type DictionaryOption struct {
 	AdapterOption
 }
 type Dictionary struct {
-	adapter *DictionaryAdapter
+	adapter Adapter
+}
+
+func (d *Dictionary) GetAdapter() Adapter{
+	return d.adapter
 }
 
 func (d *Dictionary) Create(item interface{}) error {
-	return d.adapter.Create(item)
+	return nil
+	//return d.adapter.Create(item)
 }
 
 func (d *Dictionary) Translator(query *types.Query) (Translator, error) {
-	d.adapter.fillSourceMetricsAndDimensions()
 	set, err := d.adapter.GetDataSetByName(query.DataSetName)
 	if err != nil {
 		return nil, err
@@ -96,7 +100,7 @@ func (d *Dictionary) Translate(query *types.Query) (*types.Request, error) {
 
 func NewDictionary(option *DictionaryOption) (*Dictionary, error) {
 	// 初始化DictionaryAdapter
-	adapter, err := NewDictionaryAdapter(&option.AdapterOption)
+	adapter, err := NewAdapter(&option.AdapterOption)
 	if err != nil {
 		return nil, err
 	}

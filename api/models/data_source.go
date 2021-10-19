@@ -1,19 +1,18 @@
 package models
 
 import (
-	"github.com/awatercolorpen/olap-sql/api/types"
 	"strings"
+
+	"github.com/awatercolorpen/olap-sql/api/types"
 )
 
 var DefaultOlapSqlModelDataSourceTableName = "olap_sql_model_data_sources"
 
 type DataSource struct {
-	ID          uint64               `gorm:"column:id;primaryKey"    json:"id,omitempty"`
-	Type        types.DataSourceType `gorm:"column:type"             json:"type"`
-	Name        string               `gorm:"column:name;unique"      json:"name"`
-	Description string               `gorm:"column:description"      json:"description"`
-	Metrics     []*Metric            `gorm:"foreignKey:DataSourceID" json:"metrics,omitempty"`
-	Dimensions  []*Dimension         `gorm:"foreignKey:DataSourceID" json:"dimensions,omitempty"`
+	ID          uint64               `yaml:"id"               json:"id,omitempty"`
+	Type        types.DataSourceType `yaml:"type"             json:"type"`
+	Name        string               `yaml:"name"             json:"name"`
+	Description string               `yaml:"description"      json:"description"`
 }
 
 func (d *DataSource) GetTableName() string {

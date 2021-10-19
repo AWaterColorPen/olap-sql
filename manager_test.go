@@ -31,8 +31,8 @@ func newManager(tb testing.TB) (*olapsql.Manager, error) {
 		},
 		DataDictionaryOption: &dictionary.DictionaryOption{
 			AdapterOption: dictionary.AdapterOption{
-				Type: dictionary.FileAdapter,
-				Dsn:  "",
+				Type: dictionary.FILEadapter,
+				Dsn:  "filetest/test.yaml",
 			},
 		},
 	}

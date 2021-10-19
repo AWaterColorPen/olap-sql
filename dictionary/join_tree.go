@@ -3,7 +3,6 @@ package dictionary
 import (
 	"fmt"
 	"github.com/ahmetb/go-linq/v3"
-
 	"github.com/awatercolorpen/olap-sql/api/models"
 )
 
@@ -98,11 +97,11 @@ func (j *joinNode) FindDimension(name string) (*models.Dimension, error) {
 	return d, nil
 }
 
-func newJoinNode(source *models.DataSource) *joinNode {
+func newJoinNode(metrics []*models.Metric, dimensions []*models.Dimension, source *models.DataSource) *joinNode {
 	return &joinNode{
 		source:           source,
-		metricNameMap:    Metrics(source.Metrics).NameIndex(),
-		dimensionNameMap: Dimensions(source.Dimensions).NameIndex(),
+		metricNameMap:    Metrics(metrics).NameIndex(),
+		dimensionNameMap: Dimensions(dimensions).NameIndex(),
 	}
 }
 
@@ -160,6 +159,8 @@ type JoinTree interface {
 type JoinTreeBuilder struct {
 	tree      map[uint64][]uint64
 	root      uint64
+	metrics []*models.Metric
+	dimensions []*models.Dimension
 	sourceMap map[uint64]*models.DataSource
 }
 
@@ -183,7 +184,8 @@ func (j *JoinTreeBuilder) dfs(current uint64) (*joinNode, error) {
 	if !ok {
 		return nil, fmt.Errorf("can't find %v in source map", current)
 	}
-	node := newJoinNode(source)
+	metrics, dimensions := j.GetSourceRelateMetricsAndDimensions(source)
+	node := newJoinNode(metrics, dimensions, source)
 	for _, v := range j.tree[current] {
 		child, err := j.dfs(v)
 		if err != nil {
@@ -192,4 +194,21 @@ func (j *JoinTreeBuilder) dfs(current uint64) (*joinNode, error) {
 		node.Children = append(node.Children, child)
 	}
 	return node, nil
+}
+
+// GetSourceRelateMetricsAndDimensions 获取 Source 的 Metrics 和 Dimensions
+func (j *JoinTreeBuilder) GetSourceRelateMetricsAndDimensions(src *models.DataSource) ([]*models.Metric, []*models.Dimension) {
+	metrics := make([]*models.Metric, 0)
+	dimensions := make([]*models.Dimension, 0)
+	for _, metric := range j.metrics {
+		if metric.DataSourceID == src.ID {
+			metrics = append(metrics, metric)
+		}
+	}
+	for _, dimension := range j.dimensions {
+		if dimension.DataSourceID == src.ID {
+			dimensions = append(dimensions, dimension)
+		}
+	}
+	return metrics, dimensions
 }

@@ -2,20 +2,25 @@ package dictionary
 
 import (
 	"fmt"
+	"io/ioutil"
+
 	"github.com/awatercolorpen/olap-sql/api/models"
+	"gopkg.in/yaml.v2"
 )
 
 type AdapterType string
 
 const (
-	DBAdapter   AdapterType = "DB"
-	FileAdapter AdapterType = "FILE"
+	DBadapter   AdapterType = "DB"
+	FILEadapter AdapterType = "FILE"
 )
 
 // Adapter Adapter适配器
 type Adapter interface {
-	// TODO 有待考虑(这里应该设计的不好)
-	NewAdapter(interface{}) (interface{}, error)
+	GetDataSetByName(string) (*models.DataSet, error)
+	GetSourcesByIds([]uint64) ([]*models.DataSource, error)
+	GetMetricsByIds([]uint64) ([]*models.Metric, error)
+	GetDimensionsByIds([]uint64) ([]*models.Dimension, error)
 }
 
 // AdapterOption Adapter配置
@@ -24,67 +29,79 @@ type AdapterOption struct {
 	Dsn  string
 }
 
-func NewAdapter(option *AdapterOption) (*DictionaryAdapter, error) {
+func NewAdapter(option *AdapterOption) (Adapter, error) {
 	// 根据不同的Type去实例化不同的Adapter
 	switch option.Type {
-	case DBAdapter:
-		return NewDictionaryAdapterByDB(option)
-	case FileAdapter:
-		return NewDictionaryAdapterByYaml(option)
+	case DBadapter:
+		// TODO
+		return newDictionaryAdapterByDB(option)
+	case FILEadapter:
+		return newDictionaryAdapterByYaml(option)
+	default:
+		return nil, fmt.Errorf("adapter type error")
 	}
-	return nil, nil
 }
 
-// DataSaveCenter 用于保存指标的逻辑数据信息
-type DictionaryAdapter struct {
+// FileAdapter 文件适配器
+type FileAdapter struct {
 	// TODO
-	set        []*models.DataSet
-	sources    []*models.DataSource
-	metrics    []*models.Metric
-	dimensions []*models.Dimension
+	Sets       []*models.DataSet    `yaml:"sets"`
+	Sources    []*models.DataSource `yaml:"sources"`
+	Metrics    []*models.Metric     `yaml:"metrics"`
+	Dimensions []*models.Dimension  `yaml:"dimensions""`
 }
 
-func (d *DictionaryAdapter) Create(item interface{}) error {
+func (d *FileAdapter) move() {
+	fmt.Println("qwq")
+}
+func (d *FileAdapter) Create(item interface{}) error {
 	switch v := item.(type) {
 	case *models.DataSet:
 		if err := d.isValidDataSetSchema(v.Schema); err != nil {
 			return err
 		}
-		d.set = append(d.set, v)
+		d.Sets = append(d.Sets, v)
 	case []*models.DataSet:
 		for _, i := range item.([]*models.DataSet) {
 			if err := d.isValidDataSetSchema(i.Schema); err != nil {
 				return err
 			}
-			d.set = append(d.set, i)
+			d.Sets = append(d.Sets, i)
 		}
 	case *models.DataSource:
-		d.sources = append(d.sources, v)
+		d.Sources = append(d.Sources, v)
 	case []*models.DataSource:
-		d.sources = append(d.sources, v...)
+		d.Sources = append(d.Sources, v...)
 	case *models.Metric:
-		d.metrics = append(d.metrics, v)
+		d.Metrics = append(d.Metrics, v)
 	case []*models.Metric:
-		d.metrics = append(d.metrics, v...)
+		d.Metrics = append(d.Metrics, v...)
 	case *models.Dimension:
-		d.dimensions = append(d.dimensions, v)
+		d.Dimensions = append(d.Dimensions, v)
 	case []*models.Dimension:
-		d.dimensions = append(d.dimensions, v...)
+		d.Dimensions = append(d.Dimensions, v...)
 	}
 	return nil
 }
 
-
-func NewDictionaryAdapterByDB(option *AdapterOption) (*DictionaryAdapter, error) {
-	return nil, nil
+func newDictionaryAdapterByDB(option *AdapterOption) (Adapter, error) {
+	return nil, fmt.Errorf("DB type unsupport now")
 }
 
-func NewDictionaryAdapterByYaml(option *AdapterOption) (*DictionaryAdapter, error) {
-	return nil, nil
+func newDictionaryAdapterByYaml(option *AdapterOption) (*FileAdapter, error) {
+	adapter := &FileAdapter{}
+	yamlFile, err := ioutil.ReadFile(option.Dsn)
+	if err != nil {
+		return nil, fmt.Errorf("file read error")
+	}
+	if err := yaml.Unmarshal(yamlFile, adapter); err != nil {
+		return nil, fmt.Errorf("yaml unmarshal failed")
+	}
+	return adapter, nil
 }
 
-func (d *DictionaryAdapter) GetDataSetByName(name string) (*models.DataSet, error) {
-	for _, data := range d.set {
+func (d *FileAdapter) GetDataSetByName(name string) (*models.DataSet, error) {
+	for _, data := range d.Sets {
 		if data.Name == name {
 			return checkDataSetActive(data)
 		}
@@ -92,20 +109,20 @@ func (d *DictionaryAdapter) GetDataSetByName(name string) (*models.DataSet, erro
 	return nil, fmt.Errorf("can not find '%v' data set", name)
 }
 
-func (d *DictionaryAdapter) GetSourcesByIds(ids []uint64) ([]*models.DataSource, error) {
+func (d *FileAdapter) GetSourcesByIds(ids []uint64) ([]*models.DataSource, error) {
 	idsMap := getIdsMap(ids)
 	metricsSourcesIdsMap := make(map[uint64]bool)
-	for _, metric := range d.metrics {
+	for _, metric := range d.Metrics {
 		metricsSourcesIdsMap[metric.DataSourceID] = true
 	}
 
 	dimensionsSourcesIdsMap := make(map[uint64]bool)
-	for _, dimension := range d.dimensions {
+	for _, dimension := range d.Dimensions {
 		dimensionsSourcesIdsMap[dimension.DataSourceID] = true
 	}
 
 	result := make([]*models.DataSource, 0)
-	for _, source := range d.sources {
+	for _, source := range d.Sources {
 		_, ok := idsMap[source.ID]
 		_, ok2 := metricsSourcesIdsMap[source.ID]
 		_, ok3 := dimensionsSourcesIdsMap[source.ID]
@@ -116,10 +133,10 @@ func (d *DictionaryAdapter) GetSourcesByIds(ids []uint64) ([]*models.DataSource,
 	return result, nil
 }
 
-func (d *DictionaryAdapter) GetMetricsByIds(ids []uint64) ([]*models.Metric, error) {
+func (d *FileAdapter) GetMetricsByIds(ids []uint64) ([]*models.Metric, error) {
 	idsMap := getIdsMap(ids)
 	metrics := make([]*models.Metric, 0)
-	for _, metric := range d.metrics {
+	for _, metric := range d.Metrics {
 		if _, ok := idsMap[metric.DataSourceID]; ok {
 			metrics = append(metrics, metric)
 		}
@@ -128,10 +145,10 @@ func (d *DictionaryAdapter) GetMetricsByIds(ids []uint64) ([]*models.Metric, err
 }
 
 // GetDimensionsByIds 通过ids筛选Dimensions信息
-func (d *DictionaryAdapter) GetDimensionsByIds(ids []uint64) ([]*models.Dimension, error) {
+func (d *FileAdapter) GetDimensionsByIds(ids []uint64) ([]*models.Dimension, error) {
 	idsMap := getIdsMap(ids)
 	dimensions := make([]*models.Dimension, 0)
-	for _, dimension := range d.dimensions {
+	for _, dimension := range d.Dimensions {
 		if _, ok := idsMap[dimension.DataSourceID]; ok {
 			dimensions = append(dimensions, dimension)
 		}
@@ -146,7 +163,7 @@ func checkDataSetActive(set *models.DataSet) (*models.DataSet, error) {
 	return set, nil
 }
 
-func (d *DictionaryAdapter) isValidJoinOns(joinOns models.JoinOns) (id1, id2 uint64, err error) {
+func (d *FileAdapter) isValidJoinOns(joinOns models.JoinOns) (id1, id2 uint64, err error) {
 	in1, in2 := joinOns.ID()
 
 	in1Map := getIdsMap(in1)
@@ -155,7 +172,7 @@ func (d *DictionaryAdapter) isValidJoinOns(joinOns models.JoinOns) (id1, id2 uin
 	out1 := make(map[uint64]bool, 0)
 	out2 := make(map[uint64]bool, 0)
 
-	for _, dimension := range d.dimensions {
+	for _, dimension := range d.Dimensions {
 		id := dimension.ID
 		if _, ok := in1Map[id]; ok {
 			out1[dimension.DataSourceID] = true
@@ -182,8 +199,8 @@ func (d *DictionaryAdapter) isValidJoinOns(joinOns models.JoinOns) (id1, id2 uin
 	return
 }
 
-func (d *DictionaryAdapter) isValidSecondary(secondary *models.Secondary) error {
-	id1, id2, err := d.isValidJoinOns(models.JoinOns(secondary.JoinOn))
+func (d *FileAdapter) isValidSecondary(secondary *models.Secondary) error {
+	id1, id2, err := d.isValidJoinOns(secondary.JoinOn)
 	if err != nil {
 		return err
 	}
@@ -196,7 +213,7 @@ func (d *DictionaryAdapter) isValidSecondary(secondary *models.Secondary) error 
 	return nil
 }
 
-func (d *DictionaryAdapter) isValidDataSetSchema(schema *models.DataSetSchema) error {
+func (d *FileAdapter) isValidDataSetSchema(schema *models.DataSetSchema) error {
 	if _, err := schema.Tree(); err != nil {
 		return err
 	}
@@ -210,34 +227,18 @@ func (d *DictionaryAdapter) isValidDataSetSchema(schema *models.DataSetSchema) e
 }
 
 // isValidDataSet 检查DataSet的合法性
-func (d *DictionaryAdapter) isValidDataSet(set *models.DataSet) error {
+func (d *FileAdapter) isValidDataSet(set *models.DataSet) error {
 	return d.isValidDataSetSchema(set.Schema)
 }
 
 // isValidAdapterCheck 检查Adapter的合法性
-func (d *DictionaryAdapter) isValidAdapterCheck() error {
-	for _, set := range d.set {
+func (d *FileAdapter) isValidAdapterCheck() error {
+	for _, set := range d.Sets {
 		if err := d.isValidDataSet(set); err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-// fillSourceMetricsAndDimensions 填充 Sources 的外键信息 Metrics 和 Dimensions
-func (d *DictionaryAdapter) fillSourceMetricsAndDimensions(){
-	for _, source := range d.sources {
-		for _, metric := range d.metrics {
-			if metric.DataSourceID == source.ID {
-				source.Metrics = append(source.Metrics, metric)
-			}
-		}
-		for _, dimension := range d.dimensions {
-			if dimension.DataSourceID == source.ID {
-				source.Dimensions = append(source.Dimensions, dimension)
-			}
-		}
-	}
 }
 
 func getIdsMap(ids []uint64) map[interface{}]interface{} {

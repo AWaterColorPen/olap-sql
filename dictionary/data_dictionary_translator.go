@@ -101,7 +101,13 @@ func (t *DictionaryTranslator) buildJoinTree() (JoinTree, error) {
 		return nil, err
 	}
 
-	builder := &JoinTreeBuilder{tree: tree, root: t.primaryID, sourceMap: t.sourceMap}
+	builder := &JoinTreeBuilder{
+		tree: tree,
+		root: t.primaryID,
+		metrics: t.metrics,
+		dimensions: t.dimensions,
+		sourceMap: t.sourceMap,
+	}
 	return builder.Build()
 }
 
@@ -326,3 +332,4 @@ type columnStruct struct {
 	Statement    string          `json:"statement"`
 	DataSourceID uint64          `json:"data_source_id"`
 }
+
