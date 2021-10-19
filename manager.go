@@ -4,12 +4,13 @@ import (
 	"fmt"
 
 	"github.com/awatercolorpen/olap-sql/api/types"
+	"github.com/awatercolorpen/olap-sql/dictionary"
 	"gorm.io/gorm"
 )
 
 type Manager struct {
 	clients    Clients
-	dictionary *DataDictionary
+	dictionary *dictionary.Dictionary
 }
 
 func (m *Manager) GetClients() (Clients, error) {
@@ -19,7 +20,7 @@ func (m *Manager) GetClients() (Clients, error) {
 	return m.clients, nil
 }
 
-func (m *Manager) GetDataDictionary() (*DataDictionary, error) {
+func (m *Manager) GetDataDictionary() (*dictionary.Dictionary, error) {
 	if m.dictionary == nil {
 		return nil, fmt.Errorf("it is no initialization")
 	}
@@ -82,7 +83,7 @@ func NewManager(configuration *Configuration) (*Manager, error) {
 		m.clients = clients
 	}
 	if configuration.DataDictionaryOption != nil {
-		dictionary, err := NewDataDictionary(configuration.DataDictionaryOption)
+		dictionary, err := dictionary.NewDictionary(configuration.DataDictionaryOption)
 		if err != nil {
 			return nil, err
 		}

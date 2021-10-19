@@ -3,7 +3,7 @@ package olapsql_test
 import (
 	"testing"
 
-	"github.com/awatercolorpen/olap-sql"
+	olapsql "github.com/awatercolorpen/olap-sql"
 	"github.com/awatercolorpen/olap-sql/api/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,6 +14,7 @@ func TestNewClients(t *testing.T) {
 }
 
 func TestClients_SubmitClause(t *testing.T) {
+	assert.NoError(t, MockWikiStatDataToJson())
 	m, err := newManager(t)
 	assert.NoError(t, err)
 	assert.NoError(t, MockLoad(m))
