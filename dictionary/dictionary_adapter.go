@@ -1,8 +1,10 @@
 package dictionary
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	"github.com/awatercolorpen/olap-sql/api/models"
 	"gopkg.in/yaml.v2"
@@ -44,14 +46,14 @@ func NewAdapter(option *AdapterOption) (Adapter, error) {
 
 // FileAdapter 文件适配器
 type FileAdapter struct {
-	// TODO
-	Sets       []*models.DataSet    `yaml:"sets"`
-	Sources    []*models.DataSource `yaml:"sources"`
-	Metrics    []*models.Metric     `yaml:"metrics"`
-	Dimensions []*models.Dimension  `yaml:"dimensions"`
+	Sets       []*models.DataSet    `yaml:"sets"              json:"sets"`
+	Sources    []*models.DataSource `yaml:"sources"           json:"sources"`
+	Metrics    []*models.Metric     `yaml:"metrics"           json:"metrics"`
+	Dimensions []*models.Dimension  `yaml:"dimensions"        json:"dimensions"`
 }
 
 func newDictionaryAdapterByDB(option *AdapterOption) (Adapter, error) {
+	// TODO
 	return nil, fmt.Errorf("DB type unsupport now")
 }
 
@@ -61,8 +63,19 @@ func newDictionaryAdapterByYaml(option *AdapterOption) (*FileAdapter, error) {
 	if err != nil {
 		return nil, fmt.Errorf("file read error")
 	}
-	if err := yaml.Unmarshal(yamlFile, adapter); err != nil {
-		return nil, fmt.Errorf("yaml unmarshal failed")
+
+	filetype := option.Dsn[strings.Index(option.Dsn, "."):]
+	switch filetype {
+	case ".yaml":
+		if err := yaml.Unmarshal(yamlFile, adapter); err != nil {
+			return nil, fmt.Errorf("yaml unmarshal failed")
+		}
+	case ".json":
+		if err := json.Unmarshal(yamlFile, adapter); err != nil {
+			return nil, fmt.Errorf("json unmarshal failed")
+		}
+	default:
+		return nil, fmt.Errorf("this file unsupport")
 	}
 	if err := adapter.isValidAdapterCheck(); err != nil {
 		return nil, fmt.Errorf("data is not valid")
