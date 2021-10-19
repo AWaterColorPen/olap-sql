@@ -14,7 +14,7 @@ func TestNewClients(t *testing.T) {
 }
 
 func TestClients_SubmitClause(t *testing.T) {
-	assert.NoError(t, MockWikiStatDataToJson())
+	assert.NoError(t, MockWikiStatDataToYaml())
 	m, err := newManager(t)
 	assert.NoError(t, err)
 	assert.NoError(t, MockLoad(m))

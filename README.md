@@ -6,5 +6,3 @@
 
 - docs
     - overall design
-- feature
-    - [] go.16

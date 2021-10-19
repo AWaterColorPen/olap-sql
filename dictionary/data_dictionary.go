@@ -99,11 +99,9 @@ func (d *Dictionary) Translate(query *types.Query) (*types.Request, error) {
 }
 
 func NewDictionary(option *DictionaryOption) (*Dictionary, error) {
-	// 初始化DictionaryAdapter
 	adapter, err := NewAdapter(&option.AdapterOption)
 	if err != nil {
 		return nil, err
 	}
-
 	return &Dictionary{adapter: adapter}, nil
 }

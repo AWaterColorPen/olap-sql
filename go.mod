@@ -1,11 +1,10 @@
 module github.com/awatercolorpen/olap-sql
 
-go 1.16
+go 1.17
 
 require (
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/golang/protobuf v1.5.2
-	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/testify v1.7.0
 	gopkg.in/yaml.v2 v2.2.2
 	gorm.io/driver/clickhouse v0.1.0

@@ -3,7 +3,6 @@ package dictionary
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/awatercolorpen/olap-sql/api/types"
 	"io/ioutil"
 	"strings"
 
@@ -107,7 +106,6 @@ func (d *FileAdapter) GetSourcesByIds(ids []uint64) ([]*models.DataSource, error
 
 	result := make([]*models.DataSource, 0)
 	for _, source := range d.Sources {
-		source.Type = types.DataSourceTypeClickHouse
 		_, ok := idsMap[source.ID]
 		_, ok2 := metricsSourcesIdsMap[source.ID]
 		_, ok3 := dimensionsSourcesIdsMap[source.ID]
