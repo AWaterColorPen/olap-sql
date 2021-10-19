@@ -48,7 +48,7 @@ type FileAdapter struct {
 	Sets       []*models.DataSet    `yaml:"sets"`
 	Sources    []*models.DataSource `yaml:"sources"`
 	Metrics    []*models.Metric     `yaml:"metrics"`
-	Dimensions []*models.Dimension  `yaml:"dimensions""`
+	Dimensions []*models.Dimension  `yaml:"dimensions"`
 }
 
 func newDictionaryAdapterByDB(option *AdapterOption) (Adapter, error) {
