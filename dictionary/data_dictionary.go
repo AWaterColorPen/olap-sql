@@ -55,6 +55,7 @@ func (d *Dictionary) Create(item interface{}) error {
 }
 
 func (d *Dictionary) Translator(query *types.Query) (Translator, error) {
+	d.adapter.fillSourceMetricsAndDimensions()
 	set, err := d.adapter.GetDataSetByName(query.DataSetName)
 	if err != nil {
 		return nil, err

@@ -2,7 +2,6 @@ package dictionary
 
 import (
 	"fmt"
-
 	"github.com/awatercolorpen/olap-sql/api/models"
 )
 
@@ -15,7 +14,7 @@ const (
 
 // Adapter Adapter适配器
 type Adapter interface {
-	// TODO 有待考虑
+	// TODO 有待考虑(这里应该设计的不好)
 	NewAdapter(interface{}) (interface{}, error)
 }
 
@@ -25,13 +24,13 @@ type AdapterOption struct {
 	Dsn  string
 }
 
-func NewAdapter(option *AdapterOption) (Adapter, error) {
+func NewAdapter(option *AdapterOption) (*DictionaryAdapter, error) {
 	// 根据不同的Type去实例化不同的Adapter
 	switch option.Type {
 	case DBAdapter:
-		// TODO
+		return NewDictionaryAdapterByDB(option)
 	case FileAdapter:
-		// TODO
+		return NewDictionaryAdapterByYaml(option)
 	}
 	return nil, nil
 }
@@ -52,20 +51,35 @@ func (d *DictionaryAdapter) Create(item interface{}) error {
 			return err
 		}
 		d.set = append(d.set, v)
+	case []*models.DataSet:
+		for _, i := range item.([]*models.DataSet) {
+			if err := d.isValidDataSetSchema(i.Schema); err != nil {
+				return err
+			}
+			d.set = append(d.set, i)
+		}
 	case *models.DataSource:
 		d.sources = append(d.sources, v)
+	case []*models.DataSource:
+		d.sources = append(d.sources, v...)
 	case *models.Metric:
 		d.metrics = append(d.metrics, v)
+	case []*models.Metric:
+		d.metrics = append(d.metrics, v...)
 	case *models.Dimension:
 		d.dimensions = append(d.dimensions, v)
+	case []*models.Dimension:
+		d.dimensions = append(d.dimensions, v...)
 	}
 	return nil
 }
 
-func NewDictionaryAdapter(option *AdapterOption) (*DictionaryAdapter, error) {
-	// TODO
-	// 1. 根据Option解析文件读入数据
-	// 2. CheckValid调用
+
+func NewDictionaryAdapterByDB(option *AdapterOption) (*DictionaryAdapter, error) {
+	return nil, nil
+}
+
+func NewDictionaryAdapterByYaml(option *AdapterOption) (*DictionaryAdapter, error) {
 	return nil, nil
 }
 
@@ -95,7 +109,7 @@ func (d *DictionaryAdapter) GetSourcesByIds(ids []uint64) ([]*models.DataSource,
 		_, ok := idsMap[source.ID]
 		_, ok2 := metricsSourcesIdsMap[source.ID]
 		_, ok3 := dimensionsSourcesIdsMap[source.ID]
-		if ok && ok2 && ok3 {
+		if ok && (ok2 || ok3) {
 			result = append(result, source)
 		}
 	}
@@ -113,6 +127,7 @@ func (d *DictionaryAdapter) GetMetricsByIds(ids []uint64) ([]*models.Metric, err
 	return metrics, nil
 }
 
+// GetDimensionsByIds 通过ids筛选Dimensions信息
 func (d *DictionaryAdapter) GetDimensionsByIds(ids []uint64) ([]*models.Dimension, error) {
 	idsMap := getIdsMap(ids)
 	dimensions := make([]*models.Dimension, 0)
@@ -137,7 +152,8 @@ func (d *DictionaryAdapter) isValidJoinOns(joinOns models.JoinOns) (id1, id2 uin
 	in1Map := getIdsMap(in1)
 	in2Map := getIdsMap(in2)
 
-	var out1, out2 map[uint64]bool
+	out1 := make(map[uint64]bool, 0)
+	out2 := make(map[uint64]bool, 0)
 
 	for _, dimension := range d.dimensions {
 		id := dimension.ID
@@ -193,17 +209,35 @@ func (d *DictionaryAdapter) isValidDataSetSchema(schema *models.DataSetSchema) e
 	return nil
 }
 
+// isValidDataSet 检查DataSet的合法性
 func (d *DictionaryAdapter) isValidDataSet(set *models.DataSet) error {
 	return d.isValidDataSetSchema(set.Schema)
 }
 
-func (d *DictionaryAdapter) isValidAdapterCheck(adapter *Adapter) error {
+// isValidAdapterCheck 检查Adapter的合法性
+func (d *DictionaryAdapter) isValidAdapterCheck() error {
 	for _, set := range d.set {
 		if err := d.isValidDataSet(set); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// fillSourceMetricsAndDimensions 填充 Sources 的外键信息 Metrics 和 Dimensions
+func (d *DictionaryAdapter) fillSourceMetricsAndDimensions(){
+	for _, source := range d.sources {
+		for _, metric := range d.metrics {
+			if metric.DataSourceID == source.ID {
+				source.Metrics = append(source.Metrics, metric)
+			}
+		}
+		for _, dimension := range d.dimensions {
+			if dimension.DataSourceID == source.ID {
+				source.Dimensions = append(source.Dimensions, dimension)
+			}
+		}
+	}
 }
 
 func getIdsMap(ids []uint64) map[interface{}]interface{} {
