@@ -9,12 +9,12 @@ import (
 )
 
 func TestNewClients(t *testing.T) {
-	assert.NoError(t, MockWikiStatDataToJson())
 	_, err := newClients(t.TempDir())
 	assert.NoError(t, err)
 }
 
 func TestClients_SubmitClause(t *testing.T) {
+	assert.NoError(t, MockWikiStatDataToJson())
 	m, err := newManager(t)
 	assert.NoError(t, err)
 	assert.NoError(t, MockLoad(m))
