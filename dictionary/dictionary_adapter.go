@@ -51,39 +51,6 @@ type FileAdapter struct {
 	Dimensions []*models.Dimension  `yaml:"dimensions""`
 }
 
-func (d *FileAdapter) move() {
-	fmt.Println("qwq")
-}
-func (d *FileAdapter) Create(item interface{}) error {
-	switch v := item.(type) {
-	case *models.DataSet:
-		if err := d.isValidDataSetSchema(v.Schema); err != nil {
-			return err
-		}
-		d.Sets = append(d.Sets, v)
-	case []*models.DataSet:
-		for _, i := range item.([]*models.DataSet) {
-			if err := d.isValidDataSetSchema(i.Schema); err != nil {
-				return err
-			}
-			d.Sets = append(d.Sets, i)
-		}
-	case *models.DataSource:
-		d.Sources = append(d.Sources, v)
-	case []*models.DataSource:
-		d.Sources = append(d.Sources, v...)
-	case *models.Metric:
-		d.Metrics = append(d.Metrics, v)
-	case []*models.Metric:
-		d.Metrics = append(d.Metrics, v...)
-	case *models.Dimension:
-		d.Dimensions = append(d.Dimensions, v)
-	case []*models.Dimension:
-		d.Dimensions = append(d.Dimensions, v...)
-	}
-	return nil
-}
-
 func newDictionaryAdapterByDB(option *AdapterOption) (Adapter, error) {
 	return nil, fmt.Errorf("DB type unsupport now")
 }
