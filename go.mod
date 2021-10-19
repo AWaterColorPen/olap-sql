@@ -1,6 +1,6 @@
 module github.com/awatercolorpen/olap-sql
 
-go 1.17
+go 1.16
 
 require (
 	github.com/ahmetb/go-linq/v3 v3.2.0
