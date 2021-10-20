@@ -29,7 +29,7 @@ metrics = [
 
 dimensions = [
   {id = 1, name = "date", field_name = "date", value_type = "VALUE_STRING", data_source_id = 1, description = ""},
-  {id = 2, name = "time_by_hour", field_name = "formatDateTime(time, '%%Y-%%m-%%d %%H:00:00')", value_type = "VALUE_STRING", data_source_id = 1, description = ""},
+  {id = 2, name = "time_by_hour", field_name = "formatDateTime(time, '%Y-%m-%d %H:00:00')", value_type = "VALUE_STRING", data_source_id = 1, description = ""},
   {id = 3, name = "project", field_name = "project", value_type = "VALUE_STRING", data_source_id = 1, description = ""},
   {id = 4, name = "sub_project", field_name = "subproject", value_type = "VALUE_STRING", data_source_id = 1, description = ""},
   {id = 5, name = "path", field_name = "path", value_type = "VALUE_STRING", data_source_id = 1, description = ""},
