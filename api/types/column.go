@@ -30,6 +30,21 @@ type SingleCol struct {
 	Name  string     `json:"name"`
 	Alias string     `json:"alias"`
 	Type  ColumnType `json:"type"`
+	If	  *IfOption   `json:"if"`
+}
+
+type IfOption struct {
+	Filter  *Filter `json:"filter"`
+	Metric1 *Metric `json:"metric1"`
+	Metric2 *Metric `json:"metric2"`
+}
+
+func (If *IfOption) GetExpression() string {
+	filter, _ := If.Filter.Expression()
+	metric1, _ := If.Metric1.Expression()
+	metric2, _ := If.Metric2.Expression()
+
+	return fmt.Sprintf("if(`%v`, `%v`, `%v`)",filter, metric1, metric2)
 }
 
 func (col *SingleCol) GetExpression() string {
@@ -42,6 +57,9 @@ func (col *SingleCol) GetExpression() string {
 		}
 		return fmt.Sprintf("COUNT( `%v`.`%v` )", col.Table, col.Name)
 	case ColumnTypeDistinctCount:
+		if col.If != nil {
+			return fmt.Sprintf("1.0 * COUNT(DISTINCT(`%v`) ", col.If.GetExpression())
+		}
 		return fmt.Sprintf("1.0 * COUNT(DISTINCT `%v`.`%v` )", col.Table, col.Name)
 	case ColumnTypeSum:
 		return fmt.Sprintf("1.0 * SUM( `%v`.`%v` )", col.Table, col.Name)
