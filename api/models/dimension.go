@@ -7,12 +7,12 @@ import (
 var DefaultOlapSqlModelDimensionTableName = "olap_sql_model_dimensions"
 
 type Dimension struct {
-	ID           uint64          `yaml:"id"             json:"id,omitempty"`
-	Name         string          `yaml:"name"           json:"name"`
-	FieldName    string          `yaml:"field_name"     json:"field_name"`
-	ValueType    types.ValueType `yaml:"value_type"     json:"value_type"`
-	DataSourceID uint64          `yaml:"data_source_id" json:"data_source_id"`
-	Description  string          `yaml:"description"    json:"description"`
+	ID           uint64          `toml:"id"             json:"id,omitempty"`
+	Name         string          `toml:"name"           json:"name"`
+	FieldName    string          `toml:"field_name"     json:"field_name"`
+	ValueType    types.ValueType `toml:"value_type"     json:"value_type"`
+	DataSourceID uint64          `toml:"data_source_id" json:"data_source_id"`
+	Description  string          `toml:"description"    json:"description"`
 }
 
 func (Dimension) TableName() string {

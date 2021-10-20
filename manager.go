@@ -20,7 +20,7 @@ func (m *Manager) GetClients() (Clients, error) {
 	return m.clients, nil
 }
 
-func (m *Manager) GetDataDictionary() (*dictionary.Dictionary, error) {
+func (m *Manager) GetDictionary() (*dictionary.Dictionary, error) {
 	if m.dictionary == nil {
 		return nil, fmt.Errorf("it is no initialization")
 	}
@@ -53,11 +53,11 @@ func (m *Manager) RunChan(query *types.Query) (*types.Result, error) {
 
 func (m *Manager) BuildTransaction(query *types.Query) (*gorm.DB, error) {
 	query.TranslateTimeIntervalToFilter()
-	dictionary, err := m.GetDataDictionary()
+	dict, err := m.GetDictionary()
 	if err != nil {
 		return nil, err
 	}
-	request, err := dictionary.Translate(query)
+	request, err := dict.Translate(query)
 	if err != nil {
 		return nil, err
 	}
@@ -82,12 +82,12 @@ func NewManager(configuration *Configuration) (*Manager, error) {
 		}
 		m.clients = clients
 	}
-	if configuration.DataDictionaryOption != nil {
-		dictionary, err := dictionary.NewDictionary(configuration.DataDictionaryOption)
+	if configuration.DictionaryOption != nil {
+		dict, err := dictionary.NewDictionary(configuration.DictionaryOption)
 		if err != nil {
 			return nil, err
 		}
-		m.dictionary = dictionary
+		m.dictionary = dict
 	}
 	return m, nil
 }

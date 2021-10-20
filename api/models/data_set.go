@@ -10,10 +10,10 @@ import (
 var DefaultOlapSqlModelDataSetTableName = "olap_sql_model_data_sets"
 
 type DataSet struct {
-	ID          uint64         `yaml:"id"               json:"id,omitempty"`
-	Name        string         `yaml:"name"             json:"name"`
-	Description string         `yaml:"description"      json:"description"`
-	Schema      *DataSetSchema `yaml:"schema"           json:"schema"`
+	ID          uint64         `toml:"id"               json:"id,omitempty"`
+	Name        string         `toml:"name"             json:"name"`
+	Description string         `toml:"description"      json:"description"`
+	Schema      *DataSetSchema `toml:"schema"           json:"schema"`
 }
 
 func (DataSet) TableName() string {
@@ -21,8 +21,8 @@ func (DataSet) TableName() string {
 }
 
 type DataSetSchema struct {
-	PrimaryID uint64       `json:"primary_id"`
-	Secondary []*Secondary `json:"secondary"`
+	PrimaryID uint64       `toml:"primary_id" json:"primary_id"`
+	Secondary []*Secondary `toml:"secondary" json:"secondary"`
 }
 
 func (d *DataSetSchema) DataSourceID() []uint64 {
@@ -96,9 +96,9 @@ func (d DataSetSchema) Value() (driver.Value, error) {
 }
 
 type Secondary struct {
-	DataSourceID1 uint64    `json:"data_source_id1"`
-	DataSourceID2 uint64    `json:"data_source_id2"`
-	JoinOn        []*JoinOn `json:"join_on"`
+	DataSourceID1 uint64    `toml:"data_source_id1" json:"data_source_id1"`
+	DataSourceID2 uint64    `toml:"data_source_id2" json:"data_source_id2"`
+	JoinOn        []*JoinOn `toml:"join_on"         json:"join_on"`
 }
 
 func (s *Secondary) Valid(db *gorm.DB) error {
@@ -116,8 +116,8 @@ func (s *Secondary) Valid(db *gorm.DB) error {
 }
 
 type JoinOn struct {
-	DimensionID1 uint64 `json:"dimension_id1"`
-	DimensionID2 uint64 `json:"dimension_id2"`
+	DimensionID1 uint64 `toml:"dimension_id1" json:"dimension_id1"`
+	DimensionID2 uint64 `toml:"dimension_id2" json:"dimension_id2"`
 }
 
 type JoinOns []*JoinOn

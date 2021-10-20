@@ -9,10 +9,10 @@ import (
 var DefaultOlapSqlModelDataSourceTableName = "olap_sql_model_data_sources"
 
 type DataSource struct {
-	ID          uint64               `yaml:"id"               json:"id,omitempty"`
-	Type        types.DataSourceType `yaml:"type"             json:"type"`
-	Name        string               `yaml:"name"             json:"name"`
-	Description string               `yaml:"description"      json:"description"`
+	ID          uint64               `toml:"id"          json:"id,omitempty"`
+	Type        types.DataSourceType `toml:"type"        json:"type"`
+	Name        string               `toml:"name"        json:"name"`
+	Description string               `toml:"description" json:"description"`
 }
 
 func (d *DataSource) GetTableName() string {
