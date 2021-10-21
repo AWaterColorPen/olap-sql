@@ -18,6 +18,7 @@ type Metric struct {
 	Composition  *Composition     `yaml:"composition"    json:"composition"`
 	DataSourceID uint64           `yaml:"data_source_id" json:"data_source_id"`
 	Description  string           `yaml:"description"    json:"description"`
+	If 			 types.IfOption   `yaml:"if"             json:"if"`
 }
 
 func (Metric) TableName() string {

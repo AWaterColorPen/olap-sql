@@ -3,7 +3,7 @@ package dictionary
 import (
 	"fmt"
 	"github.com/ahmetb/go-linq/v3"
-
+	olapsql "github.com/awatercolorpen/olap-sql"
 	"github.com/awatercolorpen/olap-sql/api/models"
 	"github.com/awatercolorpen/olap-sql/api/types"
 )
@@ -64,6 +64,13 @@ func (m *MetricGraphBuilder) Build() (MetricGraph, error) {
 			Table:     source.GetTableName(),
 			Name:      metric.Name,
 			FieldName: metric.FieldName,
+		}
+		switch source.Type {
+		case types.DataSourceTypeClickHouse:
+			current.DBType = olapsql.DBTypeClickHouse
+		case types.DataSourceTypeDruid:
+			// 不知道用哪个
+			current.DBType = olapsql.DBTypeSQLite
 		}
 
 		if metric.Composition != nil {
