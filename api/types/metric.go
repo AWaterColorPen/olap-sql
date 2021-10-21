@@ -23,7 +23,6 @@ const (
 	MetricTypeValue         MetricType = "METRIC_VALUE"          // single type. eg: 原始值指标
 	MetricTypeCount         MetricType = "METRIC_COUNT"          // single type. eg: 计数指标
 	MetricTypeDistinctCount MetricType = "METRIC_DISTINCT_COUNT" // single type. eg: 去重计数指标
-	MetricTypeIf			MetricType = "METRIC_IF"			 //
 	MetricTypeSum           MetricType = "METRIC_SUM"            // single type. eg: 求和指标
 	MetricTypeAdd           MetricType = "METRIC_ADD"            // composition type eg: 相加指标
 	MetricTypeSubtract      MetricType = "METRIC_SUBTRACT"       // composition type eg: 相乘指标
@@ -34,13 +33,13 @@ const (
 )
 
 type Metric struct {
-	Type           MetricType  `json:"type"`
-	Table          string      `json:"table"`
-	Name           string      `json:"name"`
-	FieldName      string      `json:"field_name"`
-	Children       []*Metric   `json:"children"`
-	If			   *IfOption `json:"if"`
-	DBType		   DBType `json:"dbtype"`
+	Type           MetricType     `json:"type"`
+	Table          string         `json:"table"`
+	Name           string         `json:"name"`
+	FieldName      string         `json:"field_name"`
+	Children       []*Metric      `json:"children"`
+	If			   *IfOption      `json:"if"`
+	DBType		   DataSourceType `json:"dbtype"`
 }
 
 func (m *Metric) Expression() (string, error) {

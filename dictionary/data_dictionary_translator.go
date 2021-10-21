@@ -102,11 +102,11 @@ func (t *DictionaryTranslator) buildJoinTree() (JoinTree, error) {
 	}
 
 	builder := &JoinTreeBuilder{
-		tree: tree,
-		root: t.primaryID,
-		metrics: t.metrics,
+		tree:       tree,
+		root:       t.primaryID,
+		metrics:    t.metrics,
 		dimensions: t.dimensions,
-		sourceMap: t.sourceMap,
+		sourceMap:  t.sourceMap,
 	}
 	return builder.Build()
 }
@@ -163,7 +163,7 @@ func (t *DictionaryTranslator) buildDimensions(query *types.Query) ([]*types.Dim
 	return dimensions, nil
 }
 
-func (t *DictionaryTranslator) buildFilters(query *types. 	Query) ([]*types.Filter, error) {
+func (t *DictionaryTranslator) buildFilters(query *types.Query) ([]*types.Filter, error) {
 	var filters []*types.Filter
 	for _, v := range query.Filters {
 		filter, err := t.treeFilter(v)
@@ -332,4 +332,3 @@ type columnStruct struct {
 	Statement    string          `json:"statement"`
 	DataSourceID uint64          `json:"data_source_id"`
 }
-

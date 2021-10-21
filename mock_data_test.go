@@ -272,4 +272,3 @@ func MockQuery6ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Source[0], 1)
 	assert.Equal(t, float64(7325), result.Source[0]["hits_sum"])
 }
-

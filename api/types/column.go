@@ -17,14 +17,8 @@ const (
 	ColumnTypePost          ColumnType = "post"
 	ColumnTypeExpression    ColumnType = "expression"
 )
+
 type ColumnType string
-
-type DBType string
-
-const(
-	DBTypeClickhouse DBType = "DATABASE_TYPE_CLICKHOUSE"
-	DBTypeSqlite     DBType = "DATABASE_TYPE_SQLITE"
-)
 
 type Column interface {
 	GetExpression() string
@@ -37,37 +31,23 @@ type SingleCol struct {
 	Alias  string         `json:"alias"`
 	Type   ColumnType     `json:"type"`
 	If     *IfOption      `json:"if"`
-	DBType DBType         `json:"dbtype"`
-}
-
-type IfCol struct {
-	Table string `toml:"table" json:"table"`
-	Name  string `toml:"name"  json:"name"`
-}
-
-func (i *IfCol) GetExpression() string{
-	if i == nil {
-		return fmt.Sprintf("NULL")
-	}
-	return fmt.Sprintf("`%v`.`%v`", i.Table, i.Name)
+	DBType DataSourceType `json:"dbtype"`
 }
 
 type IfOption struct {
 	Filter *Filter `toml:"filter" json:"filter"`
-	IfCol1  *IfCol  `toml:"ifcol1"  json:"ifcol1"`
-	IfCol2  *IfCol  `toml:"ifcol2"  json:"ifcol2"`
 }
 
-func (If *IfOption) GetExpression(dbType DBType) (string, error) {
+func (If *IfOption) GetExpression(dbType DataSourceType, table string, name string) (string, error) {
 	filter, err := If.Filter.Expression()
 	if err != nil {
 		return "", err
 	}
 	switch dbType {
-	case DBTypeClickhouse:
-		return fmt.Sprintf("IF(%v,%v,%v)", filter, If.IfCol1.GetExpression(), If.IfCol2.GetExpression()), nil
-	case DBTypeSqlite:
-		return fmt.Sprintf("IIF(%v, %v, %v)", filter, If.IfCol1.GetExpression(), If.IfCol2.GetExpression()), nil
+	case DataSourceTypeClickHouse:
+		return fmt.Sprintf("IF(%v,`%v`.`%v`,NULL)", filter, table, name), nil
+	case DataSourceTypeUnknown:
+		return fmt.Sprintf("IIF(%v,`%v`.`%v`,NULL)", filter, table, name), nil
 	default:
 		return "", fmt.Errorf("%v unsupport if now", dbType)
 	}
@@ -84,18 +64,18 @@ func (col *SingleCol) GetExpression() string {
 		return fmt.Sprintf("COUNT( `%v`.`%v` )", col.Table, col.Name)
 	case ColumnTypeDistinctCount:
 		if col.If != nil {
-			If, err := col.If.GetExpression(col.DBType)
+			If, err := col.If.GetExpression(col.DBType, col.Table, col.Name)
 			if err != nil {
-				return fmt.Sprintf("If error: %v", col.If)
+				return fmt.Sprintf("If error: %v", err)
 			}
 			return fmt.Sprintf("1.0 * COUNT(DISTINCT(%v)) ", If)
 		}
 		return fmt.Sprintf("1.0 * COUNT(DISTINCT `%v`.`%v` )", col.Table, col.Name)
 	case ColumnTypeSum:
 		if col.If != nil {
-			If, err := col.If.GetExpression(col.DBType)
+			If, err := col.If.GetExpression(col.DBType, col.Table, col.Name)
 			if err != nil {
-				return fmt.Sprintf("If error: %v", col.If)
+				return fmt.Sprintf("If error: %v", err)
 			}
 			return fmt.Sprintf("1.0 * SUM(%v) ", If)
 		}

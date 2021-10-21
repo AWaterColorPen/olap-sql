@@ -64,14 +64,8 @@ func (m *MetricGraphBuilder) Build() (MetricGraph, error) {
 			Name:      metric.Name,
 			FieldName: metric.FieldName,
 			If:        metric.If,
+			DBType:    source.Type,
 		}
-		switch source.Type {
-		case types.DataSourceTypeClickHouse:
-			current.DBType = types.DBTypeClickhouse
-		case types.DataSourceTypeUnknown:
-			current.DBType = types.DBTypeSqlite
-		}
-
 		if metric.Composition != nil {
 			for _, u := range metric.Composition.MetricID {
 				value, _ := graph.GetByID(u)
