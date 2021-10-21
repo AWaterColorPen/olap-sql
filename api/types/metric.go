@@ -38,8 +38,8 @@ type Metric struct {
 	Name           string         `json:"name"`
 	FieldName      string         `json:"field_name"`
 	Children       []*Metric      `json:"children"`
-	If			   *IfOption      `json:"if"`
-	DBType		   DataSourceType `json:"dbtype"`
+	If             *IfOption      `json:"if"`
+	DBType         DataSourceType `json:"dbtype"`
 }
 
 func (m *Metric) Expression() (string, error) {
