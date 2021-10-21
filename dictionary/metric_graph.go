@@ -63,7 +63,7 @@ func (m *MetricGraphBuilder) Build() (MetricGraph, error) {
 			Table:     source.GetTableName(),
 			Name:      metric.Name,
 			FieldName: metric.FieldName,
-			If:        metric.If,
+			Filter:    metric.Filter,
 			DBType:    source.Type,
 		}
 		if metric.Composition != nil {

@@ -4,7 +4,6 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-
 	"github.com/awatercolorpen/olap-sql/api/types"
 )
 
@@ -19,7 +18,7 @@ type Metric struct {
 	Composition  *Composition     `toml:"composition"    json:"composition"`
 	DataSourceID uint64           `toml:"data_source_id" json:"data_source_id"`
 	Description  string           `toml:"description"    json:"description"`
-	If           *types.IfOption  `toml:"if"             json:"if"`
+	Filter       *types.Filter    `toml:"filter"         json:"filter"`
 }
 
 func (Metric) TableName() string {
