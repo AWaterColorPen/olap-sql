@@ -51,37 +51,36 @@ func (m *Manager) RunChan(query *types.Query) (*types.Result, error) {
 }
 
 func (m *Manager) BuildTransaction(query *types.Query) (*gorm.DB, error) {
-	query.TranslateTimeIntervalToFilter()
-	dict, err := m.GetDictionary()
+	clients, clause, err := m.build(query)
 	if err != nil {
 		return nil, err
 	}
-	clause, err := dict.Translate(query)
-	if err != nil {
-		return nil, err
-	}
-	clients, err := m.GetClients()
-	if err != nil {
-		return nil, err
-	}
-	return clients.SubmitClause(clause)
+	return clients.BuildDB(clause)
 }
 
-func (m *Manager) BuildSql(query *types.Query) (*gorm.DB, error) {
+func (m *Manager) BuildSQL(query *types.Query) (string, error) {
+	clients, clause, err := m.build(query)
+	if err != nil {
+		return "", err
+	}
+	return clients.BuildSQL(clause)
+}
+
+func (m *Manager) build(query *types.Query) (Clients, Clause, error) {
 	query.TranslateTimeIntervalToFilter()
 	dict, err := m.GetDictionary()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	clause, err := dict.Translate(query)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	clients, err := m.GetClients()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return clients.SubmitClause(clause)
+	return clients, clause, nil
 }
 
 func NewManager(configuration *Configuration) (*Manager, error) {

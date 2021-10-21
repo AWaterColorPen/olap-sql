@@ -90,7 +90,7 @@ func (r *Request) BuildDB(tx *gorm.DB) (*gorm.DB, error) {
 	return tx, nil
 }
 
-func (r *Request) BuildSql(tx *gorm.DB) (string, error) {
+func (r *Request) BuildSQL(tx *gorm.DB) (string, error) {
 	db, err := r.BuildDB(tx.Session(&gorm.Session{DryRun: true}))
 	if err != nil {
 		return "", err
