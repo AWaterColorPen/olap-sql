@@ -46,8 +46,8 @@ func newClients(sqlitePath string) (olapsql.Clients, error) {
 	}
 
 	client := olapsql.Clients{}
-	client.RegisterByKV(types.DataSourceTypeUnknown, mockWikiStatDataSet, db)
-	client.RegisterByKV(types.DataSourceTypeUnknown, "", db)
+	client.RegisterByKV(types.DBTypeSQLite, mockWikiStatDataSet, db)
+	client.RegisterByKV(types.DBTypeSQLite, "", db)
 	return client, nil
 }
 

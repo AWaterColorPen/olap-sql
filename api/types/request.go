@@ -8,6 +8,8 @@ import (
 )
 
 type Request struct {
+	DBType     DBType       `json:"db_type"`
+	Dataset    string       `json:"dataset"`
 	Metrics    []*Metric    `json:"metrics"`
 	Dimensions []*Dimension `json:"dimensions"`
 	Filters    []*Filter    `json:"filters"`
@@ -18,7 +20,15 @@ type Request struct {
 	Sql        string       `json:"sql"`
 }
 
-func (r *Request) Clause(tx *gorm.DB) (*gorm.DB, error) {
+func (r *Request) GetDBType() DBType {
+	return r.DBType
+}
+
+func (r *Request) GetDataset() string {
+	return r.Dataset
+}
+
+func (r *Request) BuildDB(tx *gorm.DB) (*gorm.DB, error) {
 	select1, err := r.dimensionStatement()
 	if err != nil {
 		return nil, err
@@ -80,15 +90,14 @@ func (r *Request) Clause(tx *gorm.DB) (*gorm.DB, error) {
 	return tx, nil
 }
 
-func (r *Request) GenerateSql(tx *gorm.DB) (string, error) {
-	db1 := tx.Session(&gorm.Session{DryRun: true})
-	db2, err := r.Clause(db1)
+func (r *Request) BuildSql(tx *gorm.DB) (string, error) {
+	db, err := r.BuildDB(tx.Session(&gorm.Session{DryRun: true}))
 	if err != nil {
 		return "", err
 	}
-	_ = db2.Scan(nil)
-	stmt := db2.Statement
-	return db2.Dialector.Explain(stmt.SQL.String(), stmt.Vars...), nil
+	_ = db.Scan(nil)
+	stmt := db.Statement
+	return db.Dialector.Explain(stmt.SQL.String(), stmt.Vars...), nil
 }
 
 func (r *Request) metricStatement() ([]string, error) {

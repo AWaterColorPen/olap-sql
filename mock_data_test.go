@@ -65,11 +65,11 @@ func DataWithClickhouse() bool {
 	return false
 }
 
-func DataSourceType() types.DataSourceType {
+func DBType() types.DBType {
 	if DataWithClickhouse() {
-		return types.DataSourceTypeClickHouse
+		return types.DBTypeClickHouse
 	}
-	return types.DataSourceTypeUnknown
+	return types.DBTypeSQLite
 }
 
 func MockWikiStatData(db *gorm.DB) error {
@@ -119,7 +119,7 @@ func MockWikiStatData(db *gorm.DB) error {
 
 func MockLoad(manager *olapsql.Manager) error {
 	client, _ := manager.GetClients()
-	db, err := client.Get(DataSourceType(), "")
+	db, err := client.Get(DBType(), "")
 	if err != nil {
 		return err
 	}

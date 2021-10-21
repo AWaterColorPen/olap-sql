@@ -4,13 +4,12 @@ import (
 	"fmt"
 
 	"github.com/awatercolorpen/olap-sql/api/types"
-	"github.com/awatercolorpen/olap-sql/dictionary"
 	"gorm.io/gorm"
 )
 
 type Manager struct {
 	clients    Clients
-	dictionary *dictionary.Dictionary
+	dictionary *Dictionary
 }
 
 func (m *Manager) GetClients() (Clients, error) {
@@ -20,7 +19,7 @@ func (m *Manager) GetClients() (Clients, error) {
 	return m.clients, nil
 }
 
-func (m *Manager) GetDictionary() (*dictionary.Dictionary, error) {
+func (m *Manager) GetDictionary() (*Dictionary, error) {
 	if m.dictionary == nil {
 		return nil, fmt.Errorf("it is no initialization")
 	}
@@ -57,7 +56,7 @@ func (m *Manager) BuildTransaction(query *types.Query) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	request, err := dict.Translate(query)
+	clause, err := dict.Translate(query)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +64,24 @@ func (m *Manager) BuildTransaction(query *types.Query) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	return clients.SubmitClause(request)
+	return clients.SubmitClause(clause)
+}
+
+func (m *Manager) BuildSql(query *types.Query) (*gorm.DB, error) {
+	query.TranslateTimeIntervalToFilter()
+	dict, err := m.GetDictionary()
+	if err != nil {
+		return nil, err
+	}
+	clause, err := dict.Translate(query)
+	if err != nil {
+		return nil, err
+	}
+	clients, err := m.GetClients()
+	if err != nil {
+		return nil, err
+	}
+	return clients.SubmitClause(clause)
 }
 
 func NewManager(configuration *Configuration) (*Manager, error) {
@@ -83,7 +99,7 @@ func NewManager(configuration *Configuration) (*Manager, error) {
 		m.clients = clients
 	}
 	if configuration.DictionaryOption != nil {
-		dict, err := dictionary.NewDictionary(configuration.DictionaryOption)
+		dict, err := NewDictionary(configuration.DictionaryOption)
 		if err != nil {
 			return nil, err
 		}

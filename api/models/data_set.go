@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql/driver"
 	"fmt"
+	"github.com/awatercolorpen/olap-sql/api/types"
 
 	"gorm.io/gorm"
 )
@@ -12,6 +13,7 @@ var DefaultOlapSqlModelDataSetTableName = "olap_sql_model_data_sets"
 type DataSet struct {
 	ID          uint64         `toml:"id"               json:"id,omitempty"`
 	Name        string         `toml:"name"             json:"name"`
+	DBType      types.DBType   `toml:"type"             json:"type"`
 	Description string         `toml:"description"      json:"description"`
 	Schema      *DataSetSchema `toml:"schema"           json:"schema"`
 }

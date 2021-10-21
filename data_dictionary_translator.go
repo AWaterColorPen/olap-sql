@@ -1,4 +1,4 @@
-package dictionary
+package olapsql
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ type DictionaryTranslator struct {
 	metricGraph MetricGraph
 }
 
-func (t *DictionaryTranslator) Translate(query *types.Query) (*types.Request, error) {
+func (t *DictionaryTranslator) Translate(query *types.Query) (Clause, error) {
 	if err := t.init(); err != nil {
 		return nil, err
 	}
@@ -59,6 +59,8 @@ func (t *DictionaryTranslator) Translate(query *types.Query) (*types.Request, er
 		return nil, err
 	}
 	request := &types.Request{
+		DBType:     t.set.DBType,
+		Dataset:    t.set.Name,
 		Metrics:    metrics,
 		Dimensions: dimensions,
 		Filters:    filters,

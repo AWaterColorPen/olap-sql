@@ -1,8 +1,13 @@
 package olapsql
 
-import "gorm.io/gorm"
+import (
+	"github.com/awatercolorpen/olap-sql/api/types"
+	"gorm.io/gorm"
+)
 
 type Clause interface {
-	Clause(tx *gorm.DB) (*gorm.DB, error)
-	GenerateSql(tx *gorm.DB) (string, error)
+	GetDBType() types.DBType
+	GetDataset() string
+	BuildDB(tx *gorm.DB) (*gorm.DB, error)
+	BuildSql(tx *gorm.DB) (string, error)
 }
