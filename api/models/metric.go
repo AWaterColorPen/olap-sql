@@ -18,6 +18,7 @@ type Metric struct {
 	Composition  *Composition     `toml:"composition"    json:"composition"`
 	DataSourceID uint64           `toml:"data_source_id" json:"data_source_id"`
 	Description  string           `toml:"description"    json:"description"`
+	Filter       *types.Filter    `toml:"filter"         json:"filter"`
 }
 
 func (Metric) TableName() string {

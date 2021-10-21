@@ -17,7 +17,6 @@ func (d *Dictionary) GetAdapter() Adapter{
 
 func (d *Dictionary) Create(item interface{}) error {
 	return nil
-	//return d.adapter.Create(item)
 }
 
 func (d *Dictionary) Translator(query *types.Query) (Translator, error) {

@@ -2,9 +2,8 @@ package types
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/awatercolorpen/olap-sql/api/proto"
+	"strings"
 )
 
 type FilterOperatorType string
@@ -64,11 +63,11 @@ const (
 )
 
 type Filter struct {
-	OperatorType FilterOperatorType `json:"operator_type"`
-	ValueType    ValueType          `json:"value_type"`
-	Name         string             `json:"name"`
-	Value        []interface{}      `json:"value"`
-	Children     []*Filter          `json:"children"`
+	OperatorType FilterOperatorType `toml:"operator_type" json:"operator_type"`
+	ValueType    ValueType          `toml:"value_type"    json:"value_type"`
+	Name         string             `toml:"name"          json:"name"`
+	Value        []interface{}      `toml:"value"         json:"value"`
+	Children     []*Filter          `toml:"children"      json:"children"`
 }
 
 func (f *Filter) Expression() (string, error) {
