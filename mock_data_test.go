@@ -252,7 +252,7 @@ func MockQuery5() *types.Query {
 
 func MockQuery5ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Dimensions, 1)
-	assert.Equal(t, 3, result.Source[0]["project_count"])
+	assert.Equal(t, float64(7325), result.Source[0]["project_count"])
 }
 
 func MockQuery6() *types.Query {
@@ -266,6 +266,6 @@ func MockQuery6() *types.Query {
 
 func MockQuery6ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Dimensions, 1)
-	assert.Equal(t, 7325, result.Source[0]["hits_sum"])
+	assert.Equal(t, float64(7325), result.Source[0]["hits_sum"])
 }
 
