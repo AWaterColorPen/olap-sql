@@ -27,7 +27,6 @@ metrics = [
   {id = 9, type = "METRIC_DIVIDE", name = "source_avg", field_name = "", value_type = "VALUE_FLOAT", data_source_id = 2, composition = {metric_id = [7, 8]}, description = ""},
   {id = 10, type = "METRIC_DISTINCT_COUNT", name = "project_count", field_name = "project", value_type = "VALUE_INTEGER", data_source_id = 1, description = "", if = {filter = {operator_type = "FILTER_OPERATOR_GREATER_EQUALS", value_type = "VALUE_INTEGER", name = "hits", value = [1]}, if ={filter = {operator_type = "FILTER_OPERATOR_GREATER_EQUALS", value_type = "VALUE_INTEGER", name = "hits", value = [1]}}}},
   {id = 11, type = "METRIC_SUM", name = "hits_sum", field_name = "hits", value_type = "VALUE_INTEGER", data_source_id = 1, description = "", if = {filter = {operator_type = "FILTER_OPERATOR_GREATER_EQUALS", value_type = "VALUE_INTEGER", name = "hits", value = [1]}, if = {filter = {operator_type = "FILTER_OPERATOR_GREATER_EQUALS", value_type = "VALUE_INTEGER", name = "hits", value = [1]}}}},
-
 ]
 
 dimensions = [
