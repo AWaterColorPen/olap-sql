@@ -3,7 +3,6 @@ package dictionary
 import (
 	"fmt"
 	"github.com/ahmetb/go-linq/v3"
-
 	"github.com/awatercolorpen/olap-sql/api/models"
 	"github.com/awatercolorpen/olap-sql/api/types"
 )
@@ -64,8 +63,9 @@ func (m *MetricGraphBuilder) Build() (MetricGraph, error) {
 			Table:     source.GetTableName(),
 			Name:      metric.Name,
 			FieldName: metric.FieldName,
+			Filter:    metric.Filter,
+			DBType:    source.Type,
 		}
-
 		if metric.Composition != nil {
 			for _, u := range metric.Composition.MetricID {
 				value, _ := graph.GetByID(u)
