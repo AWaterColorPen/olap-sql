@@ -3,7 +3,6 @@ package types
 import (
 	"fmt"
 	"github.com/awatercolorpen/olap-sql/api/proto"
-	"github.com/sirupsen/logrus"
 	"strings"
 )
 
@@ -118,7 +117,6 @@ func (f *Filter) Statement() (string, error) {
 
 func (f *Filter) valueToStringSlice() ([]string, error) {
 	var out []string
-	logrus.Info(f.Value)
 	for _, v := range f.Value {
 		switch f.ValueType {
 		case ValueTypeString:
