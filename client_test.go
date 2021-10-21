@@ -1,11 +1,14 @@
 package olapsql_test
 
 import (
+	"gorm.io/gorm"
+	"path/filepath"
 	"testing"
 
-	olapsql "github.com/awatercolorpen/olap-sql"
+	"github.com/awatercolorpen/olap-sql"
 	"github.com/awatercolorpen/olap-sql/api/types"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/driver/sqlite"
 )
 
 func TestNewClients(t *testing.T) {
@@ -14,14 +17,13 @@ func TestNewClients(t *testing.T) {
 }
 
 func TestClients_SubmitClause(t *testing.T) {
-	assert.NoError(t, MockWikiStatDataToYaml())
 	m, err := newManager(t)
 	assert.NoError(t, err)
 	assert.NoError(t, MockLoad(m))
 
 	query := MockQuery1()
 
-	dictionary, err := m.GetDataDictionary()
+	dictionary, err := m.GetDictionary()
 	assert.NoError(t, err)
 	request, err := dictionary.Translate(query)
 	assert.NoError(t, err)
@@ -48,4 +50,9 @@ func newClients(sqlitePath string) (olapsql.Clients, error) {
 	client.RegisterByKV(types.DataSourceTypeUnknown, mockWikiStatDataSet, db)
 	client.RegisterByKV(types.DataSourceTypeUnknown, "", db)
 	return client, nil
+}
+
+func getDB(path string) (*gorm.DB, error) {
+	dsn := filepath.Join(path, "sqlite")
+	return gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 }

@@ -10,15 +10,15 @@ import (
 var DefaultOlapSqlModelMetricTableName = "olap_sql_model_metrics"
 
 type Metric struct {
-	ID           uint64           `yaml:"id"             json:"id,omitempty"`
-	Type         types.MetricType `yaml:"type"           json:"type"`
-	Name         string           `yaml:"name"           json:"name"`
-	FieldName    string           `yaml:"field_name"     json:"field_name"`
-	ValueType    types.ValueType  `yaml:"value_type"     json:"value_type"`
-	Composition  *Composition     `yaml:"composition"    json:"composition"`
-	DataSourceID uint64           `yaml:"data_source_id" json:"data_source_id"`
-	Description  string           `yaml:"description"    json:"description"`
-	If 			 types.IfOption   `yaml:"if"             json:"if"`
+	ID           uint64           `toml:"id"             json:"id,omitempty"`
+	Type         types.MetricType `toml:"type"           json:"type"`
+	Name         string           `toml:"name"           json:"name"`
+	FieldName    string           `toml:"field_name"     json:"field_name"`
+	ValueType    types.ValueType  `toml:"value_type"     json:"value_type"`
+	Composition  *Composition     `toml:"composition"    json:"composition"`
+	DataSourceID uint64           `toml:"data_source_id" json:"data_source_id"`
+	Description  string           `toml:"description"    json:"description"`
+	If 			 types.IfOption   `toml:"if"             json:"if"`
 }
 
 func (Metric) TableName() string {
@@ -26,7 +26,7 @@ func (Metric) TableName() string {
 }
 
 type Composition struct {
-	MetricID []uint64 `json:"metric_id"`
+	MetricID []uint64 `toml:"metric_id" json:"metric_id"`
 }
 
 // Scan scan value into Jsonb, implements sql.Scanner interface
