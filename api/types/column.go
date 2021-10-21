@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	olapsql "github.com/awatercolorpen/olap-sql"
 	"strings"
 )
 
@@ -31,20 +32,28 @@ type SingleCol struct {
 	Alias string     `json:"alias"`
 	Type  ColumnType `json:"type"`
 	If	  *IfOption   `json:"if"`
+	DBType olapsql.DBType `json:"dbtype"`
 }
 
 type IfOption struct {
 	Filter  *Filter `json:"filter"`
-	Metric1 *Metric `json:"metric1"`
-	Metric2 *Metric `json:"metric2"`
+	Name1 	string `json:"name1"`
+	Name2   string `json:"name2"`
 }
 
-func (If *IfOption) GetExpression() string {
-	filter, _ := If.Filter.Expression()
-	metric1, _ := If.Metric1.Expression()
-	metric2, _ := If.Metric2.Expression()
-
-	return fmt.Sprintf("if(`%v`, `%v`, `%v`)",filter, metric1, metric2)
+func (If *IfOption) GetExpression(dbType olapsql.DBType) (string, error) {
+	filter, err := If.Filter.Expression()
+	if err != nil {
+		return "", err
+	}
+	switch dbType{
+	case olapsql.DBTypeSQLite:
+		return fmt.Sprintf("IIF(%v,%v,%v)",filter,If.Name1, If.Name2), nil
+	case olapsql.DBTypeClickHouse:
+		return fmt.Sprintf("IF(%v, %v, %v)",filter, If.Name1, If.Name2), nil
+	default:
+		return "", fmt.Errorf("%v unsupport if now", dbType)
+	}
 }
 
 func (col *SingleCol) GetExpression() string {
@@ -58,10 +67,21 @@ func (col *SingleCol) GetExpression() string {
 		return fmt.Sprintf("COUNT( `%v`.`%v` )", col.Table, col.Name)
 	case ColumnTypeDistinctCount:
 		if col.If != nil {
-			return fmt.Sprintf("1.0 * COUNT(DISTINCT(`%v`) ", col.If.GetExpression())
+			If, err := col.If.GetExpression(col.DBType)
+			if err != nil {
+				return fmt.Sprintf("If error: %v", col.If)
+			}
+			return fmt.Sprintf("1.0 * COUNT(DISTINCT(%v)) ", If)
 		}
 		return fmt.Sprintf("1.0 * COUNT(DISTINCT `%v`.`%v` )", col.Table, col.Name)
 	case ColumnTypeSum:
+		if col.If != nil {
+			If, err := col.If.GetExpression(col.DBType)
+			if err != nil {
+				return fmt.Sprintf("If error: %v", col.If)
+			}
+			return fmt.Sprintf("1.0 * SUM(%v) ", If)
+		}
 		return fmt.Sprintf("1.0 * SUM( `%v`.`%v` )", col.Table, col.Name)
 	default:
 		return fmt.Sprintf("unsupported type: %v", col.Type)

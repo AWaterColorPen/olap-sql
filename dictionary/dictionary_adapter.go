@@ -1,20 +1,17 @@
 package dictionary
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"strings"
-
+	"github.com/BurntSushi/toml"
 	"github.com/awatercolorpen/olap-sql/api/models"
-	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"path/filepath"
 )
 
 type AdapterType string
 
 const (
-	DBadapter   AdapterType = "DB"
-	FILEadapter AdapterType = "FILE"
+	FILEAdapter AdapterType = "FILE"
 )
 
 // Adapter Adapter适配器
@@ -32,53 +29,41 @@ type AdapterOption struct {
 }
 
 func NewAdapter(option *AdapterOption) (Adapter, error) {
-	// 根据不同的Type去实例化不同的Adapter
 	switch option.Type {
-	case DBadapter:
-		// TODO
-		return newDictionaryAdapterByDB(option)
-	case FILEadapter:
-		return newDictionaryAdapterByYaml(option)
+	case FILEAdapter:
+		return newDictionaryAdapterByFile(option)
 	default:
-		return nil, fmt.Errorf("adapter type error")
+		return nil, fmt.Errorf("not supported adapter type %v", option.Type)
 	}
 }
 
 // FileAdapter 文件适配器
 type FileAdapter struct {
-	Sets       []*models.DataSet    `yaml:"sets"              json:"sets"`
-	Sources    []*models.DataSource `yaml:"sources"           json:"sources"`
-	Metrics    []*models.Metric     `yaml:"metrics"           json:"metrics"`
-	Dimensions []*models.Dimension  `yaml:"dimensions"        json:"dimensions"`
+	Sets       []*models.DataSet    `yaml:"sets"       json:"sets"`
+	Sources    []*models.DataSource `yaml:"sources"    json:"sources"`
+	Metrics    []*models.Metric     `yaml:"metrics"    json:"metrics"`
+	Dimensions []*models.Dimension  `yaml:"dimensions" json:"dimensions"`
 }
 
-func newDictionaryAdapterByDB(option *AdapterOption) (Adapter, error) {
-	// TODO
-	return nil, fmt.Errorf("DB type unsupport now")
-}
-
-func newDictionaryAdapterByYaml(option *AdapterOption) (*FileAdapter, error) {
-	adapter := &FileAdapter{}
-	yamlFile, err := ioutil.ReadFile(option.Dsn)
+func newDictionaryAdapterByFile(option *AdapterOption) (*FileAdapter, error) {
+	b, err := ioutil.ReadFile(option.Dsn)
 	if err != nil {
-		return nil, fmt.Errorf("file read error")
+		return nil, err
 	}
 
-	filetype := option.Dsn[strings.Index(option.Dsn, "."):]
-	switch filetype {
-	case ".yaml":
-		if err := yaml.Unmarshal(yamlFile, adapter); err != nil {
-			return nil, fmt.Errorf("yaml unmarshal failed")
-		}
-	case ".json":
-		if err := json.Unmarshal(yamlFile, adapter); err != nil {
-			return nil, fmt.Errorf("json unmarshal failed")
+	adapter := &FileAdapter{}
+	extension := filepath.Ext(option.Dsn)
+	switch extension {
+	case ".toml":
+		if err = toml.Unmarshal(b, adapter); err != nil {
+			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("this file unsupport")
+		return nil, fmt.Errorf("not supported extension %v", extension)
 	}
-	if err := adapter.isValidAdapterCheck(); err != nil {
-		return nil, fmt.Errorf("data is not valid")
+
+	if err = adapter.isValidAdapterCheck(); err != nil {
+		return nil, err
 	}
 	return adapter, nil
 }

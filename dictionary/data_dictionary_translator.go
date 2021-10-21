@@ -163,7 +163,7 @@ func (t *DictionaryTranslator) buildDimensions(query *types.Query) ([]*types.Dim
 	return dimensions, nil
 }
 
-func (t *DictionaryTranslator) buildFilters(query *types.Query) ([]*types.Filter, error) {
+func (t *DictionaryTranslator) buildFilters(query *types. 	Query) ([]*types.Filter, error) {
 	var filters []*types.Filter
 	for _, v := range query.Filters {
 		filter, err := t.treeFilter(v)
