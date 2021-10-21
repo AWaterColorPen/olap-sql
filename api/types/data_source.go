@@ -2,22 +2,9 @@ package types
 
 import (
 	"fmt"
-
-	"github.com/awatercolorpen/olap-sql/api/proto"
 )
 
 type DataSourceType string
-
-func (d DataSourceType) ToEnum() proto.DATA_SOURCE_TYPE {
-	if v, ok := proto.DATA_SOURCE_TYPE_value[string(d)]; ok {
-		return proto.DATA_SOURCE_TYPE(v)
-	}
-	return proto.DATA_SOURCE_TYPE_DATA_SOURCE_UNKNOWN
-}
-
-func EnumToDataSourceType(d proto.DATA_SOURCE_TYPE) DataSourceType {
-	return DataSourceType(d.String())
-}
 
 const (
 	DataSourceTypeUnknown    DataSourceType = "DATA_SOURCE_UNKNOWN"

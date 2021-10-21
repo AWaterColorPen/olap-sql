@@ -31,7 +31,6 @@ func TestClients_SubmitClause(t *testing.T) {
 	client, err := m.GetClients()
 	assert.NoError(t, err)
 	db, err := client.SubmitClause(request)
-	assert.NoError(t, err)
 
 	rows, err := olapsql.RunSync(db)
 	assert.NoError(t, err)

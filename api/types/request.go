@@ -80,6 +80,17 @@ func (r *Request) Clause(tx *gorm.DB) (*gorm.DB, error) {
 	return tx, nil
 }
 
+func (r *Request) GenerateSql(tx *gorm.DB) (string, error) {
+	db1 := tx.Session(&gorm.Session{DryRun: true})
+	db2, err := r.Clause(db1)
+	if err != nil {
+		return "", err
+	}
+	_ = db2.Scan(nil)
+	stmt := db2.Statement
+	return db2.Dialector.Explain(stmt.SQL.String(), stmt.Vars...), nil
+}
+
 func (r *Request) metricStatement() ([]string, error) {
 	var statement []string
 	for _, v := range r.Metrics {
