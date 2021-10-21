@@ -3,23 +3,21 @@ package dictionary
 import (
 	"fmt"
 	"github.com/ahmetb/go-linq/v3"
-	"github.com/awatercolorpen/olap-sql/api/models"
 	"github.com/awatercolorpen/olap-sql/api/types"
 	"strings"
 )
 
 type DictionaryTranslator struct {
-	set        *models.DataSet
-	sources    []*models.DataSource
-	metrics    []*models.Metric
-	dimensions []*models.Dimension
+	set        *DataSet
+	sources    []*DataSource
+	metrics    []*Metric
+	dimensions []*Dimension
 
 	primaryID      uint64
 	joinedSourceID []uint64
-	sourceMap      map[uint64]*models.DataSource
-	metricMap      map[uint64]*models.Metric
-	dimensionMap   map[uint64]*models.Dimension
-	secondaryMap   map[uint64]*models.Secondary
+	sourceMap      map[uint64]*DataSource
+	metricMap      map[uint64]*Metric
+	dimensionMap   map[uint64]*Dimension
 
 	joinTree    JoinTree
 	metricGraph MetricGraph
