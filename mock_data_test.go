@@ -239,3 +239,31 @@ func MockQuery4ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Equal(t, "entertainment", result.Source[0]["class_name"])
 	assert.Equal(t, nil, result.Source[0]["hits_per_size"])
 }
+
+// MockQuery5 mock query for count distinct if
+func MockQuery5() *types.Query {
+	query := &types.Query{
+		DataSetName:  mockWikiStatDataSet,
+		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
+		Metrics:      []string{"project_count"},
+	}
+	return query
+}
+
+func MockQuery5ResultAssert(t assert.TestingT, result *types.Result) {
+	assert.Len(t, result.Dimensions, 1)
+}
+
+func MockQuery6() *types.Query {
+	query := &types.Query{
+		DataSetName:  mockWikiStatDataSet,
+		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
+		Metrics:      []string{"hits_sum"},
+	}
+	return query
+}
+
+func MockQuery6ResultAssert(t assert.TestingT, result *types.Result) {
+	assert.Len(t, result.Dimensions, 1)
+}
+

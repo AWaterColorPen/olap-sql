@@ -2,8 +2,6 @@ package types
 
 import (
 	"fmt"
-	olapsql "github.com/awatercolorpen/olap-sql"
-
 	"github.com/awatercolorpen/olap-sql/api/proto"
 )
 
@@ -42,7 +40,7 @@ type Metric struct {
 	FieldName      string      `json:"field_name"`
 	Children       []*Metric   `json:"children"`
 	If			   *IfOption `json:"if"`
-	DBType		   olapsql.DBType `json:"dbtype"`
+	DBType		   DBType `json:"dbtype"`
 }
 
 func (m *Metric) Expression() (string, error) {
@@ -92,9 +90,9 @@ func (m *Metric) column() (Column, error) {
 	case MetricTypeCount:
 		return &SingleCol{Table: m.Table, Name: m.FieldName, Alias: m.Name, Type: ColumnTypeCount}, nil
 	case MetricTypeDistinctCount:
-		return &SingleCol{Table: m.Table, Name: m.FieldName, Alias: m.Name, Type: ColumnTypeDistinctCount}, nil
+		return &SingleCol{Table: m.Table, Name: m.FieldName, Alias: m.Name, Type: ColumnTypeDistinctCount, DBType: m.DBType, If: m.If}, nil
 	case MetricTypeSum:
-		return &SingleCol{Table: m.Table, Name: m.FieldName, Alias: m.Name, Type: ColumnTypeSum}, nil
+		return &SingleCol{Table: m.Table, Name: m.FieldName, Alias: m.Name, Type: ColumnTypeSum, DBType: m.DBType, If:m.If}, nil
 	case MetricTypeAdd:
 		return &ArithmeticCol{Column: column, Alias: m.Name, Type: ColumnTypeAdd}, nil
 	case MetricTypeSubtract:

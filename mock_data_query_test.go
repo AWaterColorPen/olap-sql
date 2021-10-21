@@ -19,6 +19,14 @@ func TestMockQuery4(t *testing.T) {
 	testMockQuery(t, MockQuery4(), MockQuery4ResultAssert)
 }
 
+func TestMockQuery5(t *testing.T) {
+	testMockQuery(t, MockQuery5(), MockQuery5ResultAssert)
+}
+
+func TestMockQuery6(t *testing.T) {
+	testMockQuery(t, MockQuery6(), MockQuery6ResultAssert)
+}
+
 func testMockQuery(t *testing.T, query *types.Query, check func(t assert.TestingT, result *types.Result)) {
 	m, err := newManager(t)
 	assert.NoError(t, err)
