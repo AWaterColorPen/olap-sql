@@ -1,4 +1,4 @@
-package dictionary
+package olapsql
 
 import (
 	"fmt"
@@ -37,6 +37,7 @@ type MetricGraph interface {
 }
 
 type MetricGraphBuilder struct {
+	dbType    types.DBType
 	sourceMap map[uint64]*models.DataSource
 	metricMap map[uint64]*models.Metric
 	joinTree  JoinTree
@@ -64,7 +65,7 @@ func (m *MetricGraphBuilder) Build() (MetricGraph, error) {
 			Name:      metric.Name,
 			FieldName: metric.FieldName,
 			Filter:    metric.Filter,
-			DBType:    source.Type,
+			DBType:    m.dbType,
 		}
 		if metric.Composition != nil {
 			for _, u := range metric.Composition.MetricID {

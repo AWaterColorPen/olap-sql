@@ -2,21 +2,9 @@ package types
 
 import (
 	"fmt"
-	"github.com/awatercolorpen/olap-sql/api/proto"
 )
 
 type MetricType string
-
-func (m MetricType) ToEnum() proto.METRIC_TYPE {
-	if v, ok := proto.METRIC_TYPE_value[string(m)]; ok {
-		return proto.METRIC_TYPE(v)
-	}
-	return proto.METRIC_TYPE_METRIC_UNKNOWN
-}
-
-func EnumToMetricType(m proto.METRIC_TYPE) MetricType {
-	return MetricType(m.String())
-}
 
 const (
 	MetricTypeUnknown       MetricType = "METRIC_UNKNOWN"        // invalid type.
@@ -33,13 +21,13 @@ const (
 )
 
 type Metric struct {
-	Type           MetricType     `json:"type"`
-	Table          string         `json:"table"`
-	Name           string         `json:"name"`
-	FieldName      string         `json:"field_name"`
-	Children       []*Metric      `json:"children"`
-	Filter         *Filter        `json:"filter"`
-	DBType         DataSourceType `json:"dbtype"`
+	Type      MetricType `json:"type"`
+	Table     string     `json:"table"`
+	Name      string     `json:"name"`
+	FieldName string     `json:"field_name"`
+	Children  []*Metric  `json:"children"`
+	Filter    *Filter    `json:"filter"`
+	DBType    DBType     `json:"db_type"`
 }
 
 func (m *Metric) Expression() (string, error) {
@@ -105,22 +93,4 @@ func (m *Metric) column() (Column, error) {
 	default:
 		return nil, fmt.Errorf("not supported metric type %v", m.Type)
 	}
-}
-
-func (m *Metric) ToProto() *proto.Metric {
-	var children []*proto.Metric
-	for _, v := range m.Children {
-		children = append(children, v.ToProto())
-	}
-	return &proto.Metric{
-		Type:      m.Type.ToEnum(),
-		Table:     m.Table,
-		Name:      m.Name,
-		FieldName: m.FieldName,
-		Children:  children,
-	}
-}
-
-func ProtoToMetric(m *proto.Metric) *Metric {
-	return &Metric{}
 }

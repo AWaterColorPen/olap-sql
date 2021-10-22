@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"github.com/awatercolorpen/olap-sql/api/proto"
 	"strings"
 )
 
@@ -15,17 +14,6 @@ func (f FilterOperatorType) IsTree() bool {
 	default:
 		return false
 	}
-}
-
-func (f FilterOperatorType) ToEnum() proto.FILTER_OPERATOR_TYPE {
-	if v, ok := proto.FILTER_OPERATOR_TYPE_value[string(f)]; ok {
-		return proto.FILTER_OPERATOR_TYPE(v)
-	}
-	return proto.FILTER_OPERATOR_TYPE_FILTER_OPERATOR_UNKNOWN
-}
-
-func EnumToFilterOperatorType(f proto.FILTER_OPERATOR_TYPE) FilterOperatorType {
-	return FilterOperatorType(f.String())
 }
 
 const (
@@ -43,17 +31,6 @@ const (
 )
 
 type ValueType string
-
-func (v ValueType) ToEnum() proto.VALUE_TYPE {
-	if u, ok := proto.VALUE_TYPE_value[string(v)]; ok {
-		return proto.VALUE_TYPE(u)
-	}
-	return proto.VALUE_TYPE_VALUE_UNKNOWN
-}
-
-func EnumToValueType(v proto.VALUE_TYPE) ValueType {
-	return ValueType(v.String())
-}
 
 const (
 	ValueTypeUnknown ValueType = "VALUE_UNKNOWN"
@@ -140,12 +117,4 @@ func (f *Filter) treeStatement(sep string) (string, error) {
 		filter = append(filter, statement)
 	}
 	return fmt.Sprintf("( %v )", strings.Join(filter, sep)), nil
-}
-
-func (f *Filter) ToProto() *proto.Filter {
-	return &proto.Filter{}
-}
-
-func ProtoToFilter(m *proto.Filter) *Filter {
-	return &Filter{}
 }

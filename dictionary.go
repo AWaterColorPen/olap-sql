@@ -1,42 +1,35 @@
-package dictionary
+package olapsql
 
 import (
 	"github.com/awatercolorpen/olap-sql/api/types"
+	"github.com/awatercolorpen/olap-sql/dictionary"
 )
 
 type Option struct {
-	AdapterOption
+	dictionary.AdapterOption
 }
 type Dictionary struct {
-	adapter Adapter
-}
-
-func (d *Dictionary) GetAdapter() Adapter{
-	return d.adapter
-}
-
-func (d *Dictionary) Create(item interface{}) error {
-	return nil
+	Adapter dictionary.Adapter
 }
 
 func (d *Dictionary) Translator(query *types.Query) (Translator, error) {
-	set, err := d.adapter.GetDataSetByName(query.DataSetName)
+	set, err := d.Adapter.GetDataSetByName(query.DataSetName)
 	if err != nil {
 		return nil, err
 	}
 
 	id := set.Schema.DataSourceID()
-	sources, err := d.adapter.GetSourcesByIds(id)
+	sources, err := d.Adapter.GetSourcesByIds(id)
 	if err != nil {
 		return nil, err
 	}
 
-	metrics, err := d.adapter.GetMetricsByIds(id)
+	metrics, err := d.Adapter.GetMetricsByIds(id)
 	if err != nil {
 		return nil, err
 	}
 
-	dimensions, err := d.adapter.GetDimensionsByIds(id)
+	dimensions, err := d.Adapter.GetDimensionsByIds(id)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +43,7 @@ func (d *Dictionary) Translator(query *types.Query) (Translator, error) {
 	return t, nil
 }
 
-func (d *Dictionary) Translate(query *types.Query) (*types.Request, error) {
+func (d *Dictionary) Translate(query *types.Query) (Clause, error) {
 	translator, err := d.Translator(query)
 	if err != nil {
 		return nil, err
@@ -59,9 +52,9 @@ func (d *Dictionary) Translate(query *types.Query) (*types.Request, error) {
 }
 
 func NewDictionary(option *Option) (*Dictionary, error) {
-	adapter, err := NewAdapter(&option.AdapterOption)
+	adapter, err := dictionary.NewAdapter(&option.AdapterOption)
 	if err != nil {
 		return nil, err
 	}
-	return &Dictionary{adapter: adapter}, nil
+	return &Dictionary{Adapter: adapter}, nil
 }

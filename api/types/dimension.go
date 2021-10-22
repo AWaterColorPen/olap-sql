@@ -3,8 +3,6 @@ package types
 import (
 	"fmt"
 	"regexp"
-
-	"github.com/awatercolorpen/olap-sql/api/proto"
 )
 
 var (
@@ -38,20 +36,4 @@ func (d *Dimension) Statement() (string, error) {
 
 func (d *Dimension) expression() bool {
 	return !reg.MatchString(d.FieldName)
-}
-
-func (d *Dimension) ToProto() *proto.Dimension {
-	return &proto.Dimension{
-		Table:     d.Table,
-		Name:      d.Name,
-		FieldName: d.FieldName,
-	}
-}
-
-func ProtoToDimension(d *proto.Dimension) *Dimension {
-	return &Dimension{
-		Table:     d.Table,
-		Name:      d.Name,
-		FieldName: d.FieldName,
-	}
 }

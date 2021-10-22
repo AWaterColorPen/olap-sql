@@ -26,12 +26,12 @@ type Column interface {
 }
 
 type SingleCol struct {
-	Table  string         `json:"table"`
-	Name   string         `json:"name"`
-	Alias  string         `json:"alias"`
-	Type   ColumnType     `json:"type"`
-	Filter *Filter        `json:"filter"`
-	DBType DataSourceType `json:"dbtype"`
+	DBType DBType     `json:"db_type"`
+	Table  string     `json:"table"`
+	Name   string     `json:"name"`
+	Alias  string     `json:"alias"`
+	Type   ColumnType `json:"type"`
+	Filter *Filter    `json:"filter"`
 }
 
 func (col *SingleCol) GetIfExpression() (string, error) {
@@ -40,10 +40,10 @@ func (col *SingleCol) GetIfExpression() (string, error) {
 		return "", err
 	}
 	switch col.DBType {
-	case DataSourceTypeClickHouse:
-		return fmt.Sprintf("IF(%v,`%v`.`%v`,NULL)", filter, col.Table, col.Name), nil
-	case DataSourceTypeUnknown:
-		return fmt.Sprintf("IIF(%v,`%v`.`%v`,NULL)", filter, col.Table, col.Name), nil
+	case DBTypeClickHouse:
+		return fmt.Sprintf("IF( %v , `%v`.`%v` , NULL )", filter, col.Table, col.Name), nil
+	case DBTypeSQLite:
+		return fmt.Sprintf("IIF( %v , `%v`.`%v` , NULL )", filter, col.Table, col.Name), nil
 	default:
 		return "", fmt.Errorf("%v unsupport if now", col.DBType)
 	}
@@ -59,7 +59,7 @@ func (col *SingleCol) GetExpression() string {
 		}
 		return fmt.Sprintf("COUNT( `%v`.`%v` )", col.Table, col.Name)
 	case ColumnTypeDistinctCount:
-		var name string = fmt.Sprintf("`%v`.`%v`",col.Table, col.Name)
+		var name string = fmt.Sprintf("`%v`.`%v`", col.Table, col.Name)
 		var err error
 		if col.Filter != nil {
 			name, err = col.GetIfExpression()
@@ -69,7 +69,7 @@ func (col *SingleCol) GetExpression() string {
 		}
 		return fmt.Sprintf("1.0 * COUNT(DISTINCT %v )", name)
 	case ColumnTypeSum:
-		var name string = fmt.Sprintf("`%v`.`%v`",col.Table, col.Name)
+		var name string = fmt.Sprintf("`%v`.`%v`", col.Table, col.Name)
 		var err error
 		if col.Filter != nil {
 			name, err = col.GetIfExpression()

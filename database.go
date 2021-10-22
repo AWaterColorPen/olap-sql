@@ -3,6 +3,7 @@ package olapsql
 import (
 	"fmt"
 
+	"github.com/awatercolorpen/olap-sql/api/types"
 	"gorm.io/driver/clickhouse"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -10,19 +11,10 @@ import (
 	"gorm.io/gorm"
 )
 
-type DBType string
-
-const (
-	DBTypeSQLite     DBType = "sqlite"
-	DBTypeMySQL      DBType = "mysql"
-	DBTypePostgre    DBType = "postgres"
-	DBTypeClickHouse DBType = "clickhouse"
-)
-
 type DBOption struct {
-	Debug bool   `json:"debug"`
-	DSN   string `json:"dsn"`
-	Type  DBType `json:"type"`
+	Debug bool         `json:"debug"`
+	DSN   string       `json:"dsn"`
+	Type  types.DBType `json:"type"`
 }
 
 func (o *DBOption) NewDB() (*gorm.DB, error) {
@@ -42,15 +34,15 @@ func (o *DBOption) NewDB() (*gorm.DB, error) {
 	return db, nil
 }
 
-func getDialect(ty DBType, dsn string) (gorm.Dialector, error) {
+func getDialect(ty types.DBType, dsn string) (gorm.Dialector, error) {
 	switch ty {
-	case DBTypeSQLite:
+	case types.DBTypeSQLite:
 		return sqlite.Open(dsn), nil
-	case DBTypeMySQL:
+	case types.DBTypeMySQL:
 		return mysql.Open(dsn), nil
-	case DBTypePostgre:
+	case types.DBTypePostgre:
 		return postgres.Open(dsn), nil
-	case DBTypeClickHouse:
+	case types.DBTypeClickHouse:
 		return clickhouse.Open(dsn), nil
 	default:
 		return nil, fmt.Errorf("unsupported db type: %v", ty)

@@ -1,7 +1,7 @@
-package dictionary
+package olapsql
 
 import "github.com/awatercolorpen/olap-sql/api/types"
 
 type Translator interface {
-	Translate(*types.Query) (*types.Request, error)
+	Translate(*types.Query) (Clause, error)
 }
