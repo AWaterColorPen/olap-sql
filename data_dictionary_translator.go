@@ -114,7 +114,7 @@ func (t *DictionaryTranslator) buildJoinTree() (JoinTree, error) {
 }
 
 func (t *DictionaryTranslator) buildMetricGraph() (MetricGraph, error) {
-	builder := &MetricGraphBuilder{sourceMap: t.sourceMap, metricMap: t.metricMap, joinTree: t.joinTree}
+	builder := &MetricGraphBuilder{dbType: t.set.DBType, sourceMap: t.sourceMap, metricMap: t.metricMap, joinTree: t.joinTree}
 	return builder.Build()
 }
 
@@ -250,7 +250,7 @@ func (t *DictionaryTranslator) buildLimit(query *types.Query) (*types.Limit, err
 
 func (t *DictionaryTranslator) buildDataSource() (*types.DataSource, error) {
 	source := t.sourceMap[t.primaryID]
-	return &types.DataSource{Type: source.Type, Name: source.Name}, nil
+	return &types.DataSource{Name: source.Name}, nil
 }
 
 func (t *DictionaryTranslator) getColumn(name string) (*columnStruct, error) {

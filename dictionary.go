@@ -9,35 +9,27 @@ type Option struct {
 	dictionary.AdapterOption
 }
 type Dictionary struct {
-	adapter dictionary.Adapter
-}
-
-func (d *Dictionary) GetAdapter() dictionary.Adapter {
-	return d.adapter
-}
-
-func (d *Dictionary) Create(item interface{}) error {
-	return nil
+	Adapter dictionary.Adapter
 }
 
 func (d *Dictionary) Translator(query *types.Query) (Translator, error) {
-	set, err := d.adapter.GetDataSetByName(query.DataSetName)
+	set, err := d.Adapter.GetDataSetByName(query.DataSetName)
 	if err != nil {
 		return nil, err
 	}
 
 	id := set.Schema.DataSourceID()
-	sources, err := d.adapter.GetSourcesByIds(id)
+	sources, err := d.Adapter.GetSourcesByIds(id)
 	if err != nil {
 		return nil, err
 	}
 
-	metrics, err := d.adapter.GetMetricsByIds(id)
+	metrics, err := d.Adapter.GetMetricsByIds(id)
 	if err != nil {
 		return nil, err
 	}
 
-	dimensions, err := d.adapter.GetDimensionsByIds(id)
+	dimensions, err := d.Adapter.GetDimensionsByIds(id)
 	if err != nil {
 		return nil, err
 	}
@@ -64,5 +56,5 @@ func NewDictionary(option *Option) (*Dictionary, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Dictionary{adapter: adapter}, nil
+	return &Dictionary{Adapter: adapter}, nil
 }

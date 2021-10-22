@@ -8,18 +8,11 @@ import (
 	"gorm.io/gorm"
 )
 
-var DefaultOlapSqlModelDataSetTableName = "olap_sql_model_data_sets"
-
 type DataSet struct {
-	ID          uint64         `toml:"id"               json:"id,omitempty"`
 	Name        string         `toml:"name"             json:"name"`
 	DBType      types.DBType   `toml:"type"             json:"type"`
 	Description string         `toml:"description"      json:"description"`
 	Schema      *DataSetSchema `toml:"schema"           json:"schema"`
-}
-
-func (DataSet) TableName() string {
-	return DefaultOlapSqlModelDataSetTableName
 }
 
 type DataSetSchema struct {

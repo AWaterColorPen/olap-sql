@@ -148,15 +148,15 @@ func (r *Request) joinStatement() ([]string, error) {
 			on = append(on, fmt.Sprintf("`%v`.`%v` = `%v`.`%v`", v.Table1, u.Key1, v.Table2, u.Key2))
 		}
 
-		switch r.DataSource.Type {
-		case DataSourceTypeUnknown, DataSourceTypeClickHouse:
+		switch r.DBType {
+		case DBTypeSQLite, DBTypeClickHouse:
 			if v.Database2 != "" {
 				statement = append(statement, fmt.Sprintf("LEFT JOIN `%v`.`%v` ON %v", v.Database2, v.Table2, strings.Join(on, " AND ")))
 			} else {
 				statement = append(statement, fmt.Sprintf("LEFT JOIN `%v` ON %v", v.Table2, strings.Join(on, " AND ")))
 			}
 		default:
-			return nil, fmt.Errorf("not supported data source type %v", r.DataSource.Type)
+			return nil, fmt.Errorf("not supported db type %v", r.DBType)
 		}
 	}
 	return statement, nil

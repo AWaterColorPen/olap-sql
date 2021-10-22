@@ -1,5 +1,5 @@
 sets = [
-  {id = 1, name = "wikistat", type = "clickhouse", description = "", schema = {primary_id = 1, secondary = [
+  {name = "wikistat", type = "clickhouse", description = "", schema = {primary_id = 1, secondary = [
     {data_source_id1 = 1, data_source_id2 = 2, join_on = [
       {dimension_id1 = 3, dimension_id2 = 6},
     ]},
