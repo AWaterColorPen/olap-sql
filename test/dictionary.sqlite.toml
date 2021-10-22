@@ -10,9 +10,9 @@ sets = [
 ]
 
 sources = [
-  {id = 1, type = "DATA_SOURCE_UNKNOWN", name = "wikistat", description = ""},
-  {id = 2, type = "DATA_SOURCE_UNKNOWN", name = "wikistat_relate", description = ""},
-  {id = 3, type = "DATA_SOURCE_UNKNOWN", name = "wikistat_class", description = ""},
+  {id = 1, name = "wikistat", description = ""},
+  {id = 2, name = "wikistat_relate", description = ""},
+  {id = 3, name = "wikistat_class", description = ""},
 ]
 
 metrics = [
