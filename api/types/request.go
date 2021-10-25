@@ -30,6 +30,18 @@ func (r *Request) GetDataset() string {
 }
 
 func (r *Request) BuildDB(tx *gorm.DB) (*gorm.DB, error) {
+	if err := r.DataSource.Statement(tx); err != nil {
+		return nil, err
+	}
+	for _, join := range r.Joins {
+		if err := join.DataSource1.Statement(tx); err != nil {
+			return nil, err
+		}
+		if err := join.DataSource2.Statement(tx); err != nil {
+			return nil, err
+		}
+	}
+
 	select1, err := r.dimensionStatement()
 	if err != nil {
 		return nil, err
@@ -152,13 +164,10 @@ func (r *Request) joinStatement() ([]string, error) {
 			on = append(on, fmt.Sprintf("`%v`.`%v` = `%v`.`%v`", onName1, u.Key1, onName2, u.Key2))
 		}
 
-		joinName2, err := v.DataSource2.Statement()
-		if err != nil {
-			return nil, err
-		}
+		joinName2, _ := v.DataSource2.GetDataSourceForJoin()
 
-		switch r.DataSource.Type {
-		case DataSourceTypeUnknown, DataSourceTypeClickHouse:
+		switch r.DBType {
+		case DBTypeSQLite, DBTypeClickHouse:
 			statement = append(statement, fmt.Sprintf("LEFT JOIN %v ON %v", joinName2, strings.Join(on, " AND ")))
 		default:
 			return nil, fmt.Errorf("not supported db type %v", r.DBType)
@@ -192,5 +201,5 @@ func (r *Request) orderStatement() ([]string, error) {
 }
 
 func (r *Request) tableStatement() (string, error) {
-	return r.DataSource.Statement()
+	return r.DataSource.GetDataSourceForJoin()
 }

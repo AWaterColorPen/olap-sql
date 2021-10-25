@@ -230,12 +230,10 @@ func (t *DictionaryTranslator) buildJoins() ([]*types.Join, error) {
 
 		j := &types.Join{
 			DataSource1: &types.DataSource{
-				Type:     s1.Type,
 				Database: s1.GetDatabaseName(),
 				Name:     s1.Name,
 			},
 			DataSource2: &types.DataSource{
-				Type:     s2.Type,
 				Database: s1.GetDatabaseName(),
 				Name:     s2.Name,
 			},

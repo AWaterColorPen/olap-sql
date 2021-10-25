@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 )
 
 type DataSourceType string
@@ -16,12 +17,12 @@ const (
 )
 
 type DataSource struct {
-	Type     DataSourceType `json:"type"`
 	Database string         `json:"database"`
 	Name     string         `json:"name"`
 	Alias    string         `json:"alias"`
 	Joins    []*Join        `json:"joins"`
 	Request  *Request       `json:"sub_request"`
+	Sql 	 string			`json:"sql"`
 }
 
 func (d *DataSource) getName() (string, error) {
@@ -38,19 +39,20 @@ func (d *DataSource) getAlias() (string, error) {
 	return d.Alias, nil
 }
 
-func (d *DataSource) Statement() (string, error) {
+func (d *DataSource) Statement(tx *gorm.DB) error {
 	switch d.Request {
-	// 寻常的datasource
 	case nil:
-		return d.getName()
-	// select子查询
+		sql, err := d.getName()
+		d.Sql = sql
+		return err
 	default:
-		return d.Request.BuildSQL()
+		sql, err := d.Request.BuildSQL(tx)
+		d.Sql = sql
+		return err
 	}
 }
 
 func (d *DataSource) GetDataSourceForOn() (string, error) {
-	// 对于on来说 要么用别名(也就是select的情况)，不然的话就是普通的情况
 	if d.Alias != "" {
 		return d.Alias, nil
 	}
@@ -58,5 +60,8 @@ func (d *DataSource) GetDataSourceForOn() (string, error) {
 }
 
 func (d *DataSource) GetDataSourceForJoin() (string, error) {
-	return "", nil
+	if d.Alias != "" {
+		return fmt.Sprintf("%v AS %v", d.Sql, d.Alias), nil
+	}
+	return d.Sql, nil
 }
