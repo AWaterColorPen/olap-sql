@@ -13,7 +13,6 @@ const (
 	DataSourceTypeDruid      DataSourceType = "DATA_SOURCE_DRUID"
 	DataSourceTypeKylin      DataSourceType = "DATA_SOURCE_KYLIN"
 	DataSourceTypePresto     DataSourceType = "DATA_SOURCE_PRESTO"
-
 )
 
 type DataSource struct {
@@ -22,7 +21,7 @@ type DataSource struct {
 	Alias    string         `json:"alias"`
 	Joins    []*Join        `json:"joins"`
 	Request  *Request       `json:"sub_request"`
-	Sql 	 string			`json:"sql"`
+	Sql      string         `json:"sql"`
 }
 
 func (d *DataSource) getName() (string, error) {
