@@ -229,11 +229,17 @@ func (t *DictionaryTranslator) buildJoins() ([]*types.Join, error) {
 		s2 := t.sourceMap[s.DataSourceID2]
 
 		j := &types.Join{
-			Database1: s1.GetDatabaseName(),
-			Database2: s2.GetDatabaseName(),
-			Table1:    s1.GetTableName(),
-			Table2:    s2.GetTableName(),
-			On:        on,
+			DataSource1: &types.DataSource{
+				Type:     s1.Type,
+				Database: s1.GetDatabaseName(),
+				Name:     s1.Name,
+			},
+			DataSource2: &types.DataSource{
+				Type:     s2.Type,
+				Database: s1.GetDatabaseName(),
+				Name:     s2.Name,
+			},
+			On: on,
 		}
 
 		joins = append(joins, j)

@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"strings"
 
 	"gorm.io/gorm"
@@ -73,6 +74,7 @@ func (r *Request) BuildDB(tx *gorm.DB) (*gorm.DB, error) {
 	}
 
 	table1, err := r.tableStatement()
+	logrus.Info(table1)
 	if err != nil {
 		return nil, err
 	}
@@ -144,17 +146,20 @@ func (r *Request) joinStatement() ([]string, error) {
 	var statement []string
 	for _, v := range r.Joins {
 		var on []string
+		onName1, _ := v.DataSource1.GetDataSourceForOn()
+		onName2, _ := v.DataSource2.GetDataSourceForOn()
 		for _, u := range v.On {
-			on = append(on, fmt.Sprintf("`%v`.`%v` = `%v`.`%v`", v.Table1, u.Key1, v.Table2, u.Key2))
+			on = append(on, fmt.Sprintf("`%v`.`%v` = `%v`.`%v`", onName1, u.Key1, onName2, u.Key2))
+		}
+
+		joinName2, err := v.DataSource2.Statement()
+		if err != nil {
+			return nil, err
 		}
 
 		switch r.DataSource.Type {
 		case DataSourceTypeUnknown, DataSourceTypeClickHouse:
-			if v.Database2 != "" {
-				statement = append(statement, fmt.Sprintf("LEFT JOIN `%v`.`%v` ON %v", v.Database2, v.Table2, strings.Join(on, " AND ")))
-			} else {
-				statement = append(statement, fmt.Sprintf("LEFT JOIN `%v` ON %v", v.Table2, strings.Join(on, " AND ")))
-			}
+			statement = append(statement, fmt.Sprintf("LEFT JOIN %v ON %v", joinName2, strings.Join(on, " AND ")))
 		default:
 			return nil, fmt.Errorf("not supported data source type %v", r.DataSource.Type)
 		}

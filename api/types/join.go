@@ -6,10 +6,13 @@ type JoinOn struct {
 }
 
 type Join struct {
-	Database1 string    `json:"data_base1"`
-	Database2 string    `json:"data_base2"`
-	Table1    string    `json:"table1"`
-	Table2    string    `json:"table2"`
-	On        []*JoinOn `json:"on"`
-	Filters   []*Filter `json:"filters"`
+	DataSource1 *DataSource       `json:"datasource1"`
+	DataSource2 *DataSource       `json:"datasource2"`
+	On          []*JoinOn         `json:"on"`
+	Filters     []*Filter         `json:"filters"`
+	TableSqlMap map[string]string `json:"tablesqlsmap"`
+}
+
+func (j *Join) Statement() (string, error) {
+	return "", nil
 }
