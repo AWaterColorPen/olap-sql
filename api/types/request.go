@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"strings"
 
 	"gorm.io/gorm"
@@ -86,7 +85,6 @@ func (r *Request) BuildDB(tx *gorm.DB) (*gorm.DB, error) {
 	}
 
 	table1, err := r.tableStatement()
-	logrus.Info(table1)
 	if err != nil {
 		return nil, err
 	}

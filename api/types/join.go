@@ -10,9 +10,4 @@ type Join struct {
 	DataSource2 *DataSource       `json:"datasource2"`
 	On          []*JoinOn         `json:"on"`
 	Filters     []*Filter         `json:"filters"`
-	TableSqlMap map[string]string `json:"tablesqlsmap"`
-}
-
-func (j *Join) Statement() (string, error) {
-	return "", nil
 }

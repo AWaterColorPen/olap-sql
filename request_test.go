@@ -1,8 +1,8 @@
 package olapsql_test
 
 import (
+	"fmt"
 	"github.com/awatercolorpen/olap-sql/api/types"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -14,8 +14,8 @@ func TestRequest(t *testing.T) {
 	request := Request1()
 	client, err := m.GetClients()
 	assert.NoError(t, err)
-	db, err := client.BuildDB(request)
-	logrus.Info(request.BuildSQL(db))
+	sql, err := client.BuildSQL(request)
+	fmt.Println(sql)
 }
 
 
@@ -48,6 +48,54 @@ func Request1() *types.Request {
 				},
 				DataSource: &types.DataSource{
 					Name: "wikistat",
+				},
+			},
+		},
+		Joins: []*types.Join{
+			{
+				DataSource1: &types.DataSource{
+					Alias: "t1",
+					Request: &types.Request{
+						DBType: types.DBTypeSQLite,
+						Dataset: mockWikiStatDataSet,
+						Metrics: []*types.Metric{
+							{
+								Type:      types.MetricTypeValue,
+								Table:     "wikistat",
+								Name:      "hits",
+								FieldName: "hits",
+								DBType:    types.DBType(types.DataSourceTypeUnknown),
+							},
+						},
+						DataSource: &types.DataSource{
+							Name: "wikistat",
+						},
+					},
+				},
+				DataSource2: &types.DataSource{
+					Alias: "t2",
+					Request: &types.Request{
+						DBType: types.DBTypeSQLite,
+						Dataset: mockWikiStatDataSet,
+						Metrics: []*types.Metric{
+							{
+								Type:      types.MetricTypeValue,
+								Table:     "wikistat",
+								Name:      "hits",
+								FieldName: "hits",
+								DBType:    types.DBType(types.DataSourceTypeUnknown),
+							},
+						},
+						DataSource: &types.DataSource{
+							Name: "wikistat",
+						},
+					},
+				},
+				On: []*types.JoinOn{
+					{
+						Key1: "hits",
+						Key2: "hits",
+					},
 				},
 			},
 		},
