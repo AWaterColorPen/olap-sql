@@ -61,7 +61,7 @@ func (d *DataSource) GetDataSourceForOn() (string, error) {
 
 func (d *DataSource) GetDataSourceForJoin() (string, error) {
 	if d.Alias != "" {
-		return fmt.Sprintf("%v AS %v", d.Sql, d.Alias), nil
+		return fmt.Sprintf("(%v) AS %v", d.Sql, d.Alias), nil
 	}
-	return d.Sql, nil
+	return d.getName()
 }
