@@ -2,10 +2,11 @@ package dictionary
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
-	"github.com/awatercolorpen/olap-sql/api/models"
 	"io/ioutil"
 	"path/filepath"
+
+	"github.com/BurntSushi/toml"
+	"github.com/awatercolorpen/olap-sql/api/models"
 )
 
 type AdapterType string
@@ -71,7 +72,7 @@ func newDictionaryAdapterByFile(option *AdapterOption) (*FileAdapter, error) {
 func (d *FileAdapter) GetDataSetByName(name string) (*models.DataSet, error) {
 	for _, data := range d.Sets {
 		if data.Name == name {
-			return checkDataSetActive(data)
+			return data, nil
 		}
 	}
 	return nil, fmt.Errorf("can not find '%v' data set", name)
@@ -122,13 +123,6 @@ func (d *FileAdapter) GetDimensionsByIds(ids []uint64) ([]*models.Dimension, err
 		}
 	}
 	return dimensions, nil
-}
-
-func checkDataSetActive(set *models.DataSet) (*models.DataSet, error) {
-	if set.Schema == nil {
-		return nil, fmt.Errorf("schema is nil for data_set %v", set.Name)
-	}
-	return set, nil
 }
 
 func (d *FileAdapter) isValidJoinOns(joinOns models.JoinOns) (id1, id2 uint64, err error) {

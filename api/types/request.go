@@ -161,7 +161,7 @@ func (r *Request) joinStatement() ([]string, error) {
 		case DataSourceTypeUnknown, DataSourceTypeClickHouse:
 			statement = append(statement, fmt.Sprintf("LEFT JOIN %v ON %v", joinName2, strings.Join(on, " AND ")))
 		default:
-			return nil, fmt.Errorf("not supported data source type %v", r.DataSource.Type)
+			return nil, fmt.Errorf("not supported db type %v", r.DBType)
 		}
 	}
 	return statement, nil
