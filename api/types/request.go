@@ -29,16 +29,8 @@ func (r *Request) GetDataset() string {
 }
 
 func (r *Request) BuildDB(tx *gorm.DB) (*gorm.DB, error) {
-	if err := r.DataSource.Statement(tx); err != nil {
+	if err := r.SourceStatement(tx); err != nil {
 		return nil, err
-	}
-	for _, join := range r.Joins {
-		if err := join.DataSource1.Statement(tx); err != nil {
-			return nil, err
-		}
-		if err := join.DataSource2.Statement(tx); err != nil {
-			return nil, err
-		}
 	}
 
 	select1, err := r.dimensionStatement()
@@ -200,4 +192,19 @@ func (r *Request) orderStatement() ([]string, error) {
 
 func (r *Request) tableStatement() (string, error) {
 	return r.DataSource.GetDataSourceForJoin()
+}
+
+func (r *Request) SourceStatement(tx *gorm.DB) error {
+	if err := r.DataSource.Statement(tx); err != nil {
+		return err
+	}
+	for _, join := range r.Joins {
+		if err := join.DataSource1.Statement(tx); err != nil {
+			return err
+		}
+		if err := join.DataSource2.Statement(tx); err != nil {
+			return err
+		}
+	}
+	return nil
 }

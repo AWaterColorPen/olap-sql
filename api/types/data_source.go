@@ -7,14 +7,6 @@ import (
 
 type DataSourceType string
 
-const (
-	DataSourceTypeUnknown    DataSourceType = "DATA_SOURCE_UNKNOWN"
-	DataSourceTypeClickHouse DataSourceType = "DATA_SOURCE_CLICKHOUSE"
-	DataSourceTypeDruid      DataSourceType = "DATA_SOURCE_DRUID"
-	DataSourceTypeKylin      DataSourceType = "DATA_SOURCE_KYLIN"
-	DataSourceTypePresto     DataSourceType = "DATA_SOURCE_PRESTO"
-)
-
 type DataSource struct {
 	Database string         `json:"database"`
 	Name     string         `json:"name"`

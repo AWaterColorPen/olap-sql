@@ -29,7 +29,7 @@ func Request1() *types.Request {
 				Table:     "t1",
 				Name:      "hits",
 				FieldName: "hits",
-				DBType:    types.DBType(types.DataSourceTypeUnknown),
+				DBType:    types.DBTypeSQLite,
 			},
 		},
 		DataSource: &types.DataSource{
@@ -43,7 +43,7 @@ func Request1() *types.Request {
 						Table:     "wikistat",
 						Name:      "hits",
 						FieldName: "hits",
-						DBType:    types.DBType(types.DataSourceTypeUnknown),
+						DBType:    types.DBTypeSQLite,
 					},
 				},
 				DataSource: &types.DataSource{
@@ -64,7 +64,7 @@ func Request1() *types.Request {
 								Table:     "wikistat",
 								Name:      "hits",
 								FieldName: "hits",
-								DBType:    types.DBType(types.DataSourceTypeUnknown),
+								DBType:    types.DBTypeSQLite,
 							},
 						},
 						DataSource: &types.DataSource{
@@ -83,7 +83,7 @@ func Request1() *types.Request {
 								Table:     "wikistat",
 								Name:      "hits",
 								FieldName: "hits",
-								DBType:    types.DBType(types.DataSourceTypeUnknown),
+								DBType:    types.DBTypeSQLite,
 							},
 						},
 						DataSource: &types.DataSource{
@@ -97,6 +97,14 @@ func Request1() *types.Request {
 						Key2: "hits",
 					},
 				},
+			},
+		},
+		Filters: []*types.Filter{
+			{
+				OperatorType: types.FilterOperatorTypeGreaterEquals,
+				ValueType: types.ValueTypeInteger,
+				Name: "hits",
+				Value: []interface{}{1},
 			},
 		},
 	}
