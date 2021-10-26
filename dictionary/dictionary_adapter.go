@@ -25,8 +25,8 @@ type Adapter interface {
 
 // AdapterOption Adapter配置
 type AdapterOption struct {
-	Type AdapterType
-	Dsn  string
+	Type AdapterType `json:"type"`
+	Dsn  string      `json:"dsn"`
 }
 
 func NewAdapter(option *AdapterOption) (Adapter, error) {
@@ -62,7 +62,6 @@ func newDictionaryAdapterByFile(option *AdapterOption) (*FileAdapter, error) {
 	default:
 		return nil, fmt.Errorf("not supported extension %v", extension)
 	}
-
 	if err = adapter.isValidAdapterCheck(); err != nil {
 		return nil, err
 	}
