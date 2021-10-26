@@ -62,7 +62,9 @@ func newDictionaryAdapterByFile(option *AdapterOption) (*FileAdapter, error) {
 	default:
 		return nil, fmt.Errorf("not supported extension %v", extension)
 	}
-
+	if err = adapter.AddId(); err != nil {
+		return nil, err
+	}
 	if err = adapter.isValidAdapterCheck(); err != nil {
 		return nil, err
 	}
@@ -209,4 +211,17 @@ func getIdsMap(ids []uint64) map[interface{}]interface{} {
 		idsMap[id] = true
 	}
 	return idsMap
+}
+
+func (d *FileAdapter) AddId() error {
+	for i, source := range d.Sources {
+		source.ID = uint64(i + 1)
+	}
+	for i, metric := range d.Metrics {
+		metric.ID = uint64(i + 1)
+	}
+	for i, dimension := range d.Dimensions {
+		dimension.ID = uint64(i + 1)
+	}
+	return nil
 }
