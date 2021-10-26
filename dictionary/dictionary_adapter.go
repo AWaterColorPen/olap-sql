@@ -26,7 +26,7 @@ type Adapter interface {
 // AdapterOption Adapter配置
 type AdapterOption struct {
 	Type AdapterType `json:"type"`
-	Dsn  string      `dsn:"dsn"`
+	Dsn  string      `json:"dsn"`
 }
 
 func NewAdapter(option *AdapterOption) (Adapter, error) {
