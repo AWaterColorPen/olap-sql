@@ -6,6 +6,7 @@ import (
 
 type DataSource struct {
 	ID          uint64               `toml:"id"          json:"id,omitempty"`
+	DataBase	string               `toml:"database"    json:"database"`
 	Name        string               `toml:"name"        json:"name"`
 	Description string               `toml:"description" json:"description"`
 }

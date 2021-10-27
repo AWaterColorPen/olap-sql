@@ -59,9 +59,11 @@ func newDictionaryAdapterByFile(option *AdapterOption) (*FileAdapter, error) {
 		if err = toml.Unmarshal(b, adapter); err != nil {
 			return nil, err
 		}
+
 	default:
 		return nil, fmt.Errorf("not supported extension %v", extension)
 	}
+
 	if err = adapter.isValidAdapterCheck(); err != nil {
 		return nil, err
 	}

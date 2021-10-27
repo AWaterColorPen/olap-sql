@@ -61,7 +61,7 @@ func (m *MetricGraphBuilder) Build() (MetricGraph, error) {
 		source := m.sourceMap[metric.DataSourceID]
 		current := &types.Metric{
 			Type:      metric.Type,
-			Table:     source.GetTableName(),
+			Table:     source.Name,
 			Name:      metric.Name,
 			FieldName: metric.FieldName,
 			Filter:    metric.Filter,

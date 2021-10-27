@@ -42,9 +42,9 @@ func getOlapDBOption(tb testing.TB) (string, *olapsql.DBOption) {
 }
 
 func getDictionaryOption() *olapsql.Option {
-	dsn := "test/dictionary.sqlite.toml"
+	dsn := "test/olap_sql.toml"
 	if DataWithClickhouse() {
-		dsn = "test/dictionary.ck.toml"
+		dsn = "test/olap_sql.toml"
 	}
 	return &olapsql.Option{
 		AdapterOption: dictionary.AdapterOption{
