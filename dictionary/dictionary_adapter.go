@@ -25,8 +25,8 @@ type Adapter interface {
 
 // AdapterOption Adapter配置
 type AdapterOption struct {
-	Type AdapterType
-	Dsn  string
+	Type AdapterType `json:"type"`
+	Dsn  string      `json:"dsn"`
 }
 
 func NewAdapter(option *AdapterOption) (Adapter, error) {
@@ -59,6 +59,7 @@ func newDictionaryAdapterByFile(option *AdapterOption) (*FileAdapter, error) {
 		if err = toml.Unmarshal(b, adapter); err != nil {
 			return nil, err
 		}
+
 	default:
 		return nil, fmt.Errorf("not supported extension %v", extension)
 	}
