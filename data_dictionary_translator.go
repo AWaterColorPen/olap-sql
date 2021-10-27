@@ -155,7 +155,7 @@ func (t *DictionaryTranslator) buildDimensions(query *types.Query) ([]*types.Dim
 
 		source := t.sourceMap[dimension.DataSourceID]
 		d := &types.Dimension{
-			Table:     source.GetTableName(),
+			Table:     source.Name,
 			Name:      dimension.Name,
 			FieldName: dimension.FieldName,
 		}
@@ -230,11 +230,11 @@ func (t *DictionaryTranslator) buildJoins() ([]*types.Join, error) {
 
 		j := &types.Join{
 			DataSource1: &types.DataSource{
-				Database: s1.GetDatabaseName(),
+				Database: s1.DataBase,
 				Name:     s1.Name,
 			},
 			DataSource2: &types.DataSource{
-				Database: s1.GetDatabaseName(),
+				Database: s2.DataBase,
 				Name:     s2.Name,
 			},
 			On: on,
@@ -254,7 +254,7 @@ func (t *DictionaryTranslator) buildLimit(query *types.Query) (*types.Limit, err
 
 func (t *DictionaryTranslator) buildDataSource() (*types.DataSource, error) {
 	source := t.sourceMap[t.primaryID]
-	return &types.DataSource{Name: source.Name}, nil
+	return &types.DataSource{Database:source.DataBase, Name: source.Name}, nil
 }
 
 func (t *DictionaryTranslator) getColumn(name string) (*columnStruct, error) {
@@ -272,7 +272,7 @@ func (t *DictionaryTranslator) getColumn(name string) (*columnStruct, error) {
 	if err == nil {
 		source := t.sourceMap[dimension.DataSourceID]
 		current := &types.Dimension{
-			Table:     source.GetTableName(),
+			Table:     source.Name,
 			Name:      dimension.Name,
 			FieldName: dimension.FieldName,
 		}
