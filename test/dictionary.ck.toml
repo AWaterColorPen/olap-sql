@@ -31,7 +31,7 @@ metrics = [
 
 dimensions = [
   {data_source = "wikistat", name = "date", field_name = "date", value_type = "VALUE_STRING", description = ""},
-  {data_source = "wikistat", name = "time_by_hour", field_name = "strftime('%Y-%m-%d %H:00:00', time)", value_type = "VALUE_STRING", description = ""},
+  {data_source = "wikistat", name = "time_by_hour", field_name = "formatDateTime(time, '%Y-%m-%d %H:00:00')", value_type = "VALUE_STRING", description = ""},
   {data_source = "wikistat", name = "project", field_name = "project", value_type = "VALUE_STRING", description = ""},
   {data_source = "wikistat", name = "sub_project", field_name = "subproject", value_type = "VALUE_STRING", description = ""},
   {data_source = "wikistat", name = "path", field_name = "path", value_type = "VALUE_STRING", description = ""},
