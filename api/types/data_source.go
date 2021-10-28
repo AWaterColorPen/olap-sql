@@ -5,15 +5,13 @@ import (
 	"gorm.io/gorm"
 )
 
-type DataSourceType string
-
 type DataSource struct {
-	Database string         `json:"database"`
-	Name     string         `json:"name"`
-	Alias    string         `json:"alias"`
-	Joins    []*Join        `json:"joins"`
-	Request  *Request       `json:"sub_request"`
-	Sql      string         `json:"sql"`
+	Database string  `json:"database"`
+	Name     string  `json:"name"`
+	Alias    string  `json:"alias"`
+	Joins    []*Join `json:"joins"`
+	Clause   Clause  `json:"clause"`
+	Sql      string  `json:"sql"`
 }
 
 func (d *DataSource) getName() (string, error) {
@@ -31,13 +29,13 @@ func (d *DataSource) getAlias() (string, error) {
 }
 
 func (d *DataSource) Statement(tx *gorm.DB) error {
-	switch d.Request {
+	switch d.Clause {
 	case nil:
 		sql, err := d.getName()
 		d.Sql = sql
 		return err
 	default:
-		sql, err := d.Request.BuildSQL(tx)
+		sql, err := d.Clause.BuildSQL(tx)
 		d.Sql = sql
 		return err
 	}

@@ -66,7 +66,7 @@ func (m *Manager) BuildSQL(query *types.Query) (string, error) {
 	return clients.BuildSQL(clause)
 }
 
-func (m *Manager) build(query *types.Query) (Clients, Clause, error) {
+func (m *Manager) build(query *types.Query) (Clients, types.Clause, error) {
 	query.TranslateTimeIntervalToFilter()
 	dict, err := m.GetDictionary()
 	if err != nil {

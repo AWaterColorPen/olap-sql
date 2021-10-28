@@ -1,23 +1,22 @@
-package olapsql
+package types
 
 import (
-	"github.com/awatercolorpen/olap-sql/api/types"
 	"gorm.io/gorm"
 )
 
 type Clause interface {
-	GetDBType() types.DBType
+	GetDBType() DBType
 	GetDataset() string
 	BuildDB(tx *gorm.DB) (*gorm.DB, error)
 	BuildSQL(tx *gorm.DB) (string, error)
 }
 
 type baseClause struct {
-	DBType  types.DBType
+	DBType  DBType
 	Dataset string
 }
 
-func (b *baseClause) GetDBType() types.DBType {
+func (b *baseClause) GetDBType() DBType {
 	return b.DBType
 }
 
@@ -30,10 +29,10 @@ type sqlClause struct {
 	sql string
 }
 
-func (s *sqlClause) BuildDB(tx *gorm.DB) (*gorm.DB, error)  {
+func (s *sqlClause) BuildDB(tx *gorm.DB) (*gorm.DB, error) {
 	return tx.Raw(s.sql), nil
 }
 
-func (s *sqlClause) BuildSQL(*gorm.DB) (string, error)  {
+func (s *sqlClause) BuildSQL(*gorm.DB) (string, error) {
 	return s.sql, nil
 }

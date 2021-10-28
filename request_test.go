@@ -18,10 +18,9 @@ func TestRequest(t *testing.T) {
 	fmt.Println(sql)
 }
 
-
 func Request1() *types.Request {
 	request := &types.Request{
-		DBType: types.DBTypeSQLite,
+		DBType:  types.DBTypeSQLite,
 		Dataset: mockWikiStatDataSet,
 		Metrics: []*types.Metric{
 			{
@@ -34,8 +33,8 @@ func Request1() *types.Request {
 		},
 		DataSource: &types.DataSource{
 			Alias: "t1",
-			Request: &types.Request{
-				DBType: types.DBTypeSQLite,
+			Clause: &types.Request{
+				DBType:  types.DBTypeSQLite,
 				Dataset: mockWikiStatDataSet,
 				Metrics: []*types.Metric{
 					{
@@ -55,8 +54,8 @@ func Request1() *types.Request {
 			{
 				DataSource1: &types.DataSource{
 					Alias: "t1",
-					Request: &types.Request{
-						DBType: types.DBTypeSQLite,
+					Clause: &types.Request{
+						DBType:  types.DBTypeSQLite,
 						Dataset: mockWikiStatDataSet,
 						Metrics: []*types.Metric{
 							{
@@ -74,8 +73,8 @@ func Request1() *types.Request {
 				},
 				DataSource2: &types.DataSource{
 					Alias: "t2",
-					Request: &types.Request{
-						DBType: types.DBTypeSQLite,
+					Clause: &types.Request{
+						DBType:  types.DBTypeSQLite,
 						Dataset: mockWikiStatDataSet,
 						Metrics: []*types.Metric{
 							{
@@ -102,9 +101,9 @@ func Request1() *types.Request {
 		Filters: []*types.Filter{
 			{
 				OperatorType: types.FilterOperatorTypeGreaterEquals,
-				ValueType: types.ValueTypeInteger,
-				Name: "hits",
-				Value: []interface{}{1},
+				ValueType:    types.ValueTypeInteger,
+				Name:         "hits",
+				Value:        []interface{}{1},
 			},
 		},
 	}

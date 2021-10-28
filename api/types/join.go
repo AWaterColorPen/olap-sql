@@ -6,8 +6,8 @@ type JoinOn struct {
 }
 
 type Join struct {
-	DataSource1 *DataSource       `json:"datasource1"`
-	DataSource2 *DataSource       `json:"datasource2"`
-	On          []*JoinOn         `json:"on"`
-	Filters     []*Filter         `json:"filters"`
+	DataSource1 *DataSource `json:"datasource1"`
+	DataSource2 *DataSource `json:"datasource2"`
+	On          []*JoinOn   `json:"on"`
+	Filters     []*Filter   `json:"filters"`
 }
