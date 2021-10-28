@@ -8,14 +8,6 @@ import (
 
 type Metrics []*models.Metric
 
-func (m Metrics) IdIndex() map[uint64]*models.Metric {
-	out := map[uint64]*models.Metric{}
-	for _, v := range m {
-		out[v.ID] = v
-	}
-	return out
-}
-
 func (m Metrics) NameIndex() map[string]*models.Metric {
 	out := map[string]*models.Metric{}
 	for _, v := range m {
@@ -24,15 +16,15 @@ func (m Metrics) NameIndex() map[string]*models.Metric {
 	return out
 }
 
-type Dimensions []*models.Dimension
-
-func (d Dimensions) IdIndex() map[uint64]*models.Dimension {
-	out := map[uint64]*models.Dimension{}
-	for _, v := range d {
-		out[v.ID] = v
+func (m Metrics) KeyIndex() map[string]*models.Metric {
+	out := map[string]*models.Metric{}
+	for _, v := range m {
+		out[v.GetKey()] = v
 	}
 	return out
 }
+
+type Dimensions []*models.Dimension
 
 func (d Dimensions) NameIndex() map[string]*models.Dimension {
 	out := map[string]*models.Dimension{}
@@ -42,25 +34,30 @@ func (d Dimensions) NameIndex() map[string]*models.Dimension {
 	return out
 }
 
+func (d Dimensions) KeyIndex() map[string]*models.Dimension {
+	out := map[string]*models.Dimension{}
+	for _, v := range d {
+		out[v.GetKey()] = v
+	}
+	return out
+}
+
 type joinNode struct {
 	Children         []*joinNode
-	source           *models.DataSource
 	metricNameMap    map[string]*models.Metric
 	dimensionNameMap map[string]*models.Dimension
+	metricKeyMap    map[string]*models.Metric
+	dimensionKeyMap map[string]*models.Dimension
 }
 
-func (j *joinNode) ID() uint64 {
-	return j.source.ID
-}
-
-func (j *joinNode) FindMetric(name string) (*models.Metric, error) {
-	m, ok := j.metricNameMap[name]
+func (j *joinNode) FindMetric(key string) (*models.Metric, error) {
+	m, ok := j.metricNameMap[key]
 	if ok {
 		return m, nil
 	}
 
 	for _, v := range j.Children {
-		u, err := v.FindMetric(name)
+		u, err := v.FindMetric(key)
 		if err != nil {
 			return nil, err
 		}
@@ -68,21 +65,21 @@ func (j *joinNode) FindMetric(name string) (*models.Metric, error) {
 			continue
 		}
 		if m != nil {
-			return nil, fmt.Errorf("duplicate metric name %v", name)
+			return nil, fmt.Errorf("duplicate metric key %v", key)
 		}
 		m = u
 	}
 	return m, nil
 }
 
-func (j *joinNode) FindDimension(name string) (*models.Dimension, error) {
-	d, ok := j.dimensionNameMap[name]
+func (j *joinNode) FindDimension(key string) (*models.Dimension, error) {
+	d, ok := j.dimensionNameMap[key]
 	if ok {
 		return d, nil
 	}
 
 	for _, v := range j.Children {
-		u, err := v.FindDimension(name)
+		u, err := v.FindDimension(key)
 		if err != nil {
 			return nil, err
 		}
@@ -90,16 +87,15 @@ func (j *joinNode) FindDimension(name string) (*models.Dimension, error) {
 			continue
 		}
 		if d != nil {
-			return nil, fmt.Errorf("duplicate dimension name %v", name)
+			return nil, fmt.Errorf("duplicate dimension name %v", key)
 		}
 		d = u
 	}
 	return d, nil
 }
 
-func newJoinNode(metrics []*models.Metric, dimensions []*models.Dimension, source *models.DataSource) *joinNode {
+func newJoinNode(metrics []*models.Metric, dimensions []*models.Dimension) *joinNode {
 	return &joinNode{
-		source:           source,
 		metricNameMap:    Metrics(metrics).NameIndex(),
 		dimensionNameMap: Dimensions(dimensions).NameIndex(),
 	}
@@ -107,12 +103,12 @@ func newJoinNode(metrics []*models.Metric, dimensions []*models.Dimension, sourc
 
 type joinTree struct {
 	joinNode
-	root     uint64
-	inverted map[uint64]uint64
+	root     string
+	inverted map[string]string
 }
 
-func (j *joinTree) Path(current uint64) ([]uint64, error) {
-	var out []uint64
+func (j *joinTree) Path(current string) ([]string, error) {
+	var out []string
 	for true {
 		out = append(out, current)
 		if current == j.root {
@@ -128,40 +124,40 @@ func (j *joinTree) Path(current uint64) ([]uint64, error) {
 	return out, nil
 }
 
-func (j *joinTree) FindMetric(name string) (*models.Metric, error) {
-	m, err := j.joinNode.FindMetric(name)
+func (j *joinTree) FindMetricByName(key string) (*models.Metric, error) {
+	m, err := j.joinNode.FindMetric(key)
 	if err != nil {
 		return nil, err
 	}
 	if m == nil {
-		return nil, fmt.Errorf("not found metric name %v", name)
+		return nil, fmt.Errorf("not found metric name %v", key)
 	}
 	return m, nil
 }
 
-func (j *joinTree) FindDimension(name string) (*models.Dimension, error) {
-	d, err := j.joinNode.FindDimension(name)
+func (j *joinTree) FindDimensionByName(key string) (*models.Dimension, error) {
+	d, err := j.joinNode.FindDimension(key)
 	if err != nil {
 		return nil, err
 	}
 	if d == nil {
-		return nil, fmt.Errorf("not found dimension name %v", name)
+		return nil, fmt.Errorf("not found dimension key %v", key)
 	}
 	return d, nil
 }
 
 type JoinTree interface {
-	Path(uint64) ([]uint64, error)
-	FindMetric(string) (*models.Metric, error)
-	FindDimension(string) (*models.Dimension, error)
+	Path(key string) ([]string, error)
+	FindMetricByName(name string) (*models.Metric, error)
+	// FindMetricByKey(key string) (*models.Metric, error)
+	FindDimensionByName(name string) (*models.Dimension, error)
+	// FindDimensionByKey(key string) (*models.Dimension, error)
 }
 
 type JoinTreeBuilder struct {
-	tree      map[uint64][]uint64
-	root      uint64
-	metrics []*models.Metric
-	dimensions []*models.Dimension
-	sourceMap map[uint64]*models.DataSource
+	tree       models.Graph
+	root       string
+	dictionary IAdapter
 }
 
 func (j *JoinTreeBuilder) Build() (JoinTree, error) {
@@ -170,7 +166,7 @@ func (j *JoinTreeBuilder) Build() (JoinTree, error) {
 		return nil, err
 	}
 
-	inverted := map[uint64]uint64{}
+	inverted := map[string]string{}
 	for k, v := range j.tree {
 		for _, u := range v {
 			inverted[u] = k
@@ -179,13 +175,17 @@ func (j *JoinTreeBuilder) Build() (JoinTree, error) {
 	return &joinTree{joinNode: *node, root: j.root, inverted: inverted}, nil
 }
 
-func (j *JoinTreeBuilder) dfs(current uint64) (*joinNode, error) {
-	source, ok := j.sourceMap[current]
-	if !ok {
-		return nil, fmt.Errorf("can't find %v in source map", current)
+func (j *JoinTreeBuilder) dfs(current string) (*joinNode, error) {
+	metrics, err := j.dictionary.GetMetricsBySourceKeys([]string{current})
+	if err != nil {
+		return nil, err
 	}
-	metrics, dimensions := j.GetSourceRelateMetricsAndDimensions(source)
-	node := newJoinNode(metrics, dimensions, source)
+	dimensions, err := j.dictionary.GetDimensionsBySourceKeys([]string{current})
+	if err != nil {
+		return nil, err
+	}
+
+	node := newJoinNode(metrics, dimensions)
 	for _, v := range j.tree[current] {
 		child, err := j.dfs(v)
 		if err != nil {
@@ -194,21 +194,4 @@ func (j *JoinTreeBuilder) dfs(current uint64) (*joinNode, error) {
 		node.Children = append(node.Children, child)
 	}
 	return node, nil
-}
-
-// GetSourceRelateMetricsAndDimensions 获取 Source 的 Metrics 和 Dimensions
-func (j *JoinTreeBuilder) GetSourceRelateMetricsAndDimensions(src *models.DataSource) ([]*models.Metric, []*models.Dimension) {
-	metrics := make([]*models.Metric, 0)
-	dimensions := make([]*models.Dimension, 0)
-	for _, metric := range j.metrics {
-		if metric.DataSourceID == src.ID {
-			metrics = append(metrics, metric)
-		}
-	}
-	for _, dimension := range j.dimensions {
-		if dimension.DataSourceID == src.ID {
-			dimensions = append(dimensions, dimension)
-		}
-	}
-	return metrics, dimensions
 }

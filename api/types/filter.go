@@ -18,6 +18,7 @@ func (f FilterOperatorType) IsTree() bool {
 
 const (
 	FilterOperatorTypeUnknown       FilterOperatorType = "FILTER_OPERATOR_UNKNOWN"
+	FilterOperatorTypeEquals        FilterOperatorType = "FILTER_OPERATOR_EQUALS"
 	FilterOperatorTypeIn            FilterOperatorType = "FILTER_OPERATOR_IN"
 	FilterOperatorTypeNotIn         FilterOperatorType = "FILTER_OPERATOR_NOT_IN"
 	FilterOperatorTypeLessEquals    FilterOperatorType = "FILTER_OPERATOR_LESS_EQUALS"
@@ -53,6 +54,9 @@ func (f *Filter) Expression() (string, error) {
 		return "", err
 	}
 	switch f.OperatorType {
+	case FilterOperatorTypeEquals:
+		v := value[0]
+		return fmt.Sprintf("%v = %v", f.Name, v), nil
 	case FilterOperatorTypeIn:
 		return fmt.Sprintf("%v IN (%v)", f.Name, strings.Join(value, ", ")), nil
 	case FilterOperatorTypeNotIn:

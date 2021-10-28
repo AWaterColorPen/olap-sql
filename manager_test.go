@@ -6,7 +6,6 @@ import (
 
 	olapsql "github.com/awatercolorpen/olap-sql"
 	"github.com/awatercolorpen/olap-sql/api/types"
-	"github.com/awatercolorpen/olap-sql/dictionary"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +26,7 @@ func newManager(tb testing.TB) (*olapsql.Manager, error) {
 	k, v := getOlapDBOption(tb)
 	do := getDictionaryOption()
 	configuration := &olapsql.Configuration{
-		ClientsOption: map[string]*olapsql.DBOption{k: v},
+		ClientsOption:    map[string]*olapsql.DBOption{k: v},
 		DictionaryOption: do,
 	}
 
@@ -47,8 +46,8 @@ func getDictionaryOption() *olapsql.Option {
 		dsn = "test/dictionary.ck.toml"
 	}
 	return &olapsql.Option{
-		AdapterOption: dictionary.AdapterOption{
-			Type: dictionary.FILEAdapter,
+		AdapterOption: olapsql.AdapterOption{
+			Type: olapsql.FILEAdapter,
 			Dsn:  dsn,
 		},
 	}

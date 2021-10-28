@@ -8,15 +8,7 @@ import (
 )
 
 type metricGraph struct {
-	id   map[uint64]*types.Metric
 	name map[string]*types.Metric
-}
-
-func (m *metricGraph) GetByID(id uint64) (*types.Metric, error) {
-	if v, ok := m.id[id]; ok {
-		return v, nil
-	}
-	return nil, fmt.Errorf("can't find %v in metric graph", id)
 }
 
 func (m *metricGraph) GetByName(name string) (*types.Metric, error) {
@@ -26,82 +18,76 @@ func (m *metricGraph) GetByName(name string) (*types.Metric, error) {
 	return nil, fmt.Errorf("can't find %v in metric graph", name)
 }
 
-func (m *metricGraph) set(id uint64, metric *types.Metric) {
-	m.id[id] = metric
+func (m *metricGraph) set(metric *types.Metric) {
 	m.name[metric.Name] = metric
 }
 
 type MetricGraph interface {
-	GetByID(id uint64) (*types.Metric, error)
 	GetByName(name string) (*types.Metric, error)
 }
 
 type MetricGraphBuilder struct {
-	dbType    types.DBType
-	sourceMap map[uint64]*models.DataSource
-	metricMap map[uint64]*models.Metric
-	joinTree  JoinTree
+	dbType     types.DBType
+	dictionary IAdapter
+	joinTree   JoinTree
 }
 
 func (m *MetricGraphBuilder) Build() (MetricGraph, error) {
-	var name []string
-	for _, v := range m.metricMap {
-		name = append(name, v.Name)
+	var key []string
+	for _, v := range m.dictionary.GetMetric() {
+		key = append(key, v.GetKey())
 	}
-	linq.From(name).Distinct().ToSlice(&name)
+	linq.From(key).Distinct().ToSlice(&key)
 
-	queue, err := m.sort(name)
+	queue, err := m.sort(key)
 	if err != nil {
 		return nil, err
 	}
 
-	graph := &metricGraph{id: map[uint64]*types.Metric{}, name: map[string]*types.Metric{}}
-	for _, v := range queue {
-		metric := m.metricMap[v]
-		source := m.sourceMap[metric.DataSourceID]
+	graph := &metricGraph{name: map[string]*types.Metric{}}
+	for _, k := range queue {
+		metric, _ := m.dictionary.GetMetricByKey(k)
 		current := &types.Metric{
 			Type:      metric.Type,
-			Table:     source.Name,
+			Table:     metric.DataSource,
 			Name:      metric.Name,
 			FieldName: metric.FieldName,
 			Filter:    metric.Filter,
 			DBType:    m.dbType,
 		}
-		if metric.Composition != nil {
-			for _, u := range metric.Composition.MetricID {
-				value, _ := graph.GetByID(u)
-				current.Children = append(current.Children, value)
-			}
+		for _, u := range metric.Composition {
+			name := models.GetNameFromKey(u)
+			value, _ := graph.GetByName(name)
+			current.Children = append(current.Children, value)
 		}
-		graph.set(v, current)
+		graph.set(current)
 	}
 
 	return graph, nil
 }
 
-func (m *MetricGraphBuilder) sort(metrics []string) ([]uint64, error) {
-	inDegree := map[uint64]int{}
-	graph := map[uint64][]uint64{}
+func (m *MetricGraphBuilder) sort(metrics []string) ([]string, error) {
+	inDegree := map[string]int{}
+	graph := map[string][]string{}
 
-	for _, v := range metrics {
-		metric, err := m.joinTree.FindMetric(v)
+	for _, key := range metrics {
+		name := models.GetNameFromKey(key)
+		metric, err := m.joinTree.FindMetricByName(name)
 		if err != nil {
 			return nil, err
 		}
 
-		inDegree[metric.ID] = 0
-		if metric.Composition != nil {
-			for _, u := range metric.Composition.MetricID {
-				graph[u] = append(graph[u], metric.ID)
-				inDegree[metric.ID]++
-				if _, ok := inDegree[u]; !ok {
-					inDegree[u] = 0
-				}
+		inDegree[metric.GetKey()] = 0
+		for _, u := range metric.Composition {
+			graph[u] = append(graph[u], metric.GetKey())
+			inDegree[metric.GetKey()]++
+			if _, ok := inDegree[u]; !ok {
+				inDegree[u] = 0
 			}
 		}
 	}
 
-	var queue []uint64
+	var queue []string
 	for k, v := range inDegree {
 		if v == 0 {
 			queue = append(queue, k)

@@ -46,7 +46,7 @@ func (c Clients) key(dbType types.DBType, dataset string) string {
 	return fmt.Sprintf("%v/%v", dbType, dataset)
 }
 
-func (c Clients) BuildDB(clause Clause) (*gorm.DB, error) {
+func (c Clients) BuildDB(clause types.Clause) (*gorm.DB, error) {
 	client, err := c.Get(clause.GetDBType(), clause.GetDataset())
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (c Clients) BuildDB(clause Clause) (*gorm.DB, error) {
 	return clause.BuildDB(client)
 }
 
-func (c Clients) BuildSQL(clause Clause) (string, error) {
+func (c Clients) BuildSQL(clause types.Clause) (string, error) {
 	client, err := c.Get(clause.GetDBType(), clause.GetDataset())
 	if err != nil {
 		return "", err
