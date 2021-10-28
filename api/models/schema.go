@@ -114,8 +114,8 @@ type Metric struct {
 	FieldName   string           `toml:"field_name"`
 	Type        types.MetricType `toml:"type"`
 	ValueType   types.ValueType  `toml:"value_type"`
-	Composition []string         `toml:"composition"`
 	Description string           `toml:"description"`
+	Composition []string         `toml:"composition"`
 	Filter      *types.Filter    `toml:"filter"`
 }
 

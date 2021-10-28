@@ -152,8 +152,9 @@ func MockQuery1ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Source, 2)
 	assert.Len(t, result.Source[0], 7)
 	assert.Equal(t, float64(7326), result.Source[0]["size_sum"])
-	assert.Equal(t, 0.022113022113022112, result.Source[0]["hits_per_size"])
-	assert.Equal(t, 3.700855, result.Source[0]["source_avg"])
+
+	assert.Equal(t, 0.022113022113022112, getValue(result.Source[0]["hits_per_size"]))
+	assert.Equal(t, 3.700855, getValue(result.Source[0]["source_avg"]))
 }
 
 // MockQuery2 mock query for group by time case
@@ -183,8 +184,8 @@ func MockQuery2ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Source[0], 7)
 	assert.Equal(t, "2021-05-06 11:00:00", result.Source[0]["time_by_hour"])
 	assert.Equal(t, float64(10086), result.Source[0]["size_sum"])
-	assert.Equal(t, 0.013781479278207416, result.Source[0]["hits_per_size"])
-	assert.Equal(t, 4.872, result.Source[0]["source_avg"])
+	assert.Equal(t, 0.013781479278207416, getValue(result.Source[0]["hits_per_size"]))
+	assert.Equal(t, 4.872, getValue(result.Source[0]["source_avg"]))
 }
 
 // MockQuery3 mock query for nested join case
@@ -213,7 +214,7 @@ func MockQuery3ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Source[0], 3)
 	assert.Equal(t, "school", result.Source[0]["project"])
 	assert.Equal(t, "location", result.Source[0]["class_name"])
-	assert.Equal(t, 0.18742, result.Source[0]["source_avg"])
+	assert.Equal(t, 0.18742, getValue(result.Source[0]["source_avg"]))
 }
 
 // MockQuery4 mock query for nan / inf case
@@ -270,5 +271,19 @@ func MockQuery6ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Dimensions, 1)
 	assert.Len(t, result.Source, 1)
 	assert.Len(t, result.Source[0], 1)
-	assert.Equal(t, float64(7325), result.Source[0]["hits_sum"])
+	assert.Equal(t, float64(7325), getValue(result.Source[0]["hits_sum"]))
+}
+
+func getValue(value interface{}) float64 {
+	switch v := value.(type) {
+	case float64:
+		return v
+	case *float64:
+		if v != nil {
+			return *v
+		}
+		return -123456789
+	default:
+		return -123456789
+	}
 }
