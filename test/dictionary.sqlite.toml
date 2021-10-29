@@ -1,22 +1,15 @@
 sets = [
-  {name = "wikistat", type = "sqlite", description = "", root = "wikistat", join = [
-    {data_source1 = "wikistat", data_source2 = "wikistat_relate", join_on = [
-      {dimension1 = "project", dimension2 = "project"},
-    ]},
-    {data_source1 = "wikistat_relate", data_source2 = "wikistat_class", join_on = [
-      {dimension1 = "class_id", dimension2 = "class_id"},
-    ]},
+  {name = "wikistat", type = "sqlite", description = "", root = "wikistat", dimension_join = [
+    {data_source1 = "wikistat", data_source2 = "wikistat_relate", join_on = [{dimension1 = "project", dimension2 = "project"}]},
+    {data_source1 = "wikistat_relate", data_source2 = "wikistat_class", join_on = [{dimension1 = "class_id", dimension2 = "class_id"}]},
   ]},
-  {name = "merged_uv", type = "sqlite", description = "", root = "wikistat_with_uv", join = [
-    {data_source1 = "virtual_wikistat", data_source2 = "virtual_wikistat_uv", join_on = [
-      {dimension1 = "time_by_hour", dimension2 = "time_by_hour"},
-      {dimension1 = "sub_project", dimension2 = "sub_project"},
-    ]},
-    {data_source1 = "wikistat", data_source2 = "wikistat_relate", join_on = [
-      {dimension1 = "project", dimension2 = "project"},
-    ]},
-    {data_source1 = "wikistat_relate", data_source2 = "wikistat_class", join_on = [
-      {dimension1 = "class_id", dimension2 = "class_id"},
+  {name = "merged_uv", type = "sqlite", description = "", root = "wikistat_with_uv", dimension_join = [
+    {data_source1 = "wikistat", data_source2 = "wikistat_relate", join_on = [{dimension1 = "project", dimension2 = "project"}]},
+    {data_source1 = "wikistat_relate", data_source2 = "wikistat_class", join_on = [{dimension1 = "class_id", dimension2 = "class_id"}]},
+  ], merged_join = [
+    {target = {data_source = "wikistat_with_uv", dimension = ["time_by_hour", "sub_project"]}, source = [
+      {data_source = "virtual_wikistat", dimension = ["time_by_hour", "sub_project"]},
+      {data_source = "virtual_wikistat_uv", dimension = ["time_by_hour", "sub_project"]},
     ]},
   ]},
 ]

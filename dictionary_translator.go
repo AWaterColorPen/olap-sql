@@ -280,8 +280,8 @@ func (t *BaseTranslator) getColumn(name string) (*columnStruct, error) {
 	return nil, fmt.Errorf("not found filter name %v", name)
 }
 
-func (t *BaseTranslator) getJoin(datasource string) (*models.DataSetJoin, error) {
-	for _, join := range t.set.Join {
+func (t *BaseTranslator) getJoin(datasource string) (*models.DataSetDimensionJoin, error) {
+	for _, join := range t.set.DimensionJoin {
 		if join.DataSource2 == datasource {
 			return join, nil
 		}
