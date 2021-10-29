@@ -46,8 +46,8 @@ type joinNode struct {
 	Children         []*joinNode
 	metricNameMap    map[string]*models.Metric
 	dimensionNameMap map[string]*models.Dimension
-	metricKeyMap    map[string]*models.Metric
-	dimensionKeyMap map[string]*models.Dimension
+	metricKeyMap     map[string]*models.Metric
+	dimensionKeyMap  map[string]*models.Dimension
 }
 
 func (j *joinNode) FindMetric(key string) (*models.Metric, error) {
@@ -149,9 +149,7 @@ func (j *joinTree) FindDimensionByName(key string) (*models.Dimension, error) {
 type JoinTree interface {
 	Path(key string) ([]string, error)
 	FindMetricByName(name string) (*models.Metric, error)
-	// FindMetricByKey(key string) (*models.Metric, error)
 	FindDimensionByName(name string) (*models.Dimension, error)
-	// FindDimensionByKey(key string) (*models.Dimension, error)
 }
 
 type JoinTreeBuilder struct {
@@ -176,14 +174,8 @@ func (j *JoinTreeBuilder) Build() (JoinTree, error) {
 }
 
 func (j *JoinTreeBuilder) dfs(current string) (*joinNode, error) {
-	metrics, err := j.dictionary.GetMetricsBySourceKeys([]string{current})
-	if err != nil {
-		return nil, err
-	}
-	dimensions, err := j.dictionary.GetDimensionsBySourceKeys([]string{current})
-	if err != nil {
-		return nil, err
-	}
+	metrics := j.dictionary.GetMetricsBySource(current)
+	dimensions := j.dictionary.GetDimensionsBySource(current)
 
 	node := newJoinNode(metrics, dimensions)
 	for _, v := range j.tree[current] {

@@ -26,9 +26,9 @@ func (d *DataSet) GetKey() string {
 }
 
 func (d *DataSet) GetDataSource() []string {
-	var out []string
+	out := []string{d.Root}
 	for _, join := range d.Join {
-	    out = append(out, join.DataSource1, join.DataSource2)
+		out = append(out, join.DataSource1, join.DataSource2)
 	}
 	linq.From(out).Distinct().ToSlice(&out)
 	return out
