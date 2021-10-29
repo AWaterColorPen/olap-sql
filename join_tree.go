@@ -46,8 +46,6 @@ type joinNode struct {
 	Children         []*joinNode
 	metricNameMap    map[string]*models.Metric
 	dimensionNameMap map[string]*models.Dimension
-	metricKeyMap     map[string]*models.Metric
-	dimensionKeyMap  map[string]*models.Dimension
 }
 
 func (j *joinNode) FindMetric(key string) (*models.Metric, error) {

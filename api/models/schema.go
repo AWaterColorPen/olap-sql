@@ -13,12 +13,12 @@ type IModel interface {
 }
 
 type DataSet struct {
-	Name        string           `toml:"name"`
-	DBType      types.DBType     `toml:"type"`
-	Description string           `toml:"description"`
-	Root        string           `toml:"root"`
-	Join        []*DataSetJoin   `toml:"join"`
-	Merged      []*DataSetMerged `toml:"merged"`
+	Name          string                  `toml:"name"`
+	DBType        types.DBType            `toml:"type"`
+	Description   string                  `toml:"description"`
+	Root          string                  `toml:"root"`
+	DimensionJoin []*DataSetDimensionJoin `toml:"dimension_join"`
+	Merged        []*DataSetMergedJoin    `toml:"merged_join"`
 }
 
 func (d *DataSet) GetKey() string {
@@ -27,7 +27,7 @@ func (d *DataSet) GetKey() string {
 
 func (d *DataSet) GetDataSource() []string {
 	out := []string{d.Root}
-	for _, join := range d.Join {
+	for _, join := range d.DimensionJoin {
 		out = append(out, join.DataSource1, join.DataSource2)
 	}
 	linq.From(out).Distinct().ToSlice(&out)
@@ -42,7 +42,7 @@ func (d *DataSet) JoinTopologyGraph() (Graph, error) {
 	inDegree := map[string]int{}
 	graph := Graph{}
 
-	for _, v := range d.Join {
+	for _, v := range d.DimensionJoin {
 		if _, ok := inDegree[v.DataSource1]; !ok {
 			inDegree[v.DataSource1] = 0
 		}
@@ -71,10 +71,17 @@ func (d *DataSet) JoinTopologyGraph() (Graph, error) {
 	return graph, nil
 }
 
-type DataSetMerged struct {
+type DataSetMergedJoin struct {
+	Target MergedJoinOn `toml:"target"`
+	Source []MergedJoinOn `toml:"source"`
 }
 
-type DataSetJoin struct {
+type MergedJoinOn struct {
+	DataSource string    `toml:"data_source"`
+	Dimension []string `toml:"dimension"`
+}
+
+type DataSetDimensionJoin struct {
 	DataSource1 string    `toml:"data_source1"`
 	DataSource2 string    `toml:"data_source2"`
 	JoinOn      []*JoinOn `toml:"join_on"`

@@ -194,7 +194,7 @@ func (f *FileAdapter) getDimensionsBySourceKeys(key []string) []*models.Dimensio
 	return out
 }
 
-func (f *FileAdapter) isValidJoin(join *models.DataSetJoin) error {
+func (f *FileAdapter) isValidDimensionJoin(join *models.DataSetDimensionJoin) error {
 	source := f.getSourcesByKeys([]string{join.DataSource1, join.DataSource2})
 	if len(source) != 2 {
 		return fmt.Errorf("invalid dataset join setting, found source=%v", source)
@@ -223,8 +223,8 @@ func (f *FileAdapter) isValidDataSet(set *models.DataSet) error {
 	if err := f.isValidJoinTopologyGraph(set); err != nil {
 		return err
 	}
-	for _, join := range set.Join {
-		if err := f.isValidJoin(join); err != nil {
+	for _, join := range set.DimensionJoin {
+		if err := f.isValidDimensionJoin(join); err != nil {
 			return err
 		}
 	}
