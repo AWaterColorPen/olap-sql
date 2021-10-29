@@ -72,13 +72,13 @@ func (d *DataSet) JoinTopologyGraph() (Graph, error) {
 }
 
 type DataSetMergedJoin struct {
-	Target MergedJoinOn `toml:"target"`
+	Target MergedJoinOn   `toml:"target"`
 	Source []MergedJoinOn `toml:"source"`
 }
 
 type MergedJoinOn struct {
-	DataSource string    `toml:"data_source"`
-	Dimension []string `toml:"dimension"`
+	DataSource string   `toml:"data_source"`
+	Dimension  []string `toml:"dimension"`
 }
 
 type DataSetDimensionJoin struct {

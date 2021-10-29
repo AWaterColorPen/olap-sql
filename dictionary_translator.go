@@ -13,20 +13,32 @@ type Translator interface {
 	Translate(*types.Query) (types.Clause, error)
 }
 
+type TranslatorType string
+
+const (
+	DimensionJoinTranslatorType TranslatorType = "dimension_join"
+	MergedJoinTranslatorType    TranslatorType = "merged_join"
+)
+
 type TranslatorOption struct {
 	Adapter IAdapter
 	Query   *types.Query
 	Set     *models.DataSet
-	Root    string
+	Current string
+}
+
+func (t *TranslatorOption) getTranslatorType() (TranslatorType, error) {
+	return "", fmt.Errorf("unsupported")
 }
 
 func NewTranslator(option *TranslatorOption) (Translator, error) {
 	if option.Set == nil {
 		option.Set, _ = option.Adapter.GetDataSetByKey(option.Query.DataSetName)
 	}
-	if option.Root == "" {
-		option.Root = option.Set.GetRoot()
+	if option.Current == "" {
+		option.Current = option.Set.GetRoot()
 	}
+
 	return newBaseTranslator(option)
 }
 
@@ -34,8 +46,8 @@ func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
 	tGraph, _ := option.Set.JoinTopologyGraph()
 
 	jBuilder := &JoinTreeBuilder{
-		tree:       tGraph.GetTree(option.Root),
-		root:       option.Root,
+		tree:       tGraph.GetTree(option.Current),
+		root:       option.Current,
 		dictionary: option.Adapter,
 	}
 	jTree, err := jBuilder.Build()
@@ -56,7 +68,7 @@ func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
 	translator := &BaseTranslator{
 		adapter:     option.Adapter,
 		set:         option.Set,
-		root:        option.Root,
+		root:        option.Current,
 		joinTree:    jTree,
 		metricGraph: mGraph,
 	}
