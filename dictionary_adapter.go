@@ -26,11 +26,8 @@ type IAdapter interface {
 	GetMetricByKey(string) (*models.Metric, error)
 	GetDimensionByKey(string) (*models.Dimension, error)
 
-	GetSourcesByKeys([]string) ([]*models.DataSource, error)
-	GetMetricsByKeys([]string) ([]*models.Metric, error)
-	GetMetricsBySourceKeys([]string) ([]*models.Metric, error)
-	GetDimensionsByKeys([]string) ([]*models.Dimension, error)
-	GetDimensionsBySourceKeys([]string) ([]*models.Dimension, error)
+	GetMetricsBySource(string) []*models.Metric
+	GetDimensionsBySource(string) []*models.Dimension
 }
 
 // AdapterOption Adapter配置
@@ -63,20 +60,13 @@ func (f *FileAdapter) BuildDataSetAdapter(key string) (IAdapter, error) {
 	}
 
 	sKey := set.GetDataSource()
-	sources, err := f.GetSourcesByKeys(sKey)
-	if err != nil {
-		return nil, err
+	sources := f.getSourcesByKeys(sKey)
+	sKey = []string{}
+	for _, v := range sources {
+		sKey = append(sKey, v.GetKey())
 	}
-
-	metrics, err := f.GetMetricsBySourceKeys(sKey)
-	if err != nil {
-		return nil, err
-	}
-
-	dimensions, err := f.GetDimensionsBySourceKeys(sKey)
-	if err != nil {
-		return nil, err
-	}
+	metrics := f.getMetricsBySourceKeys(sKey)
+	dimensions := f.getDimensionsBySourceKeys(sKey)
 
 	adapter := &FileAdapter{
 		Sets:       []*models.DataSet{set},
@@ -102,7 +92,7 @@ func (f *FileAdapter) GetDataSetByKey(key string) (*models.DataSet, error) {
 
 func (f *FileAdapter) GetSourceByKey(key string) (*models.DataSource, error) {
 	for _, source := range f.Sources {
-		if source.GetKey() == key {
+		if source.GetKey() == key || source.Alias == key {
 			return source, nil
 		}
 	}
@@ -127,18 +117,40 @@ func (f *FileAdapter) GetDimensionByKey(key string) (*models.Dimension, error) {
 	return nil, fmt.Errorf("can not find '%v' dimension", key)
 }
 
-func (f *FileAdapter) GetSourcesByKeys(key []string) ([]*models.DataSource, error) {
+func (f *FileAdapter) GetMetricsBySource(key string) []*models.Metric {
+	var out []*models.Metric
+	for _, metric := range f.Metrics {
+		if metric.DataSource == key {
+			out = append(out, metric)
+		}
+	}
+	return out
+}
+
+func (f *FileAdapter) GetDimensionsBySource(key string) []*models.Dimension {
+	var out []*models.Dimension
+	for _, dimension := range f.Dimensions {
+		if dimension.DataSource == key {
+			out = append(out, dimension)
+		}
+	}
+	return out
+}
+
+func (f *FileAdapter) getSourcesByKeys(key []string) []*models.DataSource {
 	set := getKeySet(key)
 	var out []*models.DataSource
 	for _, source := range f.Sources {
 		if _, ok := set[source.GetKey()]; ok {
 			out = append(out, source)
+		} else if _, ok := set[source.Alias]; ok {
+			out = append(out, source)
 		}
 	}
-	return out, nil
+	return out
 }
 
-func (f *FileAdapter) GetMetricsByKeys(key []string) ([]*models.Metric, error) {
+func (f *FileAdapter) getMetricsByKeys(key []string) []*models.Metric {
 	set := getKeySet(key)
 	var out []*models.Metric
 	for _, metric := range f.Metrics {
@@ -146,10 +158,10 @@ func (f *FileAdapter) GetMetricsByKeys(key []string) ([]*models.Metric, error) {
 			out = append(out, metric)
 		}
 	}
-	return out, nil
+	return out
 }
 
-func (f *FileAdapter) GetMetricsBySourceKeys(key []string) ([]*models.Metric, error) {
+func (f *FileAdapter) getMetricsBySourceKeys(key []string) []*models.Metric {
 	set := getKeySet(key)
 	var out []*models.Metric
 	for _, metric := range f.Metrics {
@@ -157,10 +169,10 @@ func (f *FileAdapter) GetMetricsBySourceKeys(key []string) ([]*models.Metric, er
 			out = append(out, metric)
 		}
 	}
-	return out, nil
+	return out
 }
 
-func (f *FileAdapter) GetDimensionsByKeys(key []string) ([]*models.Dimension, error) {
+func (f *FileAdapter) getDimensionsByKeys(key []string) []*models.Dimension {
 	set := getKeySet(key)
 	var out []*models.Dimension
 	for _, dimension := range f.Dimensions {
@@ -168,10 +180,10 @@ func (f *FileAdapter) GetDimensionsByKeys(key []string) ([]*models.Dimension, er
 			out = append(out, dimension)
 		}
 	}
-	return out, nil
+	return out
 }
 
-func (f *FileAdapter) GetDimensionsBySourceKeys(key []string) ([]*models.Dimension, error) {
+func (f *FileAdapter) getDimensionsBySourceKeys(key []string) []*models.Dimension {
 	set := getKeySet(key)
 	var out []*models.Dimension
 	for _, dimension := range f.Dimensions {
@@ -179,32 +191,26 @@ func (f *FileAdapter) GetDimensionsBySourceKeys(key []string) ([]*models.Dimensi
 			out = append(out, dimension)
 		}
 	}
-	return out, nil
+	return out
 }
 
 func (f *FileAdapter) isValidJoin(join *models.DataSetJoin) error {
-	var key1, key2 []string
-	for _, on := range join.JoinOn {
-		k1 := fmt.Sprintf("%v.%v", join.DataSource1, on.Dimension1)
-		k2 := fmt.Sprintf("%v.%v", join.DataSource2, on.Dimension2)
-		key1 = append(key1, k1)
-		key2 = append(key2, k2)
-	}
-
-	d1, _ := f.GetDimensionsByKeys(key1)
-	if len(d1) != len(join.JoinOn) {
-		return fmt.Errorf("invalid dataset join setting=%v, found dimension=%v", key1, d1)
-	}
-	d2, _ := f.GetDimensionsByKeys(key2)
-	if len(d2) != len(join.JoinOn) {
-		return fmt.Errorf("invalid dataset join setting=%v, found dimension=%v", key2, d2)
-	}
-
-	source, _ := f.GetSourcesByKeys([]string{join.DataSource1, join.DataSource2})
+	source := f.getSourcesByKeys([]string{join.DataSource1, join.DataSource2})
 	if len(source) != 2 {
 		return fmt.Errorf("invalid dataset join setting, found source=%v", source)
 	}
 
+	s1, s2 := source[0].Name, source[1].Name
+	for _, on := range join.JoinOn {
+		k1 := fmt.Sprintf("%v.%v", s1, on.Dimension1)
+		k2 := fmt.Sprintf("%v.%v", s2, on.Dimension2)
+		if _, err := f.GetDimensionByKey(k1); err != nil {
+			return fmt.Errorf("invalid dataset join setting=%v, err=%v", s1, err)
+		}
+		if _, err := f.GetDimensionByKey(k2); err != nil {
+			return fmt.Errorf("invalid dataset join setting=%v, err=%v", s2, err)
+		}
+	}
 	return nil
 }
 
@@ -226,12 +232,18 @@ func (f *FileAdapter) isValidDataSet(set *models.DataSet) error {
 }
 
 func (f *FileAdapter) isValidMetric(metric *models.Metric) error {
-	// TODO
+	_, err := f.GetSourceByKey(metric.DataSource)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (f *FileAdapter) isValidDimension(dimension *models.Dimension) error {
-	// TODO
+	_, err := f.GetSourceByKey(dimension.DataSource)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

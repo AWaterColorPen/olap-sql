@@ -11,6 +11,7 @@ import (
 )
 
 const mockWikiStatDataSet = "wikistat"
+const mockWikiStatDataSetMerged = "merged_uv"
 
 type WikiStat struct {
 	Date       time.Time `gorm:"column:date"       json:"date"`
@@ -45,6 +46,19 @@ func (ClassRelate) TableName() string {
 	return mockWikiStatDataSet + "_class"
 }
 
+type MergedUv struct {
+	Date          time.Time `gorm:"column:date"       json:"date"`
+	Time          time.Time `gorm:"column:time"       json:"time"`
+	SubProject    string    `gorm:"column:sub_project" json:"sub_project"`
+	UID           string    `gorm:"column:uid"   json:"uid"`
+	ActivationCnt uint64    `gorm:"column:activation_cnt"  json:"activation_cnt"`
+	Cost          float64   `gorm:"column:cost"  json:"cost"`
+}
+
+func (MergedUv) TableName() string {
+	return mockWikiStatDataSet + "_uv"
+}
+
 func timeParseDate(in string) time.Time {
 	t, _ := time.Parse("2006-01-02", in)
 	return t
@@ -77,7 +91,7 @@ func MockWikiStatData(db *gorm.DB) error {
 		return nil
 	}
 
-	if err := db.Debug().AutoMigrate(&WikiStat{}, &WikiStatRelate{}, &ClassRelate{}); err != nil {
+	if err := db.Debug().AutoMigrate(&WikiStat{}, &WikiStatRelate{}, &ClassRelate{}, &MergedUv{}); err != nil {
 		return err
 	}
 	if err := db.Debug().Create([]*WikiStat{
@@ -111,6 +125,21 @@ func MockWikiStatData(db *gorm.DB) error {
 		{ID: 3, Name: "culture"},
 		{ID: 4, Name: "entertainment"},
 		{ID: 5, Name: "social"},
+	}).Error; err != nil {
+		return err
+	}
+	if err := db.Debug().Create([]*MergedUv{
+		{Date: timeParseDate("2021-05-06"), Time: timeParseTime("2021-05-06T10:00:00Z"), SubProject: "CHN", UID: "aaa", ActivationCnt: 0, Cost: 0.0},
+		{Date: timeParseDate("2021-05-06"), Time: timeParseTime("2021-05-06T21:00:00Z"), SubProject: "university", UID: "pl-okm", ActivationCnt: 3, Cost: 0.45},
+		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T07:00:00Z"), SubProject: "US", UID: "aaa", ActivationCnt: 4, Cost: 0.51},
+		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T09:00:00Z"), SubProject: "pop", UID: "12345678", ActivationCnt: 1, Cost: 0.08},
+		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T09:00:00Z"), SubProject: "pop", UID: "qwerty", ActivationCnt: 2, Cost: 0.15},
+		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T09:00:00Z"), SubProject: "rap", UID: "12345678", ActivationCnt: 3, Cost: 0.21},
+		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T10:00:00Z"), SubProject: "rock", UID: "pl-okm", ActivationCnt: 10, Cost: 1.09},
+		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T11:00:00Z"), SubProject: "CHN", UID: "12345678", ActivationCnt: 2, Cost: 0.34},
+		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T11:00:00Z"), SubProject: "CHN", UID: "qwerty", ActivationCnt: 1, Cost: 0.22},
+		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T12:00:00Z"), SubProject: "CHN", UID: "12345678", ActivationCnt: 1, Cost: 0.12},
+		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T21:00:00Z"), SubProject: "university", UID: "12345678", ActivationCnt: 6, Cost: 1.12},
 	}).Error; err != nil {
 		return err
 	}
@@ -268,6 +297,26 @@ func MockQuery6() *types.Query {
 }
 
 func MockQuery6ResultAssert(t assert.TestingT, result *types.Result) {
+	assert.Len(t, result.Dimensions, 1)
+	assert.Len(t, result.Source, 1)
+	assert.Len(t, result.Source[0], 1)
+	assert.Equal(t, float64(7325), getValue(result.Source[0]["hits_sum"]))
+}
+
+func MockQuery7() *types.Query {
+	query := &types.Query{
+		DataSetName:  mockWikiStatDataSetMerged,
+		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
+		Metrics:      []string{"hits", "activation_cnt", "cost", "activation_rate"},
+		Dimensions:   []string{"time_by_hour", "sub_project"},
+		Filters: []*types.Filter{
+			{OperatorType: types.FilterOperatorTypeIn, Name: "time_by_hour", Value: []interface{}{"2021-05-07 10:00:00"}},
+		},
+	}
+	return query
+}
+
+func MockQuery7ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Dimensions, 1)
 	assert.Len(t, result.Source, 1)
 	assert.Len(t, result.Source[0], 1)

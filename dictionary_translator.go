@@ -64,12 +64,12 @@ func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
 }
 
 type BaseTranslator struct {
-	adapter      IAdapter
-	set          *models.DataSet
-	root         string
+	adapter IAdapter
+	set     *models.DataSet
+	root    string
 
-	joinTree     JoinTree
-	metricGraph  MetricGraph
+	joinTree    JoinTree
+	metricGraph MetricGraph
 
 	joinedSource []string
 }

@@ -19,7 +19,7 @@ func (d *Dictionary) Translator(query *types.Query) (Translator, error) {
 
 	option := &TranslatorOption{
 		Adapter: adapter,
-		Query: query,
+		Query:   query,
 	}
 	return NewTranslator(option)
 }

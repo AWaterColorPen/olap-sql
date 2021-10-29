@@ -12,5 +12,5 @@ func (g Graph) GetTree(current string) Graph {
 			graph[k] = append(graph[k], v)
 		}
 	}
-    return graph
+	return graph
 }
