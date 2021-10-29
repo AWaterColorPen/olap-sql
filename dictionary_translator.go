@@ -23,7 +23,7 @@ const (
 type TranslatorOption struct {
 	Adapter IAdapter
 	Query   *types.Query
-	Set     *models.DataSet
+	DBType  types.DBType
 	Current string
 }
 
@@ -32,23 +32,21 @@ func (t *TranslatorOption) getTranslatorType() (TranslatorType, error) {
 }
 
 func NewTranslator(option *TranslatorOption) (Translator, error) {
-	if option.Set == nil {
-		option.Set, _ = option.Adapter.GetDataSetByKey(option.Query.DataSetName)
-	}
-	if option.Current == "" {
-		option.Current = option.Set.GetRoot()
-	}
-
 	return newBaseTranslator(option)
 }
 
 func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
-	tGraph, _ := option.Set.JoinTopologyGraph()
+	adapter, err := option.Adapter.BuildDataSourceAdapter(option.Current)
+	if err != nil {
+		return nil, err
+	}
+
+	tGraph, _ := GetDependencyTree(adapter, option.Current)
 
 	jBuilder := &JoinTreeBuilder{
 		tree:       tGraph.GetTree(option.Current),
 		root:       option.Current,
-		dictionary: option.Adapter,
+		dictionary: adapter,
 	}
 	jTree, err := jBuilder.Build()
 	if err != nil {
@@ -56,8 +54,8 @@ func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
 	}
 
 	mBuilder := &MetricGraphBuilder{
-		dbType:     option.Set.DBType,
-		dictionary: option.Adapter,
+		dbType:     option.DBType,
+		dictionary: adapter,
 		joinTree:   jTree,
 	}
 	mGraph, err := mBuilder.Build()
@@ -66,9 +64,10 @@ func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
 	}
 
 	translator := &BaseTranslator{
-		adapter:     option.Adapter,
-		set:         option.Set,
-		root:        option.Current,
+		adapter:     adapter,
+		query:       option.Query,
+		dBType:      option.DBType,
+		current:     option.Current,
 		joinTree:    jTree,
 		metricGraph: mGraph,
 	}
@@ -77,8 +76,9 @@ func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
 
 type BaseTranslator struct {
 	adapter IAdapter
-	set     *models.DataSet
-	root    string
+	query   *types.Query
+	dBType  types.DBType
+	current string
 
 	joinTree    JoinTree
 	metricGraph MetricGraph
@@ -116,8 +116,8 @@ func (t *BaseTranslator) Translate(query *types.Query) (types.Clause, error) {
 		return nil, err
 	}
 	request := &types.Request{
-		DBType:     t.set.DBType,
-		Dataset:    t.set.Name,
+		DBType:     t.dBType,
+		Dataset:    t.query.DataSetName,
 		Metrics:    metrics,
 		Dimensions: dimensions,
 		Filters:    filters,
@@ -216,7 +216,7 @@ func (t *BaseTranslator) buildJoins() ([]*types.Join, error) {
 	var joins []*types.Join
 	linq.From(t.joinedSource).Distinct().ToSlice(&t.joinedSource)
 	for _, v := range t.joinedSource {
-		if v == t.root {
+		if v == t.current {
 			continue
 		}
 		join, err := t.getJoin(v)
@@ -224,17 +224,18 @@ func (t *BaseTranslator) buildJoins() ([]*types.Join, error) {
 			return nil, err
 		}
 
+		ds1, dl1, ds2, dl2 := join.Get1().DataSource, join.Get1().Dimension, join.Get2().DataSource, join.Get2().Dimension
 		var on []*types.JoinOn
-		for _, u := range join.JoinOn {
-			k1 := fmt.Sprintf("%v.%v", join.DataSource1, u.Dimension1)
-			k2 := fmt.Sprintf("%v.%v", join.DataSource2, u.Dimension2)
+		for i := 0; i <= len(dl1); i++ {
+			k1 := fmt.Sprintf("%v.%v", ds1, dl1)
+			k2 := fmt.Sprintf("%v.%v", ds2, dl2)
 			d1, _ := t.adapter.GetDimensionByKey(k1)
 			d2, _ := t.adapter.GetDimensionByKey(k2)
 			on = append(on, &types.JoinOn{Key1: d1.FieldName, Key2: d2.FieldName})
 		}
 
-		s1, _ := t.adapter.GetSourceByKey(join.DataSource1)
-		s2, _ := t.adapter.GetSourceByKey(join.DataSource2)
+		s1, _ := t.adapter.GetSourceByKey(ds1)
+		s2, _ := t.adapter.GetSourceByKey(ds2)
 		j := &types.Join{
 			DataSource1: &types.DataSource{
 				Database: s1.Database,
@@ -260,7 +261,7 @@ func (t *BaseTranslator) buildLimit(query *types.Query) (*types.Limit, error) {
 }
 
 func (t *BaseTranslator) buildDataSource() (*types.DataSource, error) {
-	source, _ := t.adapter.GetSourceByKey(t.root)
+	source, _ := t.adapter.GetSourceByKey(t.current)
 	return &types.DataSource{Database: source.Database, Name: source.Name}, nil
 }
 
@@ -292,12 +293,12 @@ func (t *BaseTranslator) getColumn(name string) (*columnStruct, error) {
 	return nil, fmt.Errorf("not found filter name %v", name)
 }
 
-func (t *BaseTranslator) getJoin(datasource string) (*models.DataSetDimensionJoin, error) {
-	for _, join := range t.set.DimensionJoin {
-		if join.DataSource2 == datasource {
-			return join, nil
-		}
-	}
+func (t *BaseTranslator) getJoin(datasource string) (*models.JoinPair, error) {
+	// for _, join := range t.set.DimensionJoin {
+	// 	if join.DataSource2 == datasource {
+	// 		return join, nil
+	// 	}
+	// }
 	return nil, fmt.Errorf("not found dataset_join data source %v", datasource)
 }
 

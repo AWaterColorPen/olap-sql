@@ -17,7 +17,7 @@ const (
 
 // IAdapter Adapter适配器
 type IAdapter interface {
-	BuildDataSetAdapter(string) (IAdapter, error)
+	BuildDataSourceAdapter(string) (IAdapter, error)
 
 	GetMetric() []*models.Metric
 
@@ -28,6 +28,65 @@ type IAdapter interface {
 
 	GetMetricsBySource(string) []*models.Metric
 	GetDimensionsBySource(string) []*models.Dimension
+}
+
+func IsValidJoin(adapter IAdapter, join *models.Join) error {
+	for _, on := range join.Dimension {
+		k := fmt.Sprintf("%v.%v", join.DataSource, on)
+		if _, err := adapter.GetDimensionByKey(k); err != nil {
+			return fmt.Errorf("invalid dataset join setting=%v, err=%v", join.DataSource, err)
+		}
+	}
+	return nil
+}
+
+func GetDependencyTree(adapter IAdapter, current string) (models.Graph, error) {
+	if root, err := adapter.GetSourceByKey(current); err != nil {
+		return nil, err
+	} else if root.IsDimension() {
+		return nil, fmt.Errorf("can't get dependency from a dimension datasource")
+	}
+
+	graph := models.Graph{current: nil}
+	queue := []string{current}
+	for i := 0; i < len(queue); i++ {
+		node, err := adapter.GetSourceByKey(queue[i])
+		if err != nil {
+			return nil, err
+		}
+		tree, err := node.GetDependencyTree()
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range tree {
+			for _, u := range v {
+				queue = append(queue, u)
+				graph[k] = append(graph[k], u)
+			}
+		}
+	}
+	//
+	// for _, v := range d.DimensionJoin {
+	// 	if _, ok := inDegree[v.DataSource1]; !ok {
+	// 		inDegree[v.DataSource1] = 0
+	// 	}
+	// 	inDegree[v.DataSource2] = inDegree[v.DataSource2] + 1
+	// 	graph[v.DataSource1] = append(graph[v.DataSource1], v.DataSource2)
+	// }
+	//
+	// for i := 0; i < len(queue); i++ {
+	// 	node := queue[i]
+	// 	for _, v := range graph[node] {
+	// 		inDegree[v]--
+	// 		if inDegree[v] == 0 {
+	// 			queue = append(queue, v)
+	// 		}
+	// 	}
+	// }
+	// if len(inDegree) != len(queue) {
+	// 	return nil, fmt.Errorf("it is not a topology graph. node=%v, intop=%v", len(inDegree), len(queue))
+	// }
+	return graph, nil
 }
 
 // AdapterOption Adapter配置
@@ -53,23 +112,27 @@ type FileAdapter struct {
 	Dimensions []*models.Dimension
 }
 
-func (f *FileAdapter) BuildDataSetAdapter(key string) (IAdapter, error) {
-	set, err := f.GetDataSetByKey(key)
+func (f *FileAdapter) BuildDataSourceAdapter(key string) (IAdapter, error) {
+	source, err := f.GetSourceByKey(key)
+	if err != nil {
+		return nil, err
+	}
+	tree, err := source.GetDependencyTree()
 	if err != nil {
 		return nil, err
 	}
 
-	sKey := set.GetDataSource()
-	sources := f.getSourcesByKeys(sKey)
-	sKey = []string{}
-	for _, v := range sources {
-		sKey = append(sKey, v.GetKey())
+	var sKey []string
+	for k, v := range tree {
+		sKey = append(sKey, k)
+		sKey = append(sKey, v...)
 	}
+
+	sources := f.getSourcesByKeys(sKey)
 	metrics := f.getMetricsBySourceKeys(sKey)
 	dimensions := f.getDimensionsBySourceKeys(sKey)
 
 	adapter := &FileAdapter{
-		Sets:       []*models.DataSet{set},
 		Sources:    sources,
 		Metrics:    metrics,
 		Dimensions: dimensions,
@@ -194,37 +257,38 @@ func (f *FileAdapter) getDimensionsBySourceKeys(key []string) []*models.Dimensio
 	return out
 }
 
-func (f *FileAdapter) isValidDimensionJoin(join *models.DataSetDimensionJoin) error {
-	source := f.getSourcesByKeys([]string{join.DataSource1, join.DataSource2})
-	if len(source) != 2 {
-		return fmt.Errorf("invalid dataset join setting, found source=%v", source)
+func (f *FileAdapter) isValidDataSet(set *models.DataSet) error {
+	root, err := f.GetSourceByKey(set.GetCurrent())
+	if err != nil {
+		return err
 	}
 
-	s1, s2 := source[0].Name, source[1].Name
-	for _, on := range join.JoinOn {
-		k1 := fmt.Sprintf("%v.%v", s1, on.Dimension1)
-		k2 := fmt.Sprintf("%v.%v", s2, on.Dimension2)
-		if _, err := f.GetDimensionByKey(k1); err != nil {
-			return fmt.Errorf("invalid dataset join setting=%v, err=%v", s1, err)
-		}
-		if _, err := f.GetDimensionByKey(k2); err != nil {
-			return fmt.Errorf("invalid dataset join setting=%v, err=%v", s2, err)
-		}
+	if !root.IsFact() {
+		return fmt.Errorf("can't use one datasource with type=%v as dateset's datasource", root.Type)
 	}
+
 	return nil
 }
 
-func (f *FileAdapter) isValidJoinTopologyGraph(set *models.DataSet) error {
-	_, err := set.JoinTopologyGraph()
-	return err
-}
-
-func (f *FileAdapter) isValidDataSet(set *models.DataSet) error {
-	if err := f.isValidJoinTopologyGraph(set); err != nil {
+func (f *FileAdapter) isValidDataSource(source *models.DataSource) error {
+	if err := source.IsValid(); err != nil {
 		return err
 	}
-	for _, join := range set.DimensionJoin {
-		if err := f.isValidDimensionJoin(join); err != nil {
+	for _, v := range source.DimensionJoin {
+		for _, u := range []*models.Join{v.Get1(), v.Get2()} {
+			if err := IsValidJoin(f, u); err != nil {
+				return err
+			}
+		}
+	}
+	for _, v := range source.MergedJoin {
+		if err := IsValidJoin(f, v); err != nil {
+			return err
+		}
+	}
+
+	if !source.IsDimension() {
+		if _, err := GetDependencyTree(f, source.GetKey()); err != nil {
 			return err
 		}
 	}
@@ -232,10 +296,19 @@ func (f *FileAdapter) isValidDataSet(set *models.DataSet) error {
 }
 
 func (f *FileAdapter) isValidMetric(metric *models.Metric) error {
-	_, err := f.GetSourceByKey(metric.DataSource)
-	if err != nil {
+	if _, err := f.GetSourceByKey(metric.DataSource); err != nil {
 		return err
 	}
+	for _, composition := range metric.Composition {
+		if _, err := f.GetMetricByKey(composition); err != nil {
+			return err
+		}
+	}
+	// if metric.Filter != nil {
+	// 	if _, err := f.GetMetricByKey(metric.Filter.Name); err != nil {
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 
@@ -250,6 +323,11 @@ func (f *FileAdapter) isValidDimension(dimension *models.Dimension) error {
 func (f *FileAdapter) isValid() error {
 	for _, set := range f.Sets {
 		if err := f.isValidDataSet(set); err != nil {
+			return err
+		}
+	}
+	for _, source := range f.Sources {
+		if err := f.isValidDataSource(source); err != nil {
 			return err
 		}
 	}

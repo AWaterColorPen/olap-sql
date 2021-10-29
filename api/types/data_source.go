@@ -5,13 +5,23 @@ import (
 	"gorm.io/gorm"
 )
 
+type DataSourceType string
+
+const (
+	DataSourceTypeFact              DataSourceType = "fact"
+	DataSourceTypeDimension         DataSourceType = "dimension"
+	DataSourceTypeFactDimensionJoin DataSourceType = "fact_dimension_join"
+	DataSourceTypeMergedJoin        DataSourceType = "merged_join"
+)
+
 type DataSource struct {
-	Database string  `json:"database"`
-	Name     string  `json:"name"`
-	Alias    string  `json:"alias"`
-	Joins    []*Join `json:"joins"`
-	Clause   Clause  `json:"clause"`
-	Sql      string  `json:"sql"`
+	Database string         `json:"database"`
+	Name     string         `json:"name"`
+	Alias    string         `json:"alias"`
+	Type     DataSourceType `json:"type"`
+	Joins    []*Join        `json:"joins"`
+	Clause   Clause         `json:"clause"`
+	Sql      string         `json:"sql"`
 }
 
 func (d *DataSource) getName() (string, error) {

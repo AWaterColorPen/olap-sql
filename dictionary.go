@@ -12,14 +12,15 @@ type Dictionary struct {
 }
 
 func (d *Dictionary) Translator(query *types.Query) (Translator, error) {
-	adapter, err := d.Adapter.BuildDataSetAdapter(query.DataSetName)
+	set, err := d.Adapter.GetDataSetByKey(query.DataSetName)
 	if err != nil {
 		return nil, err
 	}
-
 	option := &TranslatorOption{
-		Adapter: adapter,
+		Adapter: d.Adapter,
 		Query:   query,
+		DBType:  set.DBType,
+		Current: set.GetCurrent(),
 	}
 	return NewTranslator(option)
 }
