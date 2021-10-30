@@ -18,8 +18,8 @@ func TestRequest(t *testing.T) {
 	fmt.Println(sql)
 }
 
-func Request1() *types.Request {
-	request := &types.Request{
+func Request1() *types.NormalClause {
+	request := &types.NormalClause{
 		DBType:  types.DBTypeSQLite,
 		Dataset: mockWikiStatDataSet,
 		Metrics: []*types.Metric{
@@ -33,7 +33,7 @@ func Request1() *types.Request {
 		},
 		DataSource: &types.DataSource{
 			Alias: "t1",
-			Clause: &types.Request{
+			Clause: &types.NormalClause{
 				DBType:  types.DBTypeSQLite,
 				Dataset: mockWikiStatDataSet,
 				Metrics: []*types.Metric{
@@ -54,7 +54,7 @@ func Request1() *types.Request {
 			{
 				DataSource1: &types.DataSource{
 					Alias: "t1",
-					Clause: &types.Request{
+					Clause: &types.NormalClause{
 						DBType:  types.DBTypeSQLite,
 						Dataset: mockWikiStatDataSet,
 						Metrics: []*types.Metric{
@@ -73,7 +73,7 @@ func Request1() *types.Request {
 				},
 				DataSource2: &types.DataSource{
 					Alias: "t2",
-					Clause: &types.Request{
+					Clause: &types.NormalClause{
 						DBType:  types.DBTypeSQLite,
 						Dataset: mockWikiStatDataSet,
 						Metrics: []*types.Metric{

@@ -10,15 +10,13 @@ import (
 )
 
 type Translator interface {
-	Translate(*types.Query) (types.Clause, error)
+	GetAdapter() IAdapter
+	GetJoinTree() models.JoinTree
+	GetMetricGraph() models.MetricGraph
+	// Translate(*types.Query) (types.Clause, error)
 }
 
 type TranslatorType string
-
-const (
-	DimensionJoinTranslatorType TranslatorType = "dimension_join"
-	MergedJoinTranslatorType    TranslatorType = "merged_join"
-)
 
 type TranslatorOption struct {
 	Adapter IAdapter
@@ -43,7 +41,7 @@ func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
 
 	tGraph, _ := GetDependencyTree(adapter, option.Current)
 
-	jBuilder := &JoinTreeBuilder{
+	jBuilder := &models.JoinTreeBuilder{
 		tree:       tGraph.GetTree(option.Current),
 		root:       option.Current,
 		dictionary: adapter,
@@ -53,7 +51,7 @@ func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
 		return nil, err
 	}
 
-	mBuilder := &MetricGraphBuilder{
+	mBuilder := &models.MetricGraphBuilder{
 		dbType:     option.DBType,
 		dictionary: adapter,
 		joinTree:   jTree,
@@ -80,8 +78,8 @@ type BaseTranslator struct {
 	dBType  types.DBType
 	current string
 
-	joinTree    JoinTree
-	metricGraph MetricGraph
+	joinTree    models.JoinTree
+	metricGraph models.MetricGraph
 
 	joinedSource []string
 }
@@ -115,9 +113,7 @@ func (t *BaseTranslator) Translate(query *types.Query) (types.Clause, error) {
 	if err != nil {
 		return nil, err
 	}
-	request := &types.Request{
-		DBType:     t.dBType,
-		Dataset:    t.query.DataSetName,
+	clause := &types.NormalClause{
 		Metrics:    metrics,
 		Dimensions: dimensions,
 		Filters:    filters,
@@ -125,26 +121,61 @@ func (t *BaseTranslator) Translate(query *types.Query) (types.Clause, error) {
 		Orders:     orders,
 		Limit:      limit,
 		DataSource: datasource,
-		Sql:        query.Sql,
 	}
+	clause.DBType = t.dBType
+	clause.Dataset = query.DataSetName
 
-	return request, nil
+	return clause, nil
 }
 
-func (t *BaseTranslator) buildMetrics(query *types.Query) ([]*types.Metric, error) {
+
+type columnStruct struct {
+	ValueType  types.ValueType
+	Statement  string
+	DataSource string
+}
+
+func getColumn(translator Translator, name string) (*columnStruct, error) {
+	joinTree := translator.GetJoinTree()
+	metricGraph := translator.GetMetricGraph()
+	metric, err := joinTree.FindMetricByName(name)
+	if err == nil {
+		current, _ := metricGraph.GetByName(metric.Name)
+		statement, _ := current.Expression()
+		return &columnStruct{ValueType: metric.ValueType, Statement: statement, DataSource: metric.DataSource}, nil
+	}
+	if strings.Contains(err.Error(), "duplicate") {
+		return nil, fmt.Errorf("duplicate filter name %v", name)
+	}
+
+	dimension, err := joinTree.FindDimensionByName(name)
+	if err == nil {
+		current := &types.Dimension{
+			Table:     dimension.DataSource,
+			Name:      dimension.Name,
+			FieldName: dimension.FieldName,
+		}
+		statement, _ := current.Expression()
+		return &columnStruct{ValueType: dimension.ValueType, Statement: statement, DataSource: dimension.DataSource}, nil
+	}
+	if strings.Contains(err.Error(), "duplicate") {
+		return nil, fmt.Errorf("duplicate filter name %v", name)
+	}
+
+	return nil, fmt.Errorf("not found filter name %v", name)
+}
+
+func buildMetrics(translator Translator, query *types.Query) ([]*types.Metric, error) {
+	joinTree := translator.GetJoinTree()
+	metricGraph := translator.GetMetricGraph()
 	var metrics []*types.Metric
 	for _, v := range query.Metrics {
-		hit, err := t.joinTree.FindMetricByName(v)
+		_, err := joinTree.FindMetricByName(v)
 		if err != nil {
 			return nil, err
 		}
-		path, err := t.joinTree.Path(hit.DataSource)
-		if err != nil {
-			return nil, err
-		}
-		t.joinedSource = append(t.joinedSource, path...)
 
-		metric, err := t.metricGraph.GetByName(v)
+		metric, err := metricGraph.GetByName(v)
 		if err != nil {
 			return nil, err
 		}
@@ -153,34 +184,56 @@ func (t *BaseTranslator) buildMetrics(query *types.Query) ([]*types.Metric, erro
 	return metrics, nil
 }
 
-func (t *BaseTranslator) buildDimensions(query *types.Query) ([]*types.Dimension, error) {
+func buildDimensions(translator Translator, query *types.Query) ([]*types.Dimension, error) {
+	joinTree := translator.GetJoinTree()
 	var dimensions []*types.Dimension
 	for _, v := range query.Dimensions {
-		dimension, err := t.joinTree.FindDimensionByName(v)
+		hit, err := joinTree.FindDimensionByName(v)
 		if err != nil {
 			return nil, err
 		}
-		path, err := t.joinTree.Path(dimension.DataSource)
-		if err != nil {
-			return nil, err
-		}
-		t.joinedSource = append(t.joinedSource, path...)
 
 		d := &types.Dimension{
-			Table:     dimension.DataSource,
-			Name:      dimension.Name,
-			FieldName: dimension.FieldName,
+			Table:     hit.DataSource,
+			Name:      hit.Name,
+			FieldName: hit.FieldName,
 		}
-
 		dimensions = append(dimensions, d)
 	}
 	return dimensions, nil
 }
 
-func (t *BaseTranslator) buildFilters(query *types.Query) ([]*types.Filter, error) {
+func buildOneFilter(translator Translator, in *types.Filter) (*types.Filter, error) {
+		out := &types.Filter{
+			OperatorType: in.OperatorType,
+			Value:        in.Value,
+		}
+
+		if !out.OperatorType.IsTree() {
+			c, err := getColumn(translator, in.Name)
+			if err != nil {
+				return nil, err
+			}
+			out.ValueType = c.ValueType
+			out.Name = c.Statement
+			return out, nil
+		}
+
+		for _, v := range in.Children {
+			child, err := buildOneFilter(translator, v)
+			if err != nil {
+				return nil, err
+			}
+			out.Children = append(out.Children, child)
+		}
+
+		return out, nil
+}
+
+func buildFilters(translator Translator, query *types.Query) ([]*types.Filter, error) {
 	var filters []*types.Filter
 	for _, v := range query.Filters {
-		filter, err := t.treeFilter(v)
+		filter, err := buildOneFilter(translator, v)
 		if err != nil {
 			return nil, err
 		}
@@ -189,27 +242,29 @@ func (t *BaseTranslator) buildFilters(query *types.Query) ([]*types.Filter, erro
 	return filters, nil
 }
 
-func (t *BaseTranslator) buildOrders(query *types.Query) ([]*types.OrderBy, error) {
+func buildOrders(translator Translator, query *types.Query) ([]*types.OrderBy, error) {
 	var orders []*types.OrderBy
 	for _, v := range query.Orders {
-		c, err := t.getColumn(v.Name)
+		c, err := getColumn(translator, v.Name)
 		if err != nil {
 			return nil, err
 		}
-		path, err := t.joinTree.Path(c.DataSource)
-		if err != nil {
-			return nil, err
-		}
-		t.joinedSource = append(t.joinedSource, path...)
 
 		o := &types.OrderBy{
+			Table:     c.DataSource,
 			Name:      c.Statement,
 			Direction: v.Direction,
 		}
-
 		orders = append(orders, o)
 	}
 	return orders, nil
+}
+
+func buildLimit(translator Translator, query *types.Query) (*types.Limit, error) {
+	if query.Limit == nil {
+		return nil, nil
+	}
+	return &types.Limit{Limit: query.Limit.Limit, Offset: query.Limit.Offset}, nil
 }
 
 func (t *BaseTranslator) buildJoins() ([]*types.Join, error) {
@@ -253,44 +308,9 @@ func (t *BaseTranslator) buildJoins() ([]*types.Join, error) {
 	return joins, nil
 }
 
-func (t *BaseTranslator) buildLimit(query *types.Query) (*types.Limit, error) {
-	if query.Limit == nil {
-		return nil, nil
-	}
-	return &types.Limit{Limit: query.Limit.Limit, Offset: query.Limit.Offset}, nil
-}
-
 func (t *BaseTranslator) buildDataSource() (*types.DataSource, error) {
 	source, _ := t.adapter.GetSourceByKey(t.current)
 	return &types.DataSource{Database: source.Database, Name: source.Name}, nil
-}
-
-func (t *BaseTranslator) getColumn(name string) (*columnStruct, error) {
-	metric, err := t.joinTree.FindMetricByName(name)
-	if err == nil {
-		current, _ := t.metricGraph.GetByName(metric.Name)
-		statement, _ := current.Expression()
-		return &columnStruct{ValueType: metric.ValueType, Statement: statement, DataSource: metric.DataSource}, nil
-	}
-	if strings.Contains(err.Error(), "duplicate") {
-		return nil, fmt.Errorf("duplicate filter name %v", name)
-	}
-
-	dimension, err := t.joinTree.FindDimensionByName(name)
-	if err == nil {
-		current := &types.Dimension{
-			Table:     dimension.DataSource,
-			Name:      dimension.Name,
-			FieldName: dimension.FieldName,
-		}
-		statement, _ := current.Expression()
-		return &columnStruct{ValueType: dimension.ValueType, Statement: statement, DataSource: dimension.DataSource}, nil
-	}
-	if strings.Contains(err.Error(), "duplicate") {
-		return nil, fmt.Errorf("duplicate filter name %v", name)
-	}
-
-	return nil, fmt.Errorf("not found filter name %v", name)
 }
 
 func (t *BaseTranslator) getJoin(datasource string) (*models.JoinPair, error) {
@@ -302,41 +322,14 @@ func (t *BaseTranslator) getJoin(datasource string) (*models.JoinPair, error) {
 	return nil, fmt.Errorf("not found dataset_join data source %v", datasource)
 }
 
-func (t *BaseTranslator) treeFilter(in *types.Filter) (*types.Filter, error) {
-	out := &types.Filter{
-		OperatorType: in.OperatorType,
-		Value:        in.Value,
-	}
+type baseTranslator struct {
+	adapter IAdapter
+	query   *types.Query
+	dBType  types.DBType
+	current string
 
-	if !out.OperatorType.IsTree() {
-		c, err := t.getColumn(in.Name)
-		if err != nil {
-			return nil, err
-		}
-		path, err := t.joinTree.Path(c.DataSource)
-		if err != nil {
-			return nil, err
-		}
-		t.joinedSource = append(t.joinedSource, path...)
+	joinTree    models.JoinTree
+	metricGraph models.MetricGraph
 
-		out.ValueType = c.ValueType
-		out.Name = c.Statement
-		return out, nil
-	}
-
-	for _, v := range in.Children {
-		child, err := t.treeFilter(v)
-		if err != nil {
-			return nil, err
-		}
-		out.Children = append(out.Children, child)
-	}
-
-	return out, nil
-}
-
-type columnStruct struct {
-	ValueType  types.ValueType
-	Statement  string
-	DataSource string
+	joinedSource []string
 }

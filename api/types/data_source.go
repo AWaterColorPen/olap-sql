@@ -21,7 +21,7 @@ type DataSource struct {
 	Type     DataSourceType `json:"type"`
 	Joins    []*Join        `json:"joins"`
 	Clause   Clause         `json:"clause"`
-	Sql      string         `json:"sql"`
+	Sql      string         `json:"Sql"`
 }
 
 func (d *DataSource) getName() (string, error) {
