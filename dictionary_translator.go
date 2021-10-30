@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ahmetb/go-linq/v3"
 	"github.com/awatercolorpen/olap-sql/api/models"
 	"github.com/awatercolorpen/olap-sql/api/types"
 )
@@ -293,42 +292,43 @@ func (n *normalTranslator) buildDataSourcesAndJoins() (sources []*types.DataSour
 		return
 	}
 
-	for _, v := range t.joinedSource {
-		if v == t.current {
-			continue
-		}
-		join, err := t.getJoin(v)
-		if err != nil {
-			return nil, err
-		}
-
-		ds1, dl1, ds2, dl2 := join.Get1().DataSource, join.Get1().Dimension, join.Get2().DataSource, join.Get2().Dimension
-		var on []*types.JoinOn
-		for i := 0; i <= len(dl1); i++ {
-			k1 := fmt.Sprintf("%v.%v", ds1, dl1)
-			k2 := fmt.Sprintf("%v.%v", ds2, dl2)
-			d1, _ := t.adapter.GetDimensionByKey(k1)
-			d2, _ := t.adapter.GetDimensionByKey(k2)
-			on = append(on, &types.JoinOn{Key1: d1.FieldName, Key2: d2.FieldName})
-		}
-
-		s1, _ := t.adapter.GetSourceByKey(ds1)
-		s2, _ := t.adapter.GetSourceByKey(ds2)
-		j := &types.Join{
-			DataSource1: &types.DataSource{
-				Database: s1.Database,
-				Name:     s1.Name,
-			},
-			DataSource2: &types.DataSource{
-				Database: s2.Database,
-				Name:     s2.Name,
-			},
-			On: on,
-		}
-
-		joins = append(joins, j)
-	}
-	return joins, nil
+	// for _, v := range t.joinedSource {
+	// 	if v == t.current {
+	// 		continue
+	// 	}
+	// 	join, err := t.getJoin(v)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	//
+	// 	ds1, dl1, ds2, dl2 := join.Get1().DataSource, join.Get1().Dimension, join.Get2().DataSource, join.Get2().Dimension
+	// 	var on []*types.JoinOn
+	// 	for i := 0; i <= len(dl1); i++ {
+	// 		k1 := fmt.Sprintf("%v.%v", ds1, dl1)
+	// 		k2 := fmt.Sprintf("%v.%v", ds2, dl2)
+	// 		d1, _ := t.adapter.GetDimensionByKey(k1)
+	// 		d2, _ := t.adapter.GetDimensionByKey(k2)
+	// 		on = append(on, &types.JoinOn{Key1: d1.FieldName, Key2: d2.FieldName})
+	// 	}
+	//
+	// 	s1, _ := t.adapter.GetSourceByKey(ds1)
+	// 	s2, _ := t.adapter.GetSourceByKey(ds2)
+	// 	j := &types.Join{
+	// 		DataSource1: &types.DataSource{
+	// 			Database: s1.Database,
+	// 			Name:     s1.Name,
+	// 		},
+	// 		DataSource2: &types.DataSource{
+	// 			Database: s2.Database,
+	// 			Name:     s2.Name,
+	// 		},
+	// 		On: on,
+	// 	}
+	//
+	// 	joins = append(joins, j)
+	// }
+	// return joins, nil
+	return
 }
 
 type directSqlTranslator struct {

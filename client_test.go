@@ -16,7 +16,7 @@ func TestNewClients(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestClients_SubmitClause(t *testing.T) {
+func TestClients_BuildDB(t *testing.T) {
 	m, err := newManager(t)
 	assert.NoError(t, err)
 	assert.NoError(t, MockLoad(m))
@@ -25,12 +25,12 @@ func TestClients_SubmitClause(t *testing.T) {
 
 	dictionary, err := m.GetDictionary()
 	assert.NoError(t, err)
-	request, err := dictionary.Translate(query)
+	clause, err := dictionary.Translate(query)
 	assert.NoError(t, err)
 
 	client, err := m.GetClients()
 	assert.NoError(t, err)
-	db, err := client.BuildDB(request)
+	db, err := client.BuildDB(clause)
 
 	rows, err := olapsql.RunSync(db)
 	assert.NoError(t, err)
@@ -38,6 +38,20 @@ func TestClients_SubmitClause(t *testing.T) {
 	assert.NoError(t, err)
 	MockQuery1ResultAssert(t, result)
 }
+
+// func TestClients_BuildSQL(t *testing.T) {
+// 	m, err := newManager(t)
+// 	assert.NoError(t, err)
+// 	assert.NoError(t, MockLoad(m))
+//
+// 	clause := MockClause()
+//
+// 	client, err := m.GetClients()
+// 	assert.NoError(t, err)
+// 	sql, err := client.BuildSQL(clause)
+// 	assert.NoError(t, err)
+// 	t.Log(sql)
+// }
 
 func newClients(sqlitePath string) (olapsql.Clients, error) {
 	db, err := getDB(sqlitePath)
