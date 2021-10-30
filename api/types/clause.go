@@ -41,19 +41,17 @@ func (s *SqlClause) BuildSQL(*gorm.DB) (string, error) {
 
 type NormalClause struct {
 	baseClause
-	Metrics    []*Metric    `json:"metrics"`
-	Dimensions []*Dimension `json:"dimensions"`
-	Filters    []*Filter    `json:"filters"`
-	Joins      []*Join      `json:"joins"`
-	Orders     []*OrderBy   `json:"orders"`
-	Limit      *Limit       `json:"limit"`
-	DataSource *DataSource  `json:"data_source"`
+	Metrics    []*Metric     `json:"metrics"`
+	Dimensions []*Dimension  `json:"dimensions"`
+	Filters    []*Filter     `json:"filters"`
+	Joins      []*Join       `json:"joins"`
+	Orders     []*OrderBy    `json:"orders"`
+	Limit      *Limit        `json:"limit"`
+	DataSource []*DataSource `json:"data_source"`
 }
 
 func (n *NormalClause) BuildDB(tx *gorm.DB) (*gorm.DB, error) {
-	if err := n.SourceStatement(tx); err != nil {
-		return nil, err
-	}
+	checkpoint := tx
 
 	select1, err := n.dimensionStatement()
 	if err != nil {
@@ -75,14 +73,6 @@ func (n *NormalClause) BuildDB(tx *gorm.DB) (*gorm.DB, error) {
 		tx = tx.Where(v)
 	}
 
-	join1, err := n.joinStatement()
-	if err != nil {
-		return nil, err
-	}
-	for _, v := range join1 {
-		tx = tx.Joins(v)
-	}
-
 	group1, err := n.groupStatement()
 	if err != nil {
 		return nil, err
@@ -98,9 +88,12 @@ func (n *NormalClause) BuildDB(tx *gorm.DB) (*gorm.DB, error) {
 		tx = tx.Order(v)
 	}
 
-	table1, err := n.tableStatement()
+	table1, join1, err := n.tableAndJoinStatement(checkpoint)
 	if err != nil {
 		return nil, err
+	}
+	for _, v := range join1 {
+		tx = tx.Joins(v)
 	}
 	tx = tx.Table(table1)
 
@@ -162,32 +155,6 @@ func (n *NormalClause) filterStatement() ([]string, error) {
 	return statement, nil
 }
 
-func (n *NormalClause) joinStatement() ([]string, error) {
-	if n.DataSource == nil {
-		return nil, fmt.Errorf("nil data source")
-	}
-
-	var statement []string
-	for _, v := range n.Joins {
-		var on []string
-		onName1, _ := v.DataSource1.GetDataSourceForOn()
-		onName2, _ := v.DataSource2.GetDataSourceForOn()
-		for _, u := range v.On {
-			on = append(on, fmt.Sprintf("`%v`.`%v` = `%v`.`%v`", onName1, u.Key1, onName2, u.Key2))
-		}
-
-		joinName2, _ := v.DataSource2.GetDataSourceForJoin()
-
-		switch n.DBType {
-		case DBTypeSQLite, DBTypeClickHouse:
-			statement = append(statement, fmt.Sprintf("LEFT JOIN %v ON %v", joinName2, strings.Join(on, " AND ")))
-		default:
-			return nil, fmt.Errorf("not supported db type %v", n.DBType)
-		}
-	}
-	return statement, nil
-}
-
 func (n *NormalClause) groupStatement() ([]string, error) {
 	var statement []string
 	for _, v := range n.Dimensions {
@@ -212,21 +179,37 @@ func (n *NormalClause) orderStatement() ([]string, error) {
 	return statement, nil
 }
 
-func (n *NormalClause) tableStatement() (string, error) {
-	return n.DataSource.GetDataSourceForJoin()
-}
+func (n *NormalClause) tableAndJoinStatement(tx *gorm.DB) (table string, join []string, err error) {
+	if len(n.DataSource) == 0 {
+		err = fmt.Errorf("normal's data source has len=%v", len(n.DataSource))
+		return
+	}
+	for _, source := range n.DataSource {
+		if err = source.Init(tx); err != nil {
+			return
+		}
+	}
+	table, err = n.DataSource[0].Statement()
+	if err != nil {
+		return
+	}
 
-func (n *NormalClause) SourceStatement(tx *gorm.DB) error {
-	if err := n.DataSource.Statement(tx); err != nil {
-		return err
-	}
-	for _, join := range n.Joins {
-		if err := join.DataSource1.Statement(tx); err != nil {
-			return err
+	for _, v := range n.Joins {
+		var on []string
+		onName1, _ := v.DataSource1.Alias()
+		onName2, _ := v.DataSource2.Alias()
+		for _, u := range v.On {
+			on = append(on, fmt.Sprintf("`%v`.`%v` = `%v`.`%v`", onName1, u.Key1, onName2, u.Key2))
 		}
-		if err := join.DataSource2.Statement(tx); err != nil {
-			return err
+
+		joinName2, _ := v.DataSource2.Statement()
+		switch n.DBType {
+		case DBTypeSQLite, DBTypeClickHouse:
+			join = append(join, fmt.Sprintf("LEFT JOIN %v ON %v", joinName2, strings.Join(on, " AND ")))
+		default:
+			err = fmt.Errorf("not supported db type %v", n.DBType)
+			return
 		}
 	}
-	return nil
+	return
 }

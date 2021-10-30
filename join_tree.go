@@ -1,41 +1,42 @@
-package models
+package olapsql
 
 import (
 	"fmt"
+	"github.com/awatercolorpen/olap-sql/api/models"
+
 	"github.com/ahmetb/go-linq/v3"
-	"github.com/awatercolorpen/olap-sql"
 )
 
-type Metrics []*Metric
+type Metrics []*models.Metric
 
-func (m Metrics) NameIndex() map[string]*Metric {
-	out := map[string]*Metric{}
+func (m Metrics) NameIndex() map[string]*models.Metric {
+	out := map[string]*models.Metric{}
 	for _, v := range m {
 		out[v.Name] = v
 	}
 	return out
 }
 
-func (m Metrics) KeyIndex() map[string]*Metric {
-	out := map[string]*Metric{}
+func (m Metrics) KeyIndex() map[string]*models.Metric {
+	out := map[string]*models.Metric{}
 	for _, v := range m {
 		out[v.GetKey()] = v
 	}
 	return out
 }
 
-type Dimensions []*Dimension
+type Dimensions []*models.Dimension
 
-func (d Dimensions) NameIndex() map[string]*Dimension {
-	out := map[string]*Dimension{}
+func (d Dimensions) NameIndex() map[string]*models.Dimension {
+	out := map[string]*models.Dimension{}
 	for _, v := range d {
 		out[v.Name] = v
 	}
 	return out
 }
 
-func (d Dimensions) KeyIndex() map[string]*Dimension {
-	out := map[string]*Dimension{}
+func (d Dimensions) KeyIndex() map[string]*models.Dimension {
+	out := map[string]*models.Dimension{}
 	for _, v := range d {
 		out[v.GetKey()] = v
 	}
@@ -44,11 +45,11 @@ func (d Dimensions) KeyIndex() map[string]*Dimension {
 
 type joinNode struct {
 	Children         []*joinNode
-	metricNameMap    map[string]*Metric
-	dimensionNameMap map[string]*Dimension
+	metricNameMap    map[string]*models.Metric
+	dimensionNameMap map[string]*models.Dimension
 }
 
-func (j *joinNode) FindMetric(name string) (*Metric, error) {
+func (j *joinNode) FindMetric(name string) (*models.Metric, error) {
 	m, ok := j.metricNameMap[name]
 	if ok {
 		return m, nil
@@ -70,7 +71,7 @@ func (j *joinNode) FindMetric(name string) (*Metric, error) {
 	return m, nil
 }
 
-func (j *joinNode) FindDimension(name string) (*Dimension, error) {
+func (j *joinNode) FindDimension(name string) (*models.Dimension, error) {
 	d, ok := j.dimensionNameMap[name]
 	if ok {
 		return d, nil
@@ -92,7 +93,7 @@ func (j *joinNode) FindDimension(name string) (*Dimension, error) {
 	return d, nil
 }
 
-func newJoinNode(metrics []*Metric, dimensions []*Dimension) *joinNode {
+func newJoinNode(metrics []*models.Metric, dimensions []*models.Dimension) *joinNode {
 	return &joinNode{
 		metricNameMap:    Metrics(metrics).NameIndex(),
 		dimensionNameMap: Dimensions(dimensions).NameIndex(),
@@ -122,7 +123,7 @@ func (j *joinTree) Path(current string) ([]string, error) {
 	return out, nil
 }
 
-func (j *joinTree) FindMetricByName(name string) (*Metric, error) {
+func (j *joinTree) FindMetricByName(name string) (*models.Metric, error) {
 	m, err := j.joinNode.FindMetric(name)
 	if err != nil {
 		return nil, err
@@ -133,7 +134,7 @@ func (j *joinTree) FindMetricByName(name string) (*Metric, error) {
 	return m, nil
 }
 
-func (j *joinTree) FindDimensionByName(name string) (*Dimension, error) {
+func (j *joinTree) FindDimensionByName(name string) (*models.Dimension, error) {
 	d, err := j.joinNode.FindDimension(name)
 	if err != nil {
 		return nil, err
@@ -146,14 +147,14 @@ func (j *joinTree) FindDimensionByName(name string) (*Dimension, error) {
 
 type JoinTree interface {
 	Path(name string) ([]string, error)
-	FindMetricByName(name string) (*Metric, error)
-	FindDimensionByName(name string) (*Dimension, error)
+	FindMetricByName(name string) (*models.Metric, error)
+	FindDimensionByName(name string) (*models.Dimension, error)
 }
 
 type JoinTreeBuilder struct {
-	tree       Graph
+	tree       models.Graph
 	root       string
-	dictionary olapsql.IAdapter
+	dictionary IAdapter
 }
 
 func (j *JoinTreeBuilder) Build() (JoinTree, error) {

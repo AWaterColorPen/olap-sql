@@ -65,7 +65,7 @@ func GetDependencyTree(adapter IAdapter, current string) (models.Graph, error) {
 			}
 		}
 	}
-	//
+	// TODO (1) graph must be a tree.
 	// for _, v := range d.DimensionJoin {
 	// 	if _, ok := inDegree[v.DataSource1]; !ok {
 	// 		inDegree[v.DataSource1] = 0
@@ -304,6 +304,7 @@ func (f *FileAdapter) isValidMetric(metric *models.Metric) error {
 			return err
 		}
 	}
+	// TODO (2) should check filter is valid
 	// if metric.Filter != nil {
 	// 	if _, err := f.GetMetricByKey(metric.Filter.Name); err != nil {
 	// 		return err

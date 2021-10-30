@@ -11,12 +11,10 @@ import (
 
 type Translator interface {
 	GetAdapter() IAdapter
-	GetJoinTree() models.JoinTree
-	GetMetricGraph() models.MetricGraph
-	// Translate(*types.Query) (types.Clause, error)
+	GetJoinTree() JoinTree
+	GetMetricGraph() MetricGraph
+	Translate(*types.Query) (types.Clause, error)
 }
-
-type TranslatorType string
 
 type TranslatorOption struct {
 	Adapter IAdapter
@@ -25,15 +23,14 @@ type TranslatorOption struct {
 	Current string
 }
 
-func (t *TranslatorOption) getTranslatorType() (TranslatorType, error) {
-	return "", fmt.Errorf("unsupported")
-}
-
 func NewTranslator(option *TranslatorOption) (Translator, error) {
-	return newBaseTranslator(option)
+	if option.Query.Sql != "" {
+		return newDirectSqlTranslator(option)
+	}
+	return newNormalTranslator(option)
 }
 
-func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
+func newNormalTranslator(option *TranslatorOption) (*normalTranslator, error) {
 	adapter, err := option.Adapter.BuildDataSourceAdapter(option.Current)
 	if err != nil {
 		return nil, err
@@ -41,7 +38,7 @@ func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
 
 	tGraph, _ := GetDependencyTree(adapter, option.Current)
 
-	jBuilder := &models.JoinTreeBuilder{
+	jBuilder := &JoinTreeBuilder{
 		tree:       tGraph.GetTree(option.Current),
 		root:       option.Current,
 		dictionary: adapter,
@@ -51,7 +48,7 @@ func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
 		return nil, err
 	}
 
-	mBuilder := &models.MetricGraphBuilder{
+	mBuilder := &MetricGraphBuilder{
 		dbType:     option.DBType,
 		dictionary: adapter,
 		joinTree:   jTree,
@@ -61,7 +58,7 @@ func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
 		return nil, err
 	}
 
-	translator := &BaseTranslator{
+	translator := &normalTranslator{
 		adapter:     adapter,
 		query:       option.Query,
 		dBType:      option.DBType,
@@ -72,62 +69,10 @@ func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
 	return translator, nil
 }
 
-type BaseTranslator struct {
-	adapter IAdapter
-	query   *types.Query
-	dBType  types.DBType
-	current string
-
-	joinTree    models.JoinTree
-	metricGraph models.MetricGraph
-
-	joinedSource []string
+func newDirectSqlTranslator(option *TranslatorOption) (*directSqlTranslator, error) {
+	translator := &directSqlTranslator{dBType: option.DBType}
+	return translator, nil
 }
-
-func (t *BaseTranslator) Translate(query *types.Query) (types.Clause, error) {
-	metrics, err := t.buildMetrics(query)
-	if err != nil {
-		return nil, err
-	}
-	dimensions, err := t.buildDimensions(query)
-	if err != nil {
-		return nil, err
-	}
-	filters, err := t.buildFilters(query)
-	if err != nil {
-		return nil, err
-	}
-	orders, err := t.buildOrders(query)
-	if err != nil {
-		return nil, err
-	}
-	joins, err := t.buildJoins()
-	if err != nil {
-		return nil, err
-	}
-	limit, err := t.buildLimit(query)
-	if err != nil {
-		return nil, err
-	}
-	datasource, err := t.buildDataSource()
-	if err != nil {
-		return nil, err
-	}
-	clause := &types.NormalClause{
-		Metrics:    metrics,
-		Dimensions: dimensions,
-		Filters:    filters,
-		Joins:      joins,
-		Orders:     orders,
-		Limit:      limit,
-		DataSource: datasource,
-	}
-	clause.DBType = t.dBType
-	clause.Dataset = query.DataSetName
-
-	return clause, nil
-}
-
 
 type columnStruct struct {
 	ValueType  types.ValueType
@@ -204,30 +149,31 @@ func buildDimensions(translator Translator, query *types.Query) ([]*types.Dimens
 }
 
 func buildOneFilter(translator Translator, in *types.Filter) (*types.Filter, error) {
-		out := &types.Filter{
-			OperatorType: in.OperatorType,
-			Value:        in.Value,
-		}
+	out := &types.Filter{
+		OperatorType: in.OperatorType,
+		Value:        in.Value,
+	}
 
-		if !out.OperatorType.IsTree() {
-			c, err := getColumn(translator, in.Name)
-			if err != nil {
-				return nil, err
-			}
-			out.ValueType = c.ValueType
-			out.Name = c.Statement
-			return out, nil
+	if !out.OperatorType.IsTree() {
+		c, err := getColumn(translator, in.Name)
+		if err != nil {
+			return nil, err
 		}
-
-		for _, v := range in.Children {
-			child, err := buildOneFilter(translator, v)
-			if err != nil {
-				return nil, err
-			}
-			out.Children = append(out.Children, child)
-		}
-
+		out.ValueType = c.ValueType
+		out.Table = c.DataSource
+		out.Name = c.Statement
 		return out, nil
+	}
+
+	for _, v := range in.Children {
+		child, err := buildOneFilter(translator, v)
+		if err != nil {
+			return nil, err
+		}
+		out.Children = append(out.Children, child)
+	}
+
+	return out, nil
 }
 
 func buildFilters(translator Translator, query *types.Query) ([]*types.Filter, error) {
@@ -260,16 +206,93 @@ func buildOrders(translator Translator, query *types.Query) ([]*types.OrderBy, e
 	return orders, nil
 }
 
-func buildLimit(translator Translator, query *types.Query) (*types.Limit, error) {
+func buildLimit(_ Translator, query *types.Query) (*types.Limit, error) {
 	if query.Limit == nil {
 		return nil, nil
 	}
 	return &types.Limit{Limit: query.Limit.Limit, Offset: query.Limit.Offset}, nil
 }
 
-func (t *BaseTranslator) buildJoins() ([]*types.Join, error) {
-	var joins []*types.Join
-	linq.From(t.joinedSource).Distinct().ToSlice(&t.joinedSource)
+func buildNormalClause(translator Translator, query *types.Query) (*types.NormalClause, error) {
+	var err error
+	clause := &types.NormalClause{}
+	clause.Metrics, err = buildMetrics(translator, query)
+	if err != nil {
+		return nil, err
+	}
+	clause.Dimensions, err = buildDimensions(translator, query)
+	if err != nil {
+		return nil, err
+	}
+	clause.Filters, err = buildFilters(translator, query)
+	if err != nil {
+		return nil, err
+	}
+	clause.Orders, err = buildOrders(translator, query)
+	if err != nil {
+		return nil, err
+	}
+	clause.Limit, err = buildLimit(translator, query)
+	if err != nil {
+		return nil, err
+	}
+	return clause, nil
+}
+
+type normalTranslator struct {
+	adapter IAdapter
+	query   *types.Query
+	dBType  types.DBType
+	current string
+
+	joinTree    JoinTree
+	metricGraph MetricGraph
+}
+
+func (n *normalTranslator) GetAdapter() IAdapter {
+	return n.adapter
+}
+
+func (n *normalTranslator) GetJoinTree() JoinTree {
+	return n.joinTree
+}
+
+func (n *normalTranslator) GetMetricGraph() MetricGraph {
+	return n.metricGraph
+}
+
+func (n *normalTranslator) Translate(query *types.Query) (types.Clause, error) {
+	clause, err := buildNormalClause(n, query)
+	if err != nil {
+		return nil, err
+	}
+	clause.DataSource, clause.Joins, err = n.buildDataSourcesAndJoins()
+	if err != nil {
+		return nil, err
+	}
+	clause.DBType = n.dBType
+	clause.Dataset = query.DataSetName
+	return clause, nil
+}
+
+func (n *normalTranslator) buildDataSourcesAndJoins() (sources []*types.DataSource, joins []*types.Join, err error) {
+	toFn := func(in *models.DataSource) *types.DataSource {
+		return &types.DataSource{Database: in.Database, Name: in.Name, AliasName: in.Alias, Type: in.Type}
+	}
+
+	source, _ := n.adapter.GetSourceByKey(n.current)
+	switch source.Type {
+	case types.DataSourceTypeFact:
+		sources = append(sources, toFn(source))
+		return
+	case types.DataSourceTypeFactDimensionJoin:
+	case types.DataSourceTypeMergedJoin:
+		return
+	default:
+		err = fmt.Errorf("can't use datasource type=%v as dateset's datasource", source.Type)
+		return
+	}
+
 	for _, v := range t.joinedSource {
 		if v == t.current {
 			continue
@@ -308,28 +331,25 @@ func (t *BaseTranslator) buildJoins() ([]*types.Join, error) {
 	return joins, nil
 }
 
-func (t *BaseTranslator) buildDataSource() (*types.DataSource, error) {
-	source, _ := t.adapter.GetSourceByKey(t.current)
-	return &types.DataSource{Database: source.Database, Name: source.Name}, nil
+type directSqlTranslator struct {
+	dBType types.DBType
 }
 
-func (t *BaseTranslator) getJoin(datasource string) (*models.JoinPair, error) {
-	// for _, join := range t.set.DimensionJoin {
-	// 	if join.DataSource2 == datasource {
-	// 		return join, nil
-	// 	}
-	// }
-	return nil, fmt.Errorf("not found dataset_join data source %v", datasource)
+func (d *directSqlTranslator) GetAdapter() IAdapter {
+	panic("implement me")
 }
 
-type baseTranslator struct {
-	adapter IAdapter
-	query   *types.Query
-	dBType  types.DBType
-	current string
+func (d *directSqlTranslator) GetJoinTree() JoinTree {
+	panic("implement me")
+}
 
-	joinTree    models.JoinTree
-	metricGraph models.MetricGraph
+func (d *directSqlTranslator) GetMetricGraph() MetricGraph {
+	panic("implement me")
+}
 
-	joinedSource []string
+func (d *directSqlTranslator) Translate(query *types.Query) (types.Clause, error) {
+	clause := &types.SqlClause{Sql: query.Sql}
+	clause.DBType = d.dBType
+	clause.Dataset = query.DataSetName
+	return clause, nil
 }

@@ -1,9 +1,9 @@
-package models
+package olapsql
 
 import (
 	"fmt"
 	"github.com/ahmetb/go-linq/v3"
-	"github.com/awatercolorpen/olap-sql"
+	"github.com/awatercolorpen/olap-sql/api/models"
 	"github.com/awatercolorpen/olap-sql/api/types"
 )
 
@@ -28,7 +28,7 @@ type MetricGraph interface {
 
 type MetricGraphBuilder struct {
 	dbType     types.DBType
-	dictionary olapsql.IAdapter
+	dictionary IAdapter
 	joinTree   JoinTree
 }
 
@@ -56,7 +56,7 @@ func (m *MetricGraphBuilder) Build() (MetricGraph, error) {
 			DBType:    m.dbType,
 		}
 		for _, u := range metric.Composition {
-			name := GetNameFromKey(u)
+			name := models.GetNameFromKey(u)
 			value, _ := graph.GetByName(name)
 			current.Children = append(current.Children, value)
 		}
@@ -71,7 +71,7 @@ func (m *MetricGraphBuilder) sort(metrics []string) ([]string, error) {
 	graph := map[string][]string{}
 
 	for _, key := range metrics {
-		name := GetNameFromKey(key)
+		name := models.GetNameFromKey(key)
 		metric, err := m.joinTree.FindMetricByName(name)
 		if err != nil {
 			return nil, err
