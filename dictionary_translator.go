@@ -2,6 +2,7 @@ package olapsql
 
 import (
 	"fmt"
+	"github.com/ahmetb/go-linq/v3"
 	"strings"
 
 	"github.com/awatercolorpen/olap-sql/api/models"
@@ -59,7 +60,6 @@ func newNormalTranslator(option *TranslatorOption) (*normalTranslator, error) {
 
 	translator := &normalTranslator{
 		adapter:     adapter,
-		query:       option.Query,
 		dBType:      option.DBType,
 		current:     option.Current,
 		joinTree:    jTree,
@@ -80,11 +80,11 @@ type columnStruct struct {
 }
 
 func getColumn(translator Translator, name string) (*columnStruct, error) {
-	joinTree := translator.GetJoinTree()
-	metricGraph := translator.GetMetricGraph()
-	metric, err := joinTree.FindMetricByName(name)
+	jTree := translator.GetJoinTree()
+	mGraph := translator.GetMetricGraph()
+	metric, err := jTree.FindMetricByName(name)
 	if err == nil {
-		current, _ := metricGraph.GetByName(metric.Name)
+		current, _ := mGraph.GetByName(metric.Name)
 		statement, _ := current.Expression()
 		return &columnStruct{ValueType: metric.ValueType, Statement: statement, DataSource: metric.DataSource}, nil
 	}
@@ -92,7 +92,7 @@ func getColumn(translator Translator, name string) (*columnStruct, error) {
 		return nil, fmt.Errorf("duplicate filter name %v", name)
 	}
 
-	dimension, err := joinTree.FindDimensionByName(name)
+	dimension, err := jTree.FindDimensionByName(name)
 	if err == nil {
 		current := &types.Dimension{
 			Table:     dimension.DataSource,
@@ -110,16 +110,16 @@ func getColumn(translator Translator, name string) (*columnStruct, error) {
 }
 
 func buildMetrics(translator Translator, query *types.Query) ([]*types.Metric, error) {
-	joinTree := translator.GetJoinTree()
-	metricGraph := translator.GetMetricGraph()
+	jTree := translator.GetJoinTree()
+	mGraph := translator.GetMetricGraph()
 	var metrics []*types.Metric
 	for _, v := range query.Metrics {
-		_, err := joinTree.FindMetricByName(v)
+		_, err := jTree.FindMetricByName(v)
 		if err != nil {
 			return nil, err
 		}
 
-		metric, err := metricGraph.GetByName(v)
+		metric, err := mGraph.GetByName(v)
 		if err != nil {
 			return nil, err
 		}
@@ -238,9 +238,134 @@ func buildNormalClause(translator Translator, query *types.Query) (*types.Normal
 	return clause, nil
 }
 
+func getHitDatasourceFromMetric(metric *types.Metric) []string {
+	hit := []string{metric.Table}
+	for _, child := range metric.Children {
+		hit = append(hit, getHitDatasourceFromMetric(child)...)
+	}
+	hit = append(hit, getHitDatasourceFromFilter(metric.Filter)...)
+	return hit
+}
+
+func getHitDatasourceFromDimension(dimension *types.Dimension) []string {
+	return []string{dimension.Table}
+}
+
+func getHitDatasourceFromFilter(filter *types.Filter) []string {
+	if filter == nil {
+		return nil
+	}
+	var hit []string
+	if len(filter.Table) > 0 {
+		hit = append(hit, filter.Table)
+	}
+	for _, child := range filter.Children {
+		hit = append(hit, getHitDatasourceFromFilter(child)...)
+	}
+	return hit
+}
+
+func getHitDatasourceFromOrderBy(order *types.OrderBy) []string {
+	return []string{order.Table}
+}
+
+func getHitDatasourceKey(clause *types.NormalClause) []string {
+	var hit []string
+	for _, m := range clause.Metrics {
+		hit = append(hit, getHitDatasourceFromMetric(m)...)
+	}
+	for _, d := range clause.Dimensions {
+		hit = append(hit, getHitDatasourceFromDimension(d)...)
+	}
+	for _, f := range clause.Filters {
+		hit = append(hit, getHitDatasourceFromFilter(f)...)
+	}
+	for _, o := range clause.Orders {
+		hit = append(hit, getHitDatasourceFromOrderBy(o)...)
+	}
+	linq.From(hit).Distinct().ToSlice(&hit)
+	return hit
+}
+
+func getHitDatasource(translator Translator, clause *types.NormalClause) ([]*types.DataSource, error) {
+	// adapter := translator.GetAdapter()
+	// hitKey := getHitDatasourceKey(clause)
+	return nil, nil
+}
+
+func buildDimensionJoin(translator Translator, source *models.DataSource, hitMap map[string]*types.DataSource) []*types.Join {
+	adapter := translator.GetAdapter()
+	var joins []*types.Join
+	for _, v := range source.DimensionJoin {
+		s1, ok1 := hitMap[v.Get1().DataSource]
+		s2, ok2 := hitMap[v.Get2().DataSource]
+		if !ok1 || !ok2 {
+			continue
+		}
+		ds1, dl1, ds2, dl2 := v.Get1().DataSource, v.Get1().Dimension, v.Get2().DataSource, v.Get2().Dimension
+		var on []*types.JoinOn
+		for i := 0; i <= len(dl1); i++ {
+			k1 := fmt.Sprintf("%v.%v", ds1, dl1[i])
+			k2 := fmt.Sprintf("%v.%v", ds2, dl2[i])
+			d1, _ := adapter.GetDimensionByKey(k1)
+			d2, _ := adapter.GetDimensionByKey(k2)
+			on = append(on, &types.JoinOn{Key1: d1.FieldName, Key2: d2.FieldName})
+		}
+
+		j := &types.Join{DataSource1: s1, DataSource2: s2, On: on}
+		joins = append(joins, j)
+	}
+	return joins
+}
+
+func buildMergedJoin(translator Translator, source *models.DataSource, hitMap map[string]*types.DataSource) []*types.Join {
+	adapter := translator.GetAdapter()
+
+	var hitDArray []bool
+	var joins []*types.Join
+
+	s1, ok1 := hitMap[source.Name]
+	if !ok1 {
+		return nil
+	}
+
+	for i := 1; i < len(source.MergedJoin); i++ {
+		current := source.MergedJoin[i]
+		s2, ok2 := hitMap[current.DataSource]
+		if !ok2 {
+			continue
+		}
+		var on []*types.JoinOn
+		for j := 0; j <= len(hitDArray); j++ {
+			if !hitDArray[j] {
+				continue
+			}
+			k1 := fmt.Sprintf("%v.%v", source.MergedJoin[0].DataSource, source.MergedJoin[0].Dimension[j])
+			k2 := fmt.Sprintf("%v.%v", current.DataSource, current.Dimension[j])
+			d1, _ := adapter.GetDimensionByKey(k1)
+			d2, _ := adapter.GetDimensionByKey(k2)
+			on = append(on, &types.JoinOn{Key1: d1.FieldName, Key2: d2.FieldName})
+		}
+
+		j := &types.Join{DataSource1: s1, DataSource2: s2, On: on}
+		joins = append(joins, j)
+	}
+	return joins
+}
+
+func buildJoins(translator Translator, source *models.DataSource, hit []*types.DataSource) ([]*types.Join, error) {
+	hitMap := map[string]*types.DataSource{}
+	for _, v := range hit {
+		hitMap[v.Name] = v
+	}
+	var joins []*types.Join
+	joins = append(joins, buildDimensionJoin(translator, source, hitMap)...)
+	joins = append(joins, buildMergedJoin(translator, source, hitMap)...)
+	return joins, nil
+}
+
 type normalTranslator struct {
 	adapter IAdapter
-	query   *types.Query
 	dBType  types.DBType
 	current string
 
@@ -274,7 +399,7 @@ func (n *normalTranslator) Translate(query *types.Query) (types.Clause, error) {
 	return clause, nil
 }
 
-func (n *normalTranslator) buildDataSourcesAndJoins() (sources []*types.DataSource, joins []*types.Join, err error) {
+func (n *normalTranslator) buildDataSourcesAndJoins(clause *types.NormalClause) (sources []*types.DataSource, joins []*types.Join, err error) {
 	toFn := func(in *models.DataSource) *types.DataSource {
 		return &types.DataSource{Database: in.Database, Name: in.Name, AliasName: in.Alias, Type: in.Type}
 	}
@@ -285,49 +410,14 @@ func (n *normalTranslator) buildDataSourcesAndJoins() (sources []*types.DataSour
 		sources = append(sources, toFn(source))
 		return
 	case types.DataSourceTypeFactDimensionJoin:
+		sources, err = getHitDatasource(n, clause)
 	case types.DataSourceTypeMergedJoin:
+		sources, err = getHitDatasource(n, clause)
 		return
 	default:
 		err = fmt.Errorf("can't use datasource type=%v as dateset's datasource", source.Type)
 		return
 	}
-
-	// for _, v := range t.joinedSource {
-	// 	if v == t.current {
-	// 		continue
-	// 	}
-	// 	join, err := t.getJoin(v)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	//
-	// 	ds1, dl1, ds2, dl2 := join.Get1().DataSource, join.Get1().Dimension, join.Get2().DataSource, join.Get2().Dimension
-	// 	var on []*types.JoinOn
-	// 	for i := 0; i <= len(dl1); i++ {
-	// 		k1 := fmt.Sprintf("%v.%v", ds1, dl1)
-	// 		k2 := fmt.Sprintf("%v.%v", ds2, dl2)
-	// 		d1, _ := t.adapter.GetDimensionByKey(k1)
-	// 		d2, _ := t.adapter.GetDimensionByKey(k2)
-	// 		on = append(on, &types.JoinOn{Key1: d1.FieldName, Key2: d2.FieldName})
-	// 	}
-	//
-	// 	s1, _ := t.adapter.GetSourceByKey(ds1)
-	// 	s2, _ := t.adapter.GetSourceByKey(ds2)
-	// 	j := &types.Join{
-	// 		DataSource1: &types.DataSource{
-	// 			Database: s1.Database,
-	// 			Name:     s1.Name,
-	// 		},
-	// 		DataSource2: &types.DataSource{
-	// 			Database: s2.Database,
-	// 			Name:     s2.Name,
-	// 		},
-	// 		On: on,
-	// 	}
-	//
-	// 	joins = append(joins, j)
-	// }
-	// return joins, nil
 	return
 }
 

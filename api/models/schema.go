@@ -177,6 +177,16 @@ func (d *DataSource) GetDependencyTree() (Graph, error) {
 	}
 }
 
+type DataSources []*DataSource
+
+func (d DataSources) KeyIndex() map[string]*DataSource {
+	out := map[string]*DataSource{}
+	for _, v := range d {
+		out[v.GetKey()] = v
+	}
+	return out
+}
+
 type Dimension struct {
 	DataSource  string          `toml:"data_source"`
 	Name        string          `toml:"name"`
