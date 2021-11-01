@@ -16,6 +16,7 @@ const (
 	MetricTypeSubtract      MetricType = "METRIC_SUBTRACT"       // composition type eg: 相乘指标
 	MetricTypeMultiply      MetricType = "METRIC_MULTIPLY"       // composition type eg: 相减指标
 	MetricTypeDivide        MetricType = "METRIC_DIVIDE"         // composition type.eg: 相除指标
+	MetricTypeAs            MetricType = "METRIC_AS"             // composition type eg: 关联指标
 	MetricTypeExpression    MetricType = "METRIC_EXPRESSION"     // single type. eg: 表达式
 	MetricTypePost          MetricType = "METRIC_POST"           // composition type, unsupported now
 )
@@ -88,6 +89,8 @@ func (m *Metric) column() (Column, error) {
 		return &ArithmeticCol{Column: column, Alias: m.Name, Type: ColumnTypeMultiply}, nil
 	case MetricTypeDivide:
 		return &ArithmeticCol{Column: column, Alias: m.Name, Type: ColumnTypeDivide}, nil
+	case MetricTypeAs:
+		return &ArithmeticCol{Column: column, Alias: m.Name, Type: ColumnTypeAs}, nil
 	case MetricTypeExpression:
 		return &ExpressionCol{Expression: m.FieldName, Alias: m.Name}, nil
 	default:

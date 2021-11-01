@@ -21,9 +21,9 @@ type OrderBy struct {
 func (o *OrderBy) Expression() (string, error) {
 	switch o.Direction {
 	case OrderDirectionTypeAscending:
-		return fmt.Sprintf("%v ASC", o.Name), nil
+		return fmt.Sprintf("%v.%v ASC", o.Table, o.Name), nil
 	case OrderDirectionTypeDescending:
-		return fmt.Sprintf("%v DESC", o.Name), nil
+		return fmt.Sprintf("%v.%v DESC", o.Table, o.Name), nil
 	default:
 		return "", fmt.Errorf("not supported order direction type %v", o.Direction)
 	}
