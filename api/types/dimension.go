@@ -12,11 +12,11 @@ var (
 type DimensionType string
 
 type Dimension struct {
-	Table     string        `json:"table"`
-	Name      string        `json:"name"`
-	FieldName string        `json:"field_name"`
-	Type      DimensionType `json:"type"`
-	Composition []string    `json:"composition"`
+	Table       string        `json:"table"`
+	Name        string        `json:"name"`
+	FieldName   string        `json:"field_name"`
+	Type        DimensionType `json:"type"`
+	Composition []string      `json:"composition"`
 }
 
 const (

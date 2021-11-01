@@ -141,10 +141,10 @@ func buildDimensions(translator Translator, query *types.Query) ([]*types.Dimens
 		}
 
 		d := &types.Dimension{
-			Table:     hit.DataSource,
-			Name:      hit.Name,
-			FieldName: hit.FieldName,
-			Type:      hit.Type,
+			Table:       hit.DataSource,
+			Name:        hit.Name,
+			FieldName:   hit.FieldName,
+			Type:        hit.Type,
 			Composition: hit.Composition,
 		}
 		dimensions = append(dimensions, d)
@@ -302,8 +302,8 @@ func getHitDatasource(translator Translator, clause *types.NormalClause) ([]*typ
 			return nil, err
 		}
 		ss := &types.DataSource{
-			Database: s.Database,
-			Name:     s.Name,
+			Database:  s.Database,
+			Name:      s.Name,
 			AliasName: s.Alias,
 			Type:      s.Type,
 		}
