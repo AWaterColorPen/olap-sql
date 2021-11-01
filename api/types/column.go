@@ -123,7 +123,7 @@ func (col *ArithmeticCol) GetExpression() string {
 		operator = ArithmeticOperatorTypeAs
 	}
 	if operator == ArithmeticOperatorTypeAs {
-		return fmt.Sprintf("( %v ) %v %v", strings.Join(children,""), operator, col.Alias)
+		return fmt.Sprintf("( %v )", strings.Join(children, ""))
 	}
 	if operator == ArithmeticOperatorTypeDivide {
 		for i := 1; i < len(children); i++ {
