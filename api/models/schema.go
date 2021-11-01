@@ -188,11 +188,13 @@ func (d DataSources) KeyIndex() map[string]*DataSource {
 }
 
 type Dimension struct {
-	DataSource  string          `toml:"data_source"`
-	Name        string          `toml:"name"`
-	FieldName   string          `toml:"field_name"`
-	ValueType   types.ValueType `toml:"value_type"`
-	Description string          `toml:"description"`
+	DataSource  string              `toml:"data_source"`
+	Name        string              `toml:"name"`
+	FieldName   string              `toml:"field_name"`
+	Type        types.DimensionType `toml:"type"`
+	ValueType   types.ValueType     `toml:"value_type"`
+	Composition []string            `toml:"composition"`
+	Description string              `toml:"description"`
 }
 
 func (d *Dimension) GetKey() string {

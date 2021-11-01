@@ -95,9 +95,11 @@ func getColumn(translator Translator, name string) (*columnStruct, error) {
 	dimension, err := jTree.FindDimensionByName(name)
 	if err == nil {
 		current := &types.Dimension{
-			Table:     dimension.DataSource,
-			Name:      dimension.Name,
-			FieldName: dimension.FieldName,
+			Table:       dimension.DataSource,
+			Name:        dimension.Name,
+			FieldName:   dimension.FieldName,
+			Type:        dimension.Type,
+			Composition: dimension.Composition,
 		}
 		statement, _ := current.Expression()
 		return &columnStruct{ValueType: dimension.ValueType, Statement: statement, DataSource: dimension.DataSource}, nil
@@ -141,6 +143,8 @@ func buildDimensions(translator Translator, query *types.Query) ([]*types.Dimens
 			Table:     hit.DataSource,
 			Name:      hit.Name,
 			FieldName: hit.FieldName,
+			Type:      hit.Type,
+			Composition: hit.Composition,
 		}
 		dimensions = append(dimensions, d)
 	}
