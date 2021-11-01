@@ -30,17 +30,15 @@ func (d *Dimension) Expression() (string, error) {
 	case DimensionTypeSingle:
 		return fmt.Sprintf("%v.%v", d.Table, d.FieldName), nil
 	case DimensionTypeExpression:
-		if !reg.MatchString(d.FieldName) {
-			return d.FieldName, nil
-		}
-		return "", fmt.Errorf("dimension expression error")
+		return d.FieldName, nil
 	case DimensionTypeMulti:
 		if len(d.Composition) == 0 {
 			return "", fmt.Errorf("dimension composition error")
 		}
 		return fmt.Sprintf("%v", d.Composition[0]), nil
+	default:
+		return "", fmt.Errorf("unsupported dimension type")
 	}
-	return fmt.Sprintf("%v.%v", d.Table, d.FieldName), nil
 }
 
 func (d *Dimension) Alias() (string, error) {
