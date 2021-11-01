@@ -1,5 +1,6 @@
 sets = [
-  {name = "wikistat", type = "sqlite", description = "", data_source = "wikistat_base"},
+  {name = "wikistat", type = "sqlite", description = "", data_source = "wikistat"},
+  {name = "wikistat_join", type = "sqlite", description = "", data_source = "wikistat_base"},
   {name = "merged_uv", type = "sqlite", description = "", data_source = "wikistat_uv_merged"},
 ]
 

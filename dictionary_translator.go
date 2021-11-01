@@ -75,9 +75,10 @@ func newDirectSqlTranslator(option *TranslatorOption) (*directSqlTranslator, err
 }
 
 type columnStruct struct {
-	ValueType  types.ValueType
-	Statement  string
-	DataSource string
+	ValueType     types.ValueType
+	FieldProperty types.FieldProperty
+	Statement     string
+	DataSource    string
 }
 
 func getColumn(translator Translator, name string) (*columnStruct, error) {
@@ -87,10 +88,10 @@ func getColumn(translator Translator, name string) (*columnStruct, error) {
 	if err == nil {
 		current, _ := mGraph.GetByName(metric.Name)
 		statement, _ := current.Expression()
-		return &columnStruct{ValueType: metric.ValueType, Statement: statement, DataSource: metric.DataSource}, nil
+		return &columnStruct{ValueType: metric.ValueType, FieldProperty: types.FieldPropertyMetric, Statement: statement, DataSource: metric.DataSource}, nil
 	}
 	if strings.Contains(err.Error(), "duplicate") {
-		return nil, fmt.Errorf("duplicate filter name %v", name)
+		return nil, fmt.Errorf("duplicate column name %v", name)
 	}
 
 	dimension, err := jTree.FindDimensionByName(name)
@@ -101,13 +102,13 @@ func getColumn(translator Translator, name string) (*columnStruct, error) {
 			FieldName: dimension.FieldName,
 		}
 		statement, _ := current.Expression()
-		return &columnStruct{ValueType: dimension.ValueType, Statement: statement, DataSource: dimension.DataSource}, nil
+		return &columnStruct{ValueType: dimension.ValueType, FieldProperty: types.FieldPropertyDimension, Statement: statement, DataSource: dimension.DataSource}, nil
 	}
 	if strings.Contains(err.Error(), "duplicate") {
-		return nil, fmt.Errorf("duplicate filter name %v", name)
+		return nil, fmt.Errorf("duplicate column name %v", name)
 	}
 
-	return nil, fmt.Errorf("not found filter name %v", name)
+	return nil, fmt.Errorf("not found column name %v", name)
 }
 
 func buildMetrics(translator Translator, query *types.Query) ([]*types.Metric, error) {
@@ -162,6 +163,7 @@ func buildOneFilter(translator Translator, in *types.Filter) (*types.Filter, err
 		out.ValueType = c.ValueType
 		out.Table = c.DataSource
 		out.Name = c.Statement
+		out.FieldProperty = c.FieldProperty
 		return out, nil
 	}
 
@@ -197,9 +199,10 @@ func buildOrders(translator Translator, query *types.Query) ([]*types.OrderBy, e
 		}
 
 		o := &types.OrderBy{
-			Table:     c.DataSource,
-			Name:      c.Statement,
-			Direction: v.Direction,
+			Table:         c.DataSource,
+			Name:          c.Statement,
+			FieldProperty: c.FieldProperty,
+			Direction:     v.Direction,
 		}
 		orders = append(orders, o)
 	}
@@ -298,8 +301,8 @@ func getHitDatasource(translator Translator, clause *types.NormalClause) ([]*typ
 			return nil, err
 		}
 		ss := &types.DataSource{
-			Database: s.Database,
-			Name:     s.Name,
+			Database:  s.Database,
+			Name:      s.Name,
 			AliasName: s.Alias,
 			Type:      s.Type,
 		}

@@ -41,12 +41,13 @@ const (
 )
 
 type Filter struct {
-	OperatorType FilterOperatorType `toml:"operator_type" json:"operator_type"`
-	ValueType    ValueType          `toml:"value_type"    json:"value_type"`
-	Table        string             `toml:"table"         json:"table"`
-	Name         string             `toml:"name"          json:"name"`
-	Value        []interface{}      `toml:"value"         json:"value"`
-	Children     []*Filter          `toml:"children"      json:"children"`
+	OperatorType  FilterOperatorType `toml:"operator_type"  json:"operator_type"`
+	ValueType     ValueType          `toml:"value_type"     json:"value_type"`
+	Table         string             `toml:"table"          json:"table"`
+	Name          string             `toml:"name"           json:"name"`
+	FieldProperty FieldProperty      `toml:"field_property" json:"field_property"`
+	Value         []interface{}      `toml:"value"          json:"value"`
+	Children      []*Filter          `toml:"children"       json:"children"`
 }
 
 func (f *Filter) Expression() (string, error) {

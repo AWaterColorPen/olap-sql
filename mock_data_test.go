@@ -11,6 +11,7 @@ import (
 )
 
 const mockWikiStatDataSet = "wikistat"
+const mockWikiStatDataSetJoin = "wikistat_join"
 const mockWikiStatDataSetMerged = "merged_uv"
 
 type WikiStat struct {
@@ -155,19 +156,18 @@ func MockLoad(manager *olapsql.Manager) error {
 	return MockWikiStatData(db)
 }
 
-// MockQuery1 mock query for normal case
+// MockQuery1 mock query for normal fact case
 func MockQuery1() *types.Query {
 	query := &types.Query{
 		DataSetName:  mockWikiStatDataSet,
 		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
-		Metrics:      []string{"hits", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
-		Dimensions:   []string{"date", "class_id"},
+		Metrics:      []string{"hits", "size_sum", "hits_avg", "hits_per_size"},
+		Dimensions:   []string{"date"},
 		Filters: []*types.Filter{
 			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
-			{OperatorType: types.FilterOperatorTypeIn, Name: "class_id", Value: []interface{}{1, 2, 3, 4}},
 		},
 		Orders: []*types.OrderBy{
-			{Name: "source_sum", Direction: types.OrderDirectionTypeDescending},
+			{Name: "size_sum", Direction: types.OrderDirectionTypeDescending},
 		},
 		Limit: &types.Limit{Limit: 2, Offset: 1},
 	}
@@ -185,6 +185,37 @@ func MockQuery1ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Equal(t, 0.022113022113022112, getValue(result.Source[0]["hits_per_size"]))
 	assert.Equal(t, 3.700855, getValue(result.Source[0]["source_avg"]))
 }
+
+// // MockQuery1 mock query for normal case
+// func MockQuery1() *types.Query {
+// 	query := &types.Query{
+// 		DataSetName:  mockWikiStatDataSet,
+// 		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
+// 		Metrics:      []string{"hits", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
+// 		Dimensions:   []string{"date", "class_id"},
+// 		Filters: []*types.Filter{
+// 			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
+// 			{OperatorType: types.FilterOperatorTypeIn, Name: "class_id", Value: []interface{}{1, 2, 3, 4}},
+// 		},
+// 		Orders: []*types.OrderBy{
+// 			{Name: "source_sum", Direction: types.OrderDirectionTypeDescending},
+// 		},
+// 		Limit: &types.Limit{Limit: 2, Offset: 1},
+// 	}
+// 	return query
+// }
+//
+// func MockQuery1ResultAssert(t assert.TestingT, result *types.Result) {
+// 	assert.Len(t, result.Dimensions, 7)
+// 	assert.Equal(t, "date", result.Dimensions[0])
+// 	assert.Equal(t, "source_avg", result.Dimensions[6])
+// 	assert.Len(t, result.Source, 2)
+// 	assert.Len(t, result.Source[0], 7)
+// 	assert.Equal(t, float64(7326), result.Source[0]["size_sum"])
+//
+// 	assert.Equal(t, 0.022113022113022112, getValue(result.Source[0]["hits_per_size"]))
+// 	assert.Equal(t, 3.700855, getValue(result.Source[0]["source_avg"]))
+// }
 
 // MockQuery2 mock query for group by time case
 func MockQuery2() *types.Query {
@@ -303,6 +334,7 @@ func MockQuery6ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Equal(t, float64(7325), getValue(result.Source[0]["hits_sum"]))
 }
 
+// MockQuery7 mock query for merge join
 func MockQuery7() *types.Query {
 	query := &types.Query{
 		DataSetName:  mockWikiStatDataSetMerged,
