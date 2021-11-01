@@ -51,6 +51,7 @@ type Filter struct {
 }
 
 func (f *Filter) Expression() (string, error) {
+	key := fmt.Sprintf("%v", f.Name)
 	value, err := f.valueToStringSlice()
 	if err != nil {
 		return "", err
@@ -58,26 +59,26 @@ func (f *Filter) Expression() (string, error) {
 	switch f.OperatorType {
 	case FilterOperatorTypeEquals:
 		v := value[0]
-		return fmt.Sprintf("%v.%v = %v", f.Table, f.Name, v), nil
+		return fmt.Sprintf("%v = %v", key, v), nil
 	case FilterOperatorTypeIn:
-		return fmt.Sprintf("%v.%v IN (%v)", f.Table, f.Name, strings.Join(value, ", ")), nil
+		return fmt.Sprintf("%v IN (%v)", key, strings.Join(value, ", ")), nil
 	case FilterOperatorTypeNotIn:
-		return fmt.Sprintf("%v.%v NOT IN (%v)", f.Table, f.Name, strings.Join(value, ", ")), nil
+		return fmt.Sprintf("%v NOT IN (%v)", key, strings.Join(value, ", ")), nil
 	case FilterOperatorTypeLessEquals:
 		v := value[0]
-		return fmt.Sprintf("%v.%v <= %v", f.Table, f.Name, v), nil
+		return fmt.Sprintf("%v <= %v", key, v), nil
 	case FilterOperatorTypeLess:
 		v := value[0]
-		return fmt.Sprintf("%v.%v < %v", f.Table, f.Name, v), nil
+		return fmt.Sprintf("%v < %v", key, v), nil
 	case FilterOperatorTypeGreaterEquals:
 		v := value[0]
-		return fmt.Sprintf("%v.%v >= %v", f.Table, f.Name, v), nil
+		return fmt.Sprintf("%v >= %v", key, v), nil
 	case FilterOperatorTypeGreater:
 		v := value[0]
-		return fmt.Sprintf("%v.%v > %v", f.Table, f.Name, v), nil
+		return fmt.Sprintf("%v > %v", key, v), nil
 	case FilterOperatorTypeLike:
 		v := value[0]
-		return fmt.Sprintf("%v.%v LIKE %v", f.Table, f.Name, v), nil
+		return fmt.Sprintf("%v LIKE %v", key, v), nil
 	case FilterOperatorTypeExpression:
 		v := value[0]
 		return v, nil

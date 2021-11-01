@@ -44,9 +44,9 @@ func (o *OrderBy) Statement() (string, error) {
 
 func (o *OrderBy) getKey() (string, error) {
 	switch o.FieldProperty {
-	case FieldPropertyDimension:
-		return fmt.Sprintf("%v.%v DESC", o.Table, o.Name), nil
-	case FieldPropertyMetric:
+	// case FieldPropertyDimension:
+	// 	return fmt.Sprintf("%v.%v", o.Table, o.Name), nil
+	case FieldPropertyDimension, FieldPropertyMetric:
 		return o.Name, nil
 	default:
 		return "", fmt.Errorf("not supported field property %v", o.FieldProperty)
