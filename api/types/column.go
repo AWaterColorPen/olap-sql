@@ -14,6 +14,7 @@ const (
 	ColumnTypeSubtract      ColumnType = "subtract"
 	ColumnTypeMultiply      ColumnType = "multiply"
 	ColumnTypeDivide        ColumnType = "divide"
+	ColumnTypeAs            ColumnType = "as"
 	ColumnTypePost          ColumnType = "post"
 	ColumnTypeExpression    ColumnType = "expression"
 )
@@ -94,6 +95,7 @@ const (
 	ArithmeticOperatorTypeSubtract ArithmeticOperatorType = "-"
 	ArithmeticOperatorTypeMultiply ArithmeticOperatorType = "*"
 	ArithmeticOperatorTypeDivide   ArithmeticOperatorType = "/"
+	ArithmeticOperatorTypeAs       ArithmeticOperatorType = "as"
 )
 
 type ArithmeticCol struct {
@@ -117,6 +119,11 @@ func (col *ArithmeticCol) GetExpression() string {
 		operator = ArithmeticOperatorTypeMultiply
 	case ColumnTypeDivide:
 		operator = ArithmeticOperatorTypeDivide
+	case ColumnTypeAs:
+		operator = ArithmeticOperatorTypeAs
+	}
+	if operator == ArithmeticOperatorTypeAs {
+		return fmt.Sprintf("( %v ) %v %v", strings.Join(children,""), operator, col.Alias)
 	}
 	if operator == ArithmeticOperatorTypeDivide {
 		for i := 1; i < len(children); i++ {
