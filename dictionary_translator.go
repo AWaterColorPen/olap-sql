@@ -2,41 +2,46 @@ package olapsql
 
 import (
 	"fmt"
+	"github.com/ahmetb/go-linq/v3"
 	"strings"
 
-	"github.com/ahmetb/go-linq/v3"
 	"github.com/awatercolorpen/olap-sql/api/models"
 	"github.com/awatercolorpen/olap-sql/api/types"
 )
 
 type Translator interface {
+	GetAdapter() IAdapter
+	GetJoinTree() JoinTree
+	GetMetricGraph() MetricGraph
 	Translate(*types.Query) (types.Clause, error)
 }
 
 type TranslatorOption struct {
 	Adapter IAdapter
 	Query   *types.Query
-	Set     *models.DataSet
-	Root    string
+	DBType  types.DBType
+	Current string
 }
 
 func NewTranslator(option *TranslatorOption) (Translator, error) {
-	if option.Set == nil {
-		option.Set, _ = option.Adapter.GetDataSetByKey(option.Query.DataSetName)
+	if option.Query.Sql != "" {
+		return newDirectSqlTranslator(option)
 	}
-	if option.Root == "" {
-		option.Root = option.Set.GetRoot()
-	}
-	return newBaseTranslator(option)
+	return newNormalTranslator(option)
 }
 
-func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
-	tGraph, _ := option.Set.JoinTopologyGraph()
+func newNormalTranslator(option *TranslatorOption) (*normalTranslator, error) {
+	adapter, err := option.Adapter.BuildDataSourceAdapter(option.Current)
+	if err != nil {
+		return nil, err
+	}
+
+	tGraph, _ := GetDependencyTree(adapter, option.Current)
 
 	jBuilder := &JoinTreeBuilder{
-		tree:       tGraph.GetTree(option.Root),
-		root:       option.Root,
-		dictionary: option.Adapter,
+		tree:       tGraph.GetTree(option.Current),
+		root:       option.Current,
+		dictionary: adapter,
 	}
 	jTree, err := jBuilder.Build()
 	if err != nil {
@@ -44,8 +49,8 @@ func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
 	}
 
 	mBuilder := &MetricGraphBuilder{
-		dbType:     option.Set.DBType,
-		dictionary: option.Adapter,
+		dbType:     option.DBType,
+		dictionary: adapter,
 		joinTree:   jTree,
 	}
 	mGraph, err := mBuilder.Build()
@@ -53,209 +58,33 @@ func newBaseTranslator(option *TranslatorOption) (*BaseTranslator, error) {
 		return nil, err
 	}
 
-	translator := &BaseTranslator{
-		adapter:     option.Adapter,
-		set:         option.Set,
-		root:        option.Root,
+	translator := &normalTranslator{
+		adapter:     adapter,
+		dBType:      option.DBType,
+		current:     option.Current,
 		joinTree:    jTree,
 		metricGraph: mGraph,
 	}
 	return translator, nil
 }
 
-type BaseTranslator struct {
-	adapter IAdapter
-	set     *models.DataSet
-	root    string
-
-	joinTree    JoinTree
-	metricGraph MetricGraph
-
-	joinedSource []string
+func newDirectSqlTranslator(option *TranslatorOption) (*directSqlTranslator, error) {
+	translator := &directSqlTranslator{dBType: option.DBType}
+	return translator, nil
 }
 
-func (t *BaseTranslator) Translate(query *types.Query) (types.Clause, error) {
-	metrics, err := t.buildMetrics(query)
-	if err != nil {
-		return nil, err
-	}
-	dimensions, err := t.buildDimensions(query)
-	if err != nil {
-		return nil, err
-	}
-	filters, err := t.buildFilters(query)
-	if err != nil {
-		return nil, err
-	}
-	orders, err := t.buildOrders(query)
-	if err != nil {
-		return nil, err
-	}
-	joins, err := t.buildJoins()
-	if err != nil {
-		return nil, err
-	}
-	limit, err := t.buildLimit(query)
-	if err != nil {
-		return nil, err
-	}
-	datasource, err := t.buildDataSource()
-	if err != nil {
-		return nil, err
-	}
-	request := &types.Request{
-		DBType:     t.set.DBType,
-		Dataset:    t.set.Name,
-		Metrics:    metrics,
-		Dimensions: dimensions,
-		Filters:    filters,
-		Joins:      joins,
-		Orders:     orders,
-		Limit:      limit,
-		DataSource: datasource,
-		Sql:        query.Sql,
-	}
-
-	return request, nil
+type columnStruct struct {
+	ValueType  types.ValueType
+	Statement  string
+	DataSource string
 }
 
-func (t *BaseTranslator) buildMetrics(query *types.Query) ([]*types.Metric, error) {
-	var metrics []*types.Metric
-	for _, v := range query.Metrics {
-		hit, err := t.joinTree.FindMetricByName(v)
-		if err != nil {
-			return nil, err
-		}
-		path, err := t.joinTree.Path(hit.DataSource)
-		if err != nil {
-			return nil, err
-		}
-		t.joinedSource = append(t.joinedSource, path...)
-
-		metric, err := t.metricGraph.GetByName(v)
-		if err != nil {
-			return nil, err
-		}
-		metrics = append(metrics, metric)
-	}
-	return metrics, nil
-}
-
-func (t *BaseTranslator) buildDimensions(query *types.Query) ([]*types.Dimension, error) {
-	var dimensions []*types.Dimension
-	for _, v := range query.Dimensions {
-		dimension, err := t.joinTree.FindDimensionByName(v)
-		if err != nil {
-			return nil, err
-		}
-		path, err := t.joinTree.Path(dimension.DataSource)
-		if err != nil {
-			return nil, err
-		}
-		t.joinedSource = append(t.joinedSource, path...)
-
-		d := &types.Dimension{
-			Table:     dimension.DataSource,
-			Name:      dimension.Name,
-			FieldName: dimension.FieldName,
-		}
-
-		dimensions = append(dimensions, d)
-	}
-	return dimensions, nil
-}
-
-func (t *BaseTranslator) buildFilters(query *types.Query) ([]*types.Filter, error) {
-	var filters []*types.Filter
-	for _, v := range query.Filters {
-		filter, err := t.treeFilter(v)
-		if err != nil {
-			return nil, err
-		}
-		filters = append(filters, filter)
-	}
-	return filters, nil
-}
-
-func (t *BaseTranslator) buildOrders(query *types.Query) ([]*types.OrderBy, error) {
-	var orders []*types.OrderBy
-	for _, v := range query.Orders {
-		c, err := t.getColumn(v.Name)
-		if err != nil {
-			return nil, err
-		}
-		path, err := t.joinTree.Path(c.DataSource)
-		if err != nil {
-			return nil, err
-		}
-		t.joinedSource = append(t.joinedSource, path...)
-
-		o := &types.OrderBy{
-			Name:      c.Statement,
-			Direction: v.Direction,
-		}
-
-		orders = append(orders, o)
-	}
-	return orders, nil
-}
-
-func (t *BaseTranslator) buildJoins() ([]*types.Join, error) {
-	var joins []*types.Join
-	linq.From(t.joinedSource).Distinct().ToSlice(&t.joinedSource)
-	for _, v := range t.joinedSource {
-		if v == t.root {
-			continue
-		}
-		join, err := t.getJoin(v)
-		if err != nil {
-			return nil, err
-		}
-
-		var on []*types.JoinOn
-		for _, u := range join.JoinOn {
-			k1 := fmt.Sprintf("%v.%v", join.DataSource1, u.Dimension1)
-			k2 := fmt.Sprintf("%v.%v", join.DataSource2, u.Dimension2)
-			d1, _ := t.adapter.GetDimensionByKey(k1)
-			d2, _ := t.adapter.GetDimensionByKey(k2)
-			on = append(on, &types.JoinOn{Key1: d1.FieldName, Key2: d2.FieldName})
-		}
-
-		s1, _ := t.adapter.GetSourceByKey(join.DataSource1)
-		s2, _ := t.adapter.GetSourceByKey(join.DataSource2)
-		j := &types.Join{
-			DataSource1: &types.DataSource{
-				Database: s1.Database,
-				Name:     s1.Name,
-			},
-			DataSource2: &types.DataSource{
-				Database: s2.Database,
-				Name:     s2.Name,
-			},
-			On: on,
-		}
-
-		joins = append(joins, j)
-	}
-	return joins, nil
-}
-
-func (t *BaseTranslator) buildLimit(query *types.Query) (*types.Limit, error) {
-	if query.Limit == nil {
-		return nil, nil
-	}
-	return &types.Limit{Limit: query.Limit.Limit, Offset: query.Limit.Offset}, nil
-}
-
-func (t *BaseTranslator) buildDataSource() (*types.DataSource, error) {
-	source, _ := t.adapter.GetSourceByKey(t.root)
-	return &types.DataSource{Database: source.Database, Name: source.Name}, nil
-}
-
-func (t *BaseTranslator) getColumn(name string) (*columnStruct, error) {
-	metric, err := t.joinTree.FindMetricByName(name)
+func getColumn(translator Translator, name string) (*columnStruct, error) {
+	jTree := translator.GetJoinTree()
+	mGraph := translator.GetMetricGraph()
+	metric, err := jTree.FindMetricByName(name)
 	if err == nil {
-		current, _ := t.metricGraph.GetByName(metric.Name)
+		current, _ := mGraph.GetByName(metric.Name)
 		statement, _ := current.Expression()
 		return &columnStruct{ValueType: metric.ValueType, Statement: statement, DataSource: metric.DataSource}, nil
 	}
@@ -263,7 +92,7 @@ func (t *BaseTranslator) getColumn(name string) (*columnStruct, error) {
 		return nil, fmt.Errorf("duplicate filter name %v", name)
 	}
 
-	dimension, err := t.joinTree.FindDimensionByName(name)
+	dimension, err := jTree.FindDimensionByName(name)
 	if err == nil {
 		current := &types.Dimension{
 			Table:     dimension.DataSource,
@@ -280,39 +109,63 @@ func (t *BaseTranslator) getColumn(name string) (*columnStruct, error) {
 	return nil, fmt.Errorf("not found filter name %v", name)
 }
 
-func (t *BaseTranslator) getJoin(datasource string) (*models.DataSetDimensionJoin, error) {
-	for _, join := range t.set.DimensionJoin {
-		if join.DataSource2 == datasource {
-			return join, nil
+func buildMetrics(translator Translator, query *types.Query) ([]*types.Metric, error) {
+	jTree := translator.GetJoinTree()
+	mGraph := translator.GetMetricGraph()
+	var metrics []*types.Metric
+	for _, v := range query.Metrics {
+		_, err := jTree.FindMetricByName(v)
+		if err != nil {
+			return nil, err
 		}
+
+		metric, err := mGraph.GetByName(v)
+		if err != nil {
+			return nil, err
+		}
+		metrics = append(metrics, metric)
 	}
-	return nil, fmt.Errorf("not found dataset_join data source %v", datasource)
+	return metrics, nil
 }
 
-func (t *BaseTranslator) treeFilter(in *types.Filter) (*types.Filter, error) {
+func buildDimensions(translator Translator, query *types.Query) ([]*types.Dimension, error) {
+	joinTree := translator.GetJoinTree()
+	var dimensions []*types.Dimension
+	for _, v := range query.Dimensions {
+		hit, err := joinTree.FindDimensionByName(v)
+		if err != nil {
+			return nil, err
+		}
+
+		d := &types.Dimension{
+			Table:     hit.DataSource,
+			Name:      hit.Name,
+			FieldName: hit.FieldName,
+		}
+		dimensions = append(dimensions, d)
+	}
+	return dimensions, nil
+}
+
+func buildOneFilter(translator Translator, in *types.Filter) (*types.Filter, error) {
 	out := &types.Filter{
 		OperatorType: in.OperatorType,
 		Value:        in.Value,
 	}
 
 	if !out.OperatorType.IsTree() {
-		c, err := t.getColumn(in.Name)
+		c, err := getColumn(translator, in.Name)
 		if err != nil {
 			return nil, err
 		}
-		path, err := t.joinTree.Path(c.DataSource)
-		if err != nil {
-			return nil, err
-		}
-		t.joinedSource = append(t.joinedSource, path...)
-
 		out.ValueType = c.ValueType
+		out.Table = c.DataSource
 		out.Name = c.Statement
 		return out, nil
 	}
 
 	for _, v := range in.Children {
-		child, err := t.treeFilter(v)
+		child, err := buildOneFilter(translator, v)
 		if err != nil {
 			return nil, err
 		}
@@ -322,8 +175,271 @@ func (t *BaseTranslator) treeFilter(in *types.Filter) (*types.Filter, error) {
 	return out, nil
 }
 
-type columnStruct struct {
-	ValueType  types.ValueType
-	Statement  string
-	DataSource string
+func buildFilters(translator Translator, query *types.Query) ([]*types.Filter, error) {
+	var filters []*types.Filter
+	for _, v := range query.Filters {
+		filter, err := buildOneFilter(translator, v)
+		if err != nil {
+			return nil, err
+		}
+		filters = append(filters, filter)
+	}
+	return filters, nil
+}
+
+func buildOrders(translator Translator, query *types.Query) ([]*types.OrderBy, error) {
+	var orders []*types.OrderBy
+	for _, v := range query.Orders {
+		c, err := getColumn(translator, v.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		o := &types.OrderBy{
+			Table:     c.DataSource,
+			Name:      c.Statement,
+			Direction: v.Direction,
+		}
+		orders = append(orders, o)
+	}
+	return orders, nil
+}
+
+func buildLimit(_ Translator, query *types.Query) (*types.Limit, error) {
+	if query.Limit == nil {
+		return nil, nil
+	}
+	return &types.Limit{Limit: query.Limit.Limit, Offset: query.Limit.Offset}, nil
+}
+
+func buildNormalClause(translator Translator, query *types.Query) (*types.NormalClause, error) {
+	var err error
+	clause := &types.NormalClause{}
+	clause.Metrics, err = buildMetrics(translator, query)
+	if err != nil {
+		return nil, err
+	}
+	clause.Dimensions, err = buildDimensions(translator, query)
+	if err != nil {
+		return nil, err
+	}
+	clause.Filters, err = buildFilters(translator, query)
+	if err != nil {
+		return nil, err
+	}
+	clause.Orders, err = buildOrders(translator, query)
+	if err != nil {
+		return nil, err
+	}
+	clause.Limit, err = buildLimit(translator, query)
+	if err != nil {
+		return nil, err
+	}
+	return clause, nil
+}
+
+func getHitDatasourceFromMetric(metric *types.Metric) []string {
+	hit := []string{metric.Table}
+	for _, child := range metric.Children {
+		hit = append(hit, getHitDatasourceFromMetric(child)...)
+	}
+	hit = append(hit, getHitDatasourceFromFilter(metric.Filter)...)
+	return hit
+}
+
+func getHitDatasourceFromDimension(dimension *types.Dimension) []string {
+	return []string{dimension.Table}
+}
+
+func getHitDatasourceFromFilter(filter *types.Filter) []string {
+	if filter == nil {
+		return nil
+	}
+	var hit []string
+	if len(filter.Table) > 0 {
+		hit = append(hit, filter.Table)
+	}
+	for _, child := range filter.Children {
+		hit = append(hit, getHitDatasourceFromFilter(child)...)
+	}
+	return hit
+}
+
+func getHitDatasourceFromOrderBy(order *types.OrderBy) []string {
+	return []string{order.Table}
+}
+
+func getHitDatasourceKey(clause *types.NormalClause) []string {
+	var hit []string
+	for _, m := range clause.Metrics {
+		hit = append(hit, getHitDatasourceFromMetric(m)...)
+	}
+	for _, d := range clause.Dimensions {
+		hit = append(hit, getHitDatasourceFromDimension(d)...)
+	}
+	for _, f := range clause.Filters {
+		hit = append(hit, getHitDatasourceFromFilter(f)...)
+	}
+	for _, o := range clause.Orders {
+		hit = append(hit, getHitDatasourceFromOrderBy(o)...)
+	}
+	linq.From(hit).Distinct().ToSlice(&hit)
+	return hit
+}
+
+func getHitDatasource(translator Translator, clause *types.NormalClause) ([]*types.DataSource, error) {
+	// adapter := translator.GetAdapter()
+	// hitKey := getHitDatasourceKey(clause)
+	return nil, nil
+}
+
+func buildDimensionJoin(translator Translator, source *models.DataSource, hitMap map[string]*types.DataSource) []*types.Join {
+	adapter := translator.GetAdapter()
+	var joins []*types.Join
+	for _, v := range source.DimensionJoin {
+		s1, ok1 := hitMap[v.Get1().DataSource]
+		s2, ok2 := hitMap[v.Get2().DataSource]
+		if !ok1 || !ok2 {
+			continue
+		}
+		ds1, dl1, ds2, dl2 := v.Get1().DataSource, v.Get1().Dimension, v.Get2().DataSource, v.Get2().Dimension
+		var on []*types.JoinOn
+		for i := 0; i <= len(dl1); i++ {
+			k1 := fmt.Sprintf("%v.%v", ds1, dl1[i])
+			k2 := fmt.Sprintf("%v.%v", ds2, dl2[i])
+			d1, _ := adapter.GetDimensionByKey(k1)
+			d2, _ := adapter.GetDimensionByKey(k2)
+			on = append(on, &types.JoinOn{Key1: d1.FieldName, Key2: d2.FieldName})
+		}
+
+		j := &types.Join{DataSource1: s1, DataSource2: s2, On: on}
+		joins = append(joins, j)
+	}
+	return joins
+}
+
+func buildMergedJoin(translator Translator, source *models.DataSource, hitMap map[string]*types.DataSource) []*types.Join {
+	adapter := translator.GetAdapter()
+
+	var hitDArray []bool
+	var joins []*types.Join
+
+	s1, ok1 := hitMap[source.Name]
+	if !ok1 {
+		return nil
+	}
+
+	for i := 1; i < len(source.MergedJoin); i++ {
+		current := source.MergedJoin[i]
+		s2, ok2 := hitMap[current.DataSource]
+		if !ok2 {
+			continue
+		}
+		var on []*types.JoinOn
+		for j := 0; j <= len(hitDArray); j++ {
+			if !hitDArray[j] {
+				continue
+			}
+			k1 := fmt.Sprintf("%v.%v", source.MergedJoin[0].DataSource, source.MergedJoin[0].Dimension[j])
+			k2 := fmt.Sprintf("%v.%v", current.DataSource, current.Dimension[j])
+			d1, _ := adapter.GetDimensionByKey(k1)
+			d2, _ := adapter.GetDimensionByKey(k2)
+			on = append(on, &types.JoinOn{Key1: d1.FieldName, Key2: d2.FieldName})
+		}
+
+		j := &types.Join{DataSource1: s1, DataSource2: s2, On: on}
+		joins = append(joins, j)
+	}
+	return joins
+}
+
+func buildJoins(translator Translator, source *models.DataSource, hit []*types.DataSource) ([]*types.Join, error) {
+	hitMap := map[string]*types.DataSource{}
+	for _, v := range hit {
+		hitMap[v.Name] = v
+	}
+	var joins []*types.Join
+	joins = append(joins, buildDimensionJoin(translator, source, hitMap)...)
+	joins = append(joins, buildMergedJoin(translator, source, hitMap)...)
+	return joins, nil
+}
+
+type normalTranslator struct {
+	adapter IAdapter
+	dBType  types.DBType
+	current string
+
+	joinTree    JoinTree
+	metricGraph MetricGraph
+}
+
+func (n *normalTranslator) GetAdapter() IAdapter {
+	return n.adapter
+}
+
+func (n *normalTranslator) GetJoinTree() JoinTree {
+	return n.joinTree
+}
+
+func (n *normalTranslator) GetMetricGraph() MetricGraph {
+	return n.metricGraph
+}
+
+func (n *normalTranslator) Translate(query *types.Query) (types.Clause, error) {
+	clause, err := buildNormalClause(n, query)
+	if err != nil {
+		return nil, err
+	}
+	clause.DataSource, clause.Joins, err = n.buildDataSourcesAndJoins()
+	if err != nil {
+		return nil, err
+	}
+	clause.DBType = n.dBType
+	clause.Dataset = query.DataSetName
+	return clause, nil
+}
+
+func (n *normalTranslator) buildDataSourcesAndJoins(clause *types.NormalClause) (sources []*types.DataSource, joins []*types.Join, err error) {
+	toFn := func(in *models.DataSource) *types.DataSource {
+		return &types.DataSource{Database: in.Database, Name: in.Name, AliasName: in.Alias, Type: in.Type}
+	}
+
+	source, _ := n.adapter.GetSourceByKey(n.current)
+	switch source.Type {
+	case types.DataSourceTypeFact:
+		sources = append(sources, toFn(source))
+		return
+	case types.DataSourceTypeFactDimensionJoin:
+		sources, err = getHitDatasource(n, clause)
+	case types.DataSourceTypeMergedJoin:
+		sources, err = getHitDatasource(n, clause)
+		return
+	default:
+		err = fmt.Errorf("can't use datasource type=%v as dateset's datasource", source.Type)
+		return
+	}
+	return
+}
+
+type directSqlTranslator struct {
+	dBType types.DBType
+}
+
+func (d *directSqlTranslator) GetAdapter() IAdapter {
+	panic("implement me")
+}
+
+func (d *directSqlTranslator) GetJoinTree() JoinTree {
+	panic("implement me")
+}
+
+func (d *directSqlTranslator) GetMetricGraph() MetricGraph {
+	panic("implement me")
+}
+
+func (d *directSqlTranslator) Translate(query *types.Query) (types.Clause, error) {
+	clause := &types.SqlClause{Sql: query.Sql}
+	clause.DBType = d.dBType
+	clause.Dataset = query.DataSetName
+	return clause, nil
 }

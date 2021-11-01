@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ahmetb/go-linq/v3"
 	"github.com/awatercolorpen/olap-sql/api/types"
 )
 
@@ -13,94 +12,179 @@ type IModel interface {
 }
 
 type DataSet struct {
-	Name          string                  `toml:"name"`
-	DBType        types.DBType            `toml:"type"`
-	Description   string                  `toml:"description"`
-	Root          string                  `toml:"root"`
-	DimensionJoin []*DataSetDimensionJoin `toml:"dimension_join"`
-	Merged        []*DataSetMergedJoin    `toml:"merged_join"`
+	Name        string       `toml:"name"`
+	DBType      types.DBType `toml:"type"`
+	Description string       `toml:"description"`
+	DataSource  string       `toml:"data_source"`
 }
 
 func (d *DataSet) GetKey() string {
 	return d.Name
 }
 
-func (d *DataSet) GetDataSource() []string {
-	out := []string{d.Root}
-	for _, join := range d.DimensionJoin {
-		out = append(out, join.DataSource1, join.DataSource2)
+func (d *DataSet) GetCurrent() string {
+	return d.DataSource
+}
+
+type Join struct {
+	DataSource string   `toml:"data_source"`
+	Dimension  []string `toml:"dimension"`
+}
+
+type JoinPair []*Join
+
+func (j JoinPair) Get1() *Join {
+	return j[0]
+}
+
+func (j JoinPair) Get2() *Join {
+	return j[1]
+}
+
+func (j JoinPair) IsValid() error {
+	if len(j) != 2 {
+		return fmt.Errorf("join pair len %v != 2", len(j))
 	}
-	linq.From(out).Distinct().ToSlice(&out)
-	return out
+	if len(j.Get1().Dimension) != len(j.Get2().Dimension) {
+		return fmt.Errorf("join pair's dimension list len %v != %v", len(j.Get1().Dimension), len(j.Get2().Dimension))
+	}
+	return nil
 }
 
-func (d *DataSet) GetRoot() string {
-	return d.Root
+type DimensionJoins []*JoinPair
+
+func (d DimensionJoins) IsValid() error {
+	if len(d) == 0 {
+		return fmt.Errorf("dimension join len == 0")
+	}
+	for _, v := range d {
+		if err := v.IsValid(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func (d *DataSet) JoinTopologyGraph() (Graph, error) {
+func (d DimensionJoins) GetDependencyTree(source string) (Graph, error) {
+	g := Graph{source: nil}
 	inDegree := map[string]int{}
-	graph := Graph{}
-
-	for _, v := range d.DimensionJoin {
-		if _, ok := inDegree[v.DataSource1]; !ok {
-			inDegree[v.DataSource1] = 0
+	for _, v := range d {
+		id1, id2 := v.Get1().DataSource, v.Get2().DataSource
+		g[id1] = append(g[id1], id2)
+		if _, ok := inDegree[id1]; !ok {
+			inDegree[id1] = 0
 		}
-		inDegree[v.DataSource2] = inDegree[v.DataSource2] + 1
-		graph[v.DataSource1] = append(graph[v.DataSource1], v.DataSource2)
+		inDegree[id2] = inDegree[id2] + 1
 	}
 
-	var queue []string
+	var root []string
 	for k, v := range inDegree {
+		if v > 1 {
+			return nil, fmt.Errorf("it is graph, not a tree. id=%v has indegree=%v", k, v)
+		}
 		if v == 0 {
-			queue = append(queue, k)
+			root = append(root, k)
 		}
 	}
-	for i := 0; i < len(queue); i++ {
-		node := queue[i]
-		for _, v := range graph[node] {
-			inDegree[v]--
-			if inDegree[v] == 0 {
-				queue = append(queue, v)
-			}
+	if len(root) != 1 {
+		return nil, fmt.Errorf("there are mulit root. id=%v", root)
+	}
+
+	g[source] = append(g[source], root...)
+	return g, nil
+}
+
+type MergedJoin []*Join
+
+func (m MergedJoin) IsValid(source string) error {
+	if len(m) < 3 {
+		return fmt.Errorf("merged join len %v < 3", len(m))
+	}
+	if m[0].DataSource != source {
+		return fmt.Errorf("merged join's first dimension should be itself's, but %v", m[0].DataSource)
+	}
+	for i := 1; i < len(m); i++ {
+		if len(m[i-1].Dimension) != len(m[i].Dimension) {
+			return fmt.Errorf("merged join's dimension list len %v != %v", len(m[i-1].Dimension), len(m[i].Dimension))
 		}
 	}
-	if len(inDegree) != len(queue) {
-		return nil, fmt.Errorf("it is not a topology graph. node=%v, intop=%v", len(inDegree), len(queue))
+	return nil
+}
+
+func (m MergedJoin) GetDependencyTree(source string) (Graph, error) {
+	g := Graph{}
+	for i := 1; i < len(m); i++ {
+		g[source] = append(g[source], m[i].DataSource)
 	}
-	return graph, nil
-}
-
-type DataSetMergedJoin struct {
-	Target MergedJoinOn `toml:"target"`
-	Source []MergedJoinOn `toml:"source"`
-}
-
-type MergedJoinOn struct {
-	DataSource string    `toml:"data_source"`
-	Dimension []string `toml:"dimension"`
-}
-
-type DataSetDimensionJoin struct {
-	DataSource1 string    `toml:"data_source1"`
-	DataSource2 string    `toml:"data_source2"`
-	JoinOn      []*JoinOn `toml:"join_on"`
-}
-
-type JoinOn struct {
-	Dimension1 string `toml:"dimension1"`
-	Dimension2 string `toml:"dimension2"`
+	return g, nil
 }
 
 type DataSource struct {
-	Database    string `toml:"database"`
-	Name        string `toml:"name"`
-	Alias       string `toml:"alias"`
-	Description string `toml:"description"`
+	Database      string               `toml:"database"`
+	Name          string               `toml:"name"`
+	Alias         string               `toml:"alias"`
+	Type          types.DataSourceType `toml:"type"`
+	Description   string               `toml:"description"`
+	DimensionJoin DimensionJoins       `toml:"dimension_join"`
+	MergedJoin    MergedJoin           `toml:"merged_join"`
 }
 
 func (d *DataSource) GetKey() string {
 	return d.Name
+}
+
+func (d *DataSource) IsFact() bool {
+	switch d.Type {
+	case types.DataSourceTypeFact, types.DataSourceTypeFactDimensionJoin, types.DataSourceTypeMergedJoin:
+		return true
+	default:
+		return false
+	}
+}
+
+func (d *DataSource) IsDimension() bool {
+	switch d.Type {
+	case types.DataSourceTypeDimension:
+		return true
+	default:
+		return false
+	}
+}
+
+func (d *DataSource) IsValid() error {
+	switch d.Type {
+	case types.DataSourceTypeFactDimensionJoin:
+		return d.DimensionJoin.IsValid()
+	case types.DataSourceTypeMergedJoin:
+		return d.MergedJoin.IsValid(d.Name)
+	case types.DataSourceTypeFact, types.DataSourceTypeDimension:
+		return nil
+	default:
+		return fmt.Errorf("can't use datasource type=%v as dateset's datasource", d.Type)
+	}
+}
+
+func (d *DataSource) GetDependencyTree() (Graph, error) {
+	switch d.Type {
+	case types.DataSourceTypeFactDimensionJoin:
+		return d.DimensionJoin.GetDependencyTree(d.Name)
+	case types.DataSourceTypeMergedJoin:
+		return d.MergedJoin.GetDependencyTree(d.Name)
+	case types.DataSourceTypeFact, types.DataSourceTypeDimension:
+		return Graph{d.Name: nil}, nil
+	default:
+		return nil, fmt.Errorf("can't use datasource type=%v as dateset's datasource", d.Type)
+	}
+}
+
+type DataSources []*DataSource
+
+func (d DataSources) KeyIndex() map[string]*DataSource {
+	out := map[string]*DataSource{}
+	for _, v := range d {
+		out[v.GetKey()] = v
+	}
+	return out
 }
 
 type Dimension struct {

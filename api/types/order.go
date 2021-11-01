@@ -13,6 +13,7 @@ const (
 )
 
 type OrderBy struct {
+	Table     string             `json:"table"`
 	Name      string             `json:"name"`
 	Direction OrderDirectionType `json:"direction"`
 }

@@ -23,7 +23,7 @@ type Query struct {
 	Filters      []*Filter     `json:"filters"`
 	Orders       []*OrderBy    `json:"orders"`
 	Limit        *Limit        `json:"limit"`
-	Sql          string        `json:"sql"`
+	Sql          string        `json:"Sql"`
 }
 
 func (q *Query) TranslateTimeIntervalToFilter() {

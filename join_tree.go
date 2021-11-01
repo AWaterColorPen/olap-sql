@@ -2,8 +2,9 @@ package olapsql
 
 import (
 	"fmt"
-	"github.com/ahmetb/go-linq/v3"
 	"github.com/awatercolorpen/olap-sql/api/models"
+
+	"github.com/ahmetb/go-linq/v3"
 )
 
 type Metrics []*models.Metric
@@ -48,14 +49,14 @@ type joinNode struct {
 	dimensionNameMap map[string]*models.Dimension
 }
 
-func (j *joinNode) FindMetric(key string) (*models.Metric, error) {
-	m, ok := j.metricNameMap[key]
+func (j *joinNode) FindMetric(name string) (*models.Metric, error) {
+	m, ok := j.metricNameMap[name]
 	if ok {
 		return m, nil
 	}
 
 	for _, v := range j.Children {
-		u, err := v.FindMetric(key)
+		u, err := v.FindMetric(name)
 		if err != nil {
 			return nil, err
 		}
@@ -63,21 +64,21 @@ func (j *joinNode) FindMetric(key string) (*models.Metric, error) {
 			continue
 		}
 		if m != nil {
-			return nil, fmt.Errorf("duplicate metric key %v", key)
+			return nil, fmt.Errorf("duplicate metric name %v", name)
 		}
 		m = u
 	}
 	return m, nil
 }
 
-func (j *joinNode) FindDimension(key string) (*models.Dimension, error) {
-	d, ok := j.dimensionNameMap[key]
+func (j *joinNode) FindDimension(name string) (*models.Dimension, error) {
+	d, ok := j.dimensionNameMap[name]
 	if ok {
 		return d, nil
 	}
 
 	for _, v := range j.Children {
-		u, err := v.FindDimension(key)
+		u, err := v.FindDimension(name)
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +86,7 @@ func (j *joinNode) FindDimension(key string) (*models.Dimension, error) {
 			continue
 		}
 		if d != nil {
-			return nil, fmt.Errorf("duplicate dimension name %v", key)
+			return nil, fmt.Errorf("duplicate dimension name %v", name)
 		}
 		d = u
 	}
@@ -122,30 +123,30 @@ func (j *joinTree) Path(current string) ([]string, error) {
 	return out, nil
 }
 
-func (j *joinTree) FindMetricByName(key string) (*models.Metric, error) {
-	m, err := j.joinNode.FindMetric(key)
+func (j *joinTree) FindMetricByName(name string) (*models.Metric, error) {
+	m, err := j.joinNode.FindMetric(name)
 	if err != nil {
 		return nil, err
 	}
 	if m == nil {
-		return nil, fmt.Errorf("not found metric name %v", key)
+		return nil, fmt.Errorf("not found metric name %v", name)
 	}
 	return m, nil
 }
 
-func (j *joinTree) FindDimensionByName(key string) (*models.Dimension, error) {
-	d, err := j.joinNode.FindDimension(key)
+func (j *joinTree) FindDimensionByName(name string) (*models.Dimension, error) {
+	d, err := j.joinNode.FindDimension(name)
 	if err != nil {
 		return nil, err
 	}
 	if d == nil {
-		return nil, fmt.Errorf("not found dimension key %v", key)
+		return nil, fmt.Errorf("not found dimension name %v", name)
 	}
 	return d, nil
 }
 
 type JoinTree interface {
-	Path(key string) ([]string, error)
+	Path(name string) ([]string, error)
 	FindMetricByName(name string) (*models.Metric, error)
 	FindDimensionByName(name string) (*models.Dimension, error)
 }
