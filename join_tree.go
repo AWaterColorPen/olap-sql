@@ -3,8 +3,6 @@ package olapsql
 import (
 	"fmt"
 	"github.com/awatercolorpen/olap-sql/api/models"
-
-	"github.com/ahmetb/go-linq/v3"
 )
 
 type Metrics []*models.Metric
@@ -102,25 +100,7 @@ func newJoinNode(metrics []*models.Metric, dimensions []*models.Dimension) *join
 
 type joinTree struct {
 	joinNode
-	root     string
-	inverted map[string]string
-}
-
-func (j *joinTree) Path(current string) ([]string, error) {
-	var out []string
-	for true {
-		out = append(out, current)
-		if current == j.root {
-			break
-		}
-		u, ok := j.inverted[current]
-		if !ok {
-			return nil, fmt.Errorf("can't find %v node", current)
-		}
-		current = u
-	}
-	linq.From(out).Reverse().ToSlice(&out)
-	return out, nil
+	root string
 }
 
 func (j *joinTree) FindMetricByName(name string) (*models.Metric, error) {
@@ -146,7 +126,6 @@ func (j *joinTree) FindDimensionByName(name string) (*models.Dimension, error) {
 }
 
 type JoinTree interface {
-	Path(name string) ([]string, error)
 	FindMetricByName(name string) (*models.Metric, error)
 	FindDimensionByName(name string) (*models.Dimension, error)
 }
@@ -162,14 +141,7 @@ func (j *JoinTreeBuilder) Build() (JoinTree, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	inverted := map[string]string{}
-	for k, v := range j.tree {
-		for _, u := range v {
-			inverted[u] = k
-		}
-	}
-	return &joinTree{joinNode: *node, root: j.root, inverted: inverted}, nil
+	return &joinTree{joinNode: *node, root: j.root}, nil
 }
 
 func (j *JoinTreeBuilder) dfs(current string) (*joinNode, error) {

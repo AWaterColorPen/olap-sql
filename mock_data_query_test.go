@@ -7,6 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestMockQuery1(t *testing.T) {
+	testMockQuery(t, MockQuery1(), MockQuery1ResultAssert)
+}
+
 func TestMockQuery2(t *testing.T) {
 	testMockQuery(t, MockQuery2(), MockQuery2ResultAssert)
 }

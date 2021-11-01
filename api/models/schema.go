@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"github.com/ahmetb/go-linq/v3"
 	"strings"
 
 	"github.com/awatercolorpen/olap-sql/api/types"
@@ -177,6 +178,18 @@ func (d *DataSource) GetDependencyTree() (Graph, error) {
 	}
 }
 
+func (d *DataSource) GetGetDependencyKey() []string {
+	var key []string
+	for _, v := range d.DimensionJoin {
+		key = append(key, v.Get1().DataSource, v.Get2().DataSource)
+	}
+	for i := 1; i < len(d.MergedJoin); i++ {
+		key = append(key, d.MergedJoin[i].DataSource)
+	}
+	linq.From(key).Distinct().ToSlice(&key)
+	return key
+}
+
 type DataSources []*DataSource
 
 func (d DataSources) KeyIndex() map[string]*DataSource {
@@ -201,6 +214,10 @@ func (d *Dimension) GetKey() string {
 	return fmt.Sprintf("%v.%v", d.DataSource, d.Name)
 }
 
+func (d *Dimension) GetDependency() []string {
+	return d.Composition
+}
+
 type Metric struct {
 	DataSource  string           `toml:"data_source"`
 	Name        string           `toml:"name"`
@@ -214,6 +231,10 @@ type Metric struct {
 
 func (m *Metric) GetKey() string {
 	return fmt.Sprintf("%v.%v", m.DataSource, m.Name)
+}
+
+func (m *Metric) GetDependency() []string {
+	return m.Composition
 }
 
 func GetNameFromKey(key string) string {

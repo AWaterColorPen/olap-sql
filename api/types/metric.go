@@ -22,10 +22,11 @@ const (
 )
 
 type Metric struct {
-	Type      MetricType `json:"type"`
 	Table     string     `json:"table"`
 	Name      string     `json:"name"`
+	Type      MetricType `json:"type"`
 	FieldName string     `json:"field_name"`
+	ValueType ValueType  `json:"value_type"`
 	Children  []*Metric  `json:"children"`
 	Filter    *Filter    `json:"filter"`
 	DBType    DBType     `json:"db_type"`

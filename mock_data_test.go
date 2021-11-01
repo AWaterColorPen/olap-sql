@@ -187,7 +187,7 @@ func MockQuery1ResultAssert(t assert.TestingT, result *types.Result) {
 // MockQuery2 mock query for normal fact dimension join case
 func MockQuery2() *types.Query {
 	query := &types.Query{
-		DataSetName:  mockWikiStatDataSet,
+		DataSetName:  mockWikiStatDataSetJoin,
 		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
 		Metrics:      []string{"hits", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
 		Dimensions:   []string{"date", "class_id"},
@@ -215,36 +215,36 @@ func MockQuery2ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Equal(t, 3.700855, getValue(result.Source[0]["source_avg"]))
 }
 
-// MockQuery2 mock query for group by time case
-func MockQuery2() *types.Query {
-	query := &types.Query{
-		DataSetName:  mockWikiStatDataSet,
-		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
-		Metrics:      []string{"hits", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
-		Dimensions:   []string{"time_by_hour", "class_id"},
-		Filters: []*types.Filter{
-			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
-			{OperatorType: types.FilterOperatorTypeIn, Name: "class_id", Value: []interface{}{1, 2, 3, 4}},
-		},
-		Orders: []*types.OrderBy{
-			{Name: "time_by_hour", Direction: types.OrderDirectionTypeAscending},
-		},
-		Limit: &types.Limit{Limit: 10},
-	}
-	return query
-}
-
-func MockQuery2ResultAssert(t assert.TestingT, result *types.Result) {
-	assert.Len(t, result.Dimensions, 7)
-	assert.Equal(t, "time_by_hour", result.Dimensions[0])
-	assert.Equal(t, "source_avg", result.Dimensions[6])
-	assert.Len(t, result.Source, 8)
-	assert.Len(t, result.Source[0], 7)
-	assert.Equal(t, "2021-05-06 11:00:00", result.Source[0]["time_by_hour"])
-	assert.Equal(t, float64(10086), result.Source[0]["size_sum"])
-	assert.Equal(t, 0.013781479278207416, getValue(result.Source[0]["hits_per_size"]))
-	assert.Equal(t, 4.872, getValue(result.Source[0]["source_avg"]))
-}
+// // MockQuery2 mock query for group by time case
+// func MockQuery2() *types.Query {
+// 	query := &types.Query{
+// 		DataSetName:  mockWikiStatDataSet,
+// 		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
+// 		Metrics:      []string{"hits", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
+// 		Dimensions:   []string{"time_by_hour", "class_id"},
+// 		Filters: []*types.Filter{
+// 			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
+// 			{OperatorType: types.FilterOperatorTypeIn, Name: "class_id", Value: []interface{}{1, 2, 3, 4}},
+// 		},
+// 		Orders: []*types.OrderBy{
+// 			{Name: "time_by_hour", Direction: types.OrderDirectionTypeAscending},
+// 		},
+// 		Limit: &types.Limit{Limit: 10},
+// 	}
+// 	return query
+// }
+//
+// func MockQuery2ResultAssert(t assert.TestingT, result *types.Result) {
+// 	assert.Len(t, result.Dimensions, 7)
+// 	assert.Equal(t, "time_by_hour", result.Dimensions[0])
+// 	assert.Equal(t, "source_avg", result.Dimensions[6])
+// 	assert.Len(t, result.Source, 8)
+// 	assert.Len(t, result.Source[0], 7)
+// 	assert.Equal(t, "2021-05-06 11:00:00", result.Source[0]["time_by_hour"])
+// 	assert.Equal(t, float64(10086), result.Source[0]["size_sum"])
+// 	assert.Equal(t, 0.013781479278207416, getValue(result.Source[0]["hits_per_size"]))
+// 	assert.Equal(t, 4.872, getValue(result.Source[0]["source_avg"]))
+// }
 
 // MockQuery3 mock query for nested join case
 func MockQuery3() *types.Query {

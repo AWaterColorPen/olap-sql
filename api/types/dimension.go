@@ -12,11 +12,12 @@ var (
 type DimensionType string
 
 type Dimension struct {
-	Table       string        `json:"table"`
-	Name        string        `json:"name"`
-	FieldName   string        `json:"field_name"`
-	Type        DimensionType `json:"type"`
-	Composition []string      `json:"composition"`
+	Table      string        `json:"table"`
+	Name       string        `json:"name"`
+	FieldName  string        `json:"field_name"`
+	Type       DimensionType `json:"type"`
+	ValueType  ValueType     `json:"value_type"`
+	Dependency []*Dimension  `json:"dependency"`
 }
 
 const (
@@ -32,10 +33,10 @@ func (d *Dimension) Expression() (string, error) {
 	case DimensionTypeExpression:
 		return d.FieldName, nil
 	case DimensionTypeMulti:
-		if len(d.Composition) == 0 {
-			return "", fmt.Errorf("dimension composition error")
+		if len(d.Dependency) == 0 {
+			return "", fmt.Errorf("dimension dependency error")
 		}
-		return fmt.Sprintf("%v", d.Composition[0]), nil
+		return d.Dependency[0].Expression()
 	default:
 		return "", fmt.Errorf("unsupported dimension type")
 	}
@@ -51,8 +52,4 @@ func (d *Dimension) Statement() (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("%v AS %v", expression, d.Name), nil
-}
-
-func (d *Dimension) expression() bool {
-	return !reg.MatchString(d.FieldName)
 }

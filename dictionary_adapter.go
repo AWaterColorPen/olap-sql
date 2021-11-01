@@ -20,6 +20,7 @@ type IAdapter interface {
 	BuildDataSourceAdapter(string) (IAdapter, error)
 
 	GetMetric() []*models.Metric
+	GetDimension() []*models.Dimension
 
 	GetDataSetByKey(string) (*models.DataSet, error)
 	GetSourceByKey(string) (*models.DataSource, error)
@@ -142,6 +143,10 @@ func (f *FileAdapter) BuildDataSourceAdapter(key string) (IAdapter, error) {
 
 func (f *FileAdapter) GetMetric() []*models.Metric {
 	return f.Metrics
+}
+
+func (f *FileAdapter) GetDimension() []*models.Dimension {
+	return f.Dimensions
 }
 
 func (f *FileAdapter) GetDataSetByKey(key string) (*models.DataSet, error) {
