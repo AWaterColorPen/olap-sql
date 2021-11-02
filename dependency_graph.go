@@ -59,7 +59,7 @@ type DependencyGraphBuilder struct {
 	dbType     types.DBType
 	dictionary IAdapter
 
-	current    string
+	current               string
 	inDependencySourceKey map[string]bool
 }
 
