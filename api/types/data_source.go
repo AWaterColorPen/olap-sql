@@ -28,7 +28,7 @@ type DataSource struct {
 
 func (d *DataSource) Expression() (string, error) {
 	if d.expression != "" {
-		return d.expression, nil
+		return fmt.Sprintf("( %v )", d.expression), nil
 	}
 	if d.Database == "" {
 		return fmt.Sprintf("`%v`", d.Name), nil
@@ -46,7 +46,7 @@ func (d *DataSource) Alias() (string, error) {
 func (d *DataSource) Statement() (string, error) {
 	expression, _ := d.Expression()
 	alias, _ := d.Alias()
-	return fmt.Sprintf("(%v) AS %v", expression, alias), nil
+	return fmt.Sprintf("%v AS %v", expression, alias), nil
 }
 
 func (d *DataSource) Init(tx *gorm.DB) (err error) {
