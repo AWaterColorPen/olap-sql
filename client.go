@@ -5,6 +5,7 @@ import (
 
 	"github.com/awatercolorpen/olap-sql/api/types"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type ClientsOption = map[string]*DBOption
@@ -25,6 +26,12 @@ func (c Clients) RegisterByOption(option ClientsOption) error {
 		c[k] = db
 	}
 	return nil
+}
+
+func (c Clients) SetLogger(log logger.Interface) {
+	for _, v := range c {
+		v.Config.Logger = log
+	}
 }
 
 func (c Clients) Get(dbType types.DBType, dataset string) (*gorm.DB, error) {

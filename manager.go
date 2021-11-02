@@ -5,6 +5,7 @@ import (
 
 	"github.com/awatercolorpen/olap-sql/api/types"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type Manager struct {
@@ -24,6 +25,13 @@ func (m *Manager) GetDictionary() (*Dictionary, error) {
 		return nil, fmt.Errorf("it is no initialization")
 	}
 	return m.dictionary, nil
+}
+
+func (m *Manager) SetLogger(log logger.Interface) {
+	c, err := m.GetClients()
+	if err == nil {
+		c.SetLogger(log)
+	}
 }
 
 func (m *Manager) RunSync(query *types.Query) (*types.Result, error) {

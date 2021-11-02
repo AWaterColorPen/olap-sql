@@ -415,11 +415,11 @@ func (n *normalTranslator) buildDataSourcesAndJoins(clause *types.NormalClause) 
 			return
 		}
 		var splitter *normalClauseSplitter
-		splitter, err = NewNormalClauseSplitter(sources)
+		splitter, err = NewNormalClauseSplitter(clause, sources)
 		if err != nil {
 			return
 		}
-		mq, ee := splitter.Split(clause)
+		mq, ee := splitter.Split()
 		if ee != nil {
 			return
 		}
