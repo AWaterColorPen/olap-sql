@@ -9,15 +9,19 @@ type Splitter interface {
 
 type normalClauseSplitter struct {
 	Candidate map[string]*types.DataSource
+	SplitQuery map[string]*types.Query
 }
 
 func NewNormalClauseSplitter(source []*types.DataSource) (*normalClauseSplitter, error) {
 	candidate := map[string]*types.DataSource{}
+	splitQuery := map[string]*types.Query{}
 	for _, v := range source {
 		candidate[v.Name] = v
+		splitQuery[v.Name] = &types.Query{}
 	}
 	splitter := &normalClauseSplitter{
 		Candidate: candidate,
+		SplitQuery: splitQuery,
 	}
 	return splitter, nil
 }
@@ -34,7 +38,7 @@ func (n *normalClauseSplitter) Split(clause *types.NormalClause) (map[*types.Dat
 			return nil, err
 		}
 		for k, v := range kv {
-			out[k].Metrics = v
+			out[k].Metrics = append(out[k].Metrics, v...)
 		}
 	}
 
@@ -44,7 +48,7 @@ func (n *normalClauseSplitter) Split(clause *types.NormalClause) (map[*types.Dat
 			return nil, err
 		}
 		for k, v := range kv {
-			out[k].Dimensions = v
+			out[k].Dimensions = append(out[k].Dimensions, v...)
 		}
 	}
 	for _, f := range clause.Filters {
@@ -105,8 +109,17 @@ func (n *normalClauseSplitter) splitFilter(filter *types.Filter) (map[*types.Dat
 
 func (n *normalClauseSplitter) splitDimension(dimension *types.Dimension) (map[*types.DataSource][]string, error) {
 	out := map[*types.DataSource][]string{}
-	if hit, ok := n.Candidate[dimension.Table]; ok {
-		out[hit] = append(out[hit], dimension.Name)
+	if len(dimension.Table) > 0 {
+		if hit, ok := n.Candidate[dimension.Table]; ok {
+			out[hit] = append(out[hit], dimension.Name)
+		}
+	}
+	for _, child := range dimension.Dependency {
+		kv, err := n.splitDimension(child)
+		if err != nil {
+			return nil, err
+		}
+		mergeSplitMap(kv, &out)
 	}
 	return out, nil
 }

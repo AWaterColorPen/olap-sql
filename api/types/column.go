@@ -53,9 +53,9 @@ func (col *SingleCol) GetIfExpression() (string, error) {
 func (col *SingleCol) GetExpression() string {
 	switch col.Type {
 	case ColumnTypeValue:
-		// if col.Name == "" {
-		// 	fmt.Sprintf("`%v`.`%v`", col.Table, col.Alias)
-		// }
+		if col.Name == "" {
+			return fmt.Sprintf("`%v`.`%v`", col.Table, col.Alias)
+		}
 		return fmt.Sprintf("`%v`.`%v`", col.Table, col.Name)
 	case ColumnTypeCount:
 		if col.Name == "*" {

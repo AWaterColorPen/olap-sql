@@ -287,7 +287,8 @@ func getHitDatasource(translator Translator, clause *types.NormalClause, source 
 }
 
 func buildDimensionJoin(translator Translator, source *models.DataSource, hitMap map[string]*types.DataSource) []*types.Join {
-	adapter := translator.GetAdapter()
+	dGraph := translator.GetDependencyGraph()
+	// adapter := translator.GetAdapter()
 	var joins []*types.Join
 	for _, v := range source.DimensionJoin {
 		s1, ok1 := hitMap[v.Get1().DataSource]
@@ -300,9 +301,11 @@ func buildDimensionJoin(translator Translator, source *models.DataSource, hitMap
 		for i := 0; i < len(dl1); i++ {
 			k1 := fmt.Sprintf("%v.%v", ds1, dl1[i])
 			k2 := fmt.Sprintf("%v.%v", ds2, dl2[i])
-			d1, _ := adapter.GetDimensionByKey(k1)
-			d2, _ := adapter.GetDimensionByKey(k2)
-			on = append(on, &types.JoinOn{Key1: d1.FieldName, Key2: d2.FieldName})
+			d1, _ := dGraph.GetDimension(k1)
+			d2, _ := dGraph.GetDimension(k2)
+			key1, _ := d1.Expression()
+			key2, _ := d2.Expression()
+			on = append(on, &types.JoinOn{Key1: models.GetNameFromKey(key1), Key2: models.GetNameFromKey(key2)})
 		}
 
 		j := &types.Join{DataSource1: s1, DataSource2: s2, On: on}
@@ -312,7 +315,7 @@ func buildDimensionJoin(translator Translator, source *models.DataSource, hitMap
 }
 
 func buildMergedJoin(translator Translator, source *models.DataSource, hitMap map[string]*types.DataSource) []*types.Join {
-	adapter := translator.GetAdapter()
+	dGraph := translator.GetDependencyGraph()
 	var joins []*types.Join
 	for i := 2; i < len(source.MergedJoin); i++ {
 		s1, ok1 := hitMap[source.MergedJoin[1].DataSource]
@@ -326,9 +329,11 @@ func buildMergedJoin(translator Translator, source *models.DataSource, hitMap ma
 		for j := 0; j < len(dl1); j++ {
 			k1 := fmt.Sprintf("%v.%v", ds1, dl1[j])
 			k2 := fmt.Sprintf("%v.%v", ds2, dl2[j])
-			d1, _ := adapter.GetDimensionByKey(k1)
-			d2, _ := adapter.GetDimensionByKey(k2)
-			on = append(on, &types.JoinOn{Key1: d1.FieldName, Key2: d2.FieldName})
+			d1, _ := dGraph.GetDimension(k1)
+			d2, _ := dGraph.GetDimension(k2)
+			key1, _ := d1.Expression()
+			key2, _ := d2.Expression()
+			on = append(on, &types.JoinOn{Key1: models.GetNameFromKey(key1), Key2: models.GetNameFromKey(key2)})
 		}
 		j := &types.Join{DataSource1: s1, DataSource2: s2, On: on}
 		joins = append(joins, j)
