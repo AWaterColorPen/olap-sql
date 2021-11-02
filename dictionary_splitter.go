@@ -18,8 +18,9 @@ func getSourceFromTranslator(translator Translator) *models.DataSource {
 type normalClauseSplitter struct {
 	Translator Translator
 
-	Candidate  map[string]*types.DataSource
-	SplitQuery map[string]*types.Query
+	CandidateList []*types.DataSource
+	Candidate     map[string]*types.DataSource
+	SplitQuery    map[string]*types.Query
 
 	Clause *types.NormalClause
 	Query  *types.Query
@@ -29,19 +30,22 @@ type normalClauseSplitter struct {
 func NewNormalClauseSplitter(translator Translator, clause *types.NormalClause, query *types.Query, dbType types.DBType) (*normalClauseSplitter, error) {
 	adapter := translator.GetAdapter()
 	source := getSourceFromTranslator(translator)
-	candidate := map[string]*types.DataSource{
-		source.Name: convertDataSourceToDataSource(source),
-	}
+
+	candidateList := []*types.DataSource{convertDataSourceToDataSource(source)}
 	for _, hit := range source.GetGetDependencyKey() {
 		in, _ := adapter.GetSourceByKey(hit)
-		candidate[in.Name] = convertDataSourceToDataSource(in)
+		candidateList = append(candidateList, convertDataSourceToDataSource(in))
 	}
+
+	candidate := map[string]*types.DataSource{}
 	splitQuery := map[string]*types.Query{}
-	for _, v := range candidate {
+	for _, v := range candidateList {
+		candidate[v.Name] = v
 		splitQuery[v.Name] = &types.Query{}
 	}
 	splitter := &normalClauseSplitter{
 		Translator: translator,
+		CandidateList: candidateList,
 		Candidate:  candidate,
 		SplitQuery: splitQuery,
 		Clause:     clause,
@@ -141,12 +145,12 @@ func (n *normalClauseSplitter) GetSelfCandidate() *types.DataSource {
 	return n.Candidate[current]
 }
 
-func (n *normalClauseSplitter) GetOtherCandidate() map[string]*types.DataSource {
-	other := map[string]*types.DataSource{}
+func (n *normalClauseSplitter) GetOtherCandidate() []*types.DataSource {
+	var other []*types.DataSource
 	current := n.Translator.GetCurrent()
-	for k, v := range n.Candidate {
-		if k != current {
-			other[k] = v
+	for _, v := range n.CandidateList {
+		if v.Name != current {
+			other = append(other, v)
 		}
 	}
 	return other
@@ -167,7 +171,7 @@ func (n *normalClauseSplitter) split() error {
 		}
 		n.addDimension(kv)
 	}
-	for _, f := range n.Clause.Filters {
+	for _, f := range n.Query.Filters {
 		kv, err := n.splitFilter(f)
 		if err != nil {
 			return err
@@ -321,15 +325,15 @@ func (n *normalClauseSplitter) buildMergedJoin() []*types.Join {
 		ds2, dl2 := source.MergedJoin[i].DataSource, source.MergedJoin[i].Dimension
 		var on []*types.JoinOn
 		for j := 0; j < len(dl1); j++ {
-			if _, ok := hitDimension[dl1[j]]; !ok {
+			if _, ok := hitDimension[source.MergedJoin[0].Dimension[j]]; !ok {
 				continue
 			}
 			k1 := fmt.Sprintf("%v.%v", ds1, dl1[j])
 			k2 := fmt.Sprintf("%v.%v", ds2, dl2[j])
 			d1, _ := dGraph.GetDimension(k1)
 			d2, _ := dGraph.GetDimension(k2)
-			key1, _ := d1.Expression()
-			key2, _ := d2.Expression()
+			key1, _ := d1.Alias()
+			key2, _ := d2.Alias()
 			on = append(on, &types.JoinOn{Key1: models.GetNameFromKey(key1), Key2: models.GetNameFromKey(key2)})
 		}
 		j := &types.Join{DataSource1: s1, DataSource2: s2, On: on}

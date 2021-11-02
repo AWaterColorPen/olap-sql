@@ -35,7 +35,7 @@ func newManager(tb testing.TB) (*olapsql.Manager, error) {
 
 func getOlapDBOption(tb testing.TB) (string, *olapsql.DBOption) {
 	if DataWithClickhouse() {
-		return string(types.DBTypeClickHouse), &olapsql.DBOption{DSN: "tcp://localhost:9000?database=default", Type: types.DBTypeClickHouse}
+		return string(types.DBTypeClickHouse), &olapsql.DBOption{DSN: "tcp://localhost:9000?database=default", Type: types.DBTypeClickHouse, Debug: true}
 	}
 	return string(types.DBTypeSQLite), &olapsql.DBOption{DSN: filepath.Join(tb.TempDir(), "sqlite"), Type: types.DBTypeSQLite, Debug: true}
 }

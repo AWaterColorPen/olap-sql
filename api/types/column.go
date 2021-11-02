@@ -53,17 +53,14 @@ func (col *SingleCol) GetIfExpression() (string, error) {
 func (col *SingleCol) GetExpression() string {
 	switch col.Type {
 	case ColumnTypeValue:
-		if col.Name == "" {
-			return fmt.Sprintf("`%v`.`%v`", col.Table, col.Alias)
-		}
-		return fmt.Sprintf("`%v`.`%v`", col.Table, col.Name)
+		return col.getSimpleName()
 	case ColumnTypeCount:
 		if col.Name == "*" {
 			return fmt.Sprintf("COUNT(*)")
 		}
 		return fmt.Sprintf("COUNT( `%v`.`%v` )", col.Table, col.Name)
 	case ColumnTypeDistinctCount:
-		var name string = fmt.Sprintf("`%v`.`%v`", col.Table, col.Name)
+		name := col.getSimpleName()
 		var err error
 		if col.Filter != nil {
 			name, err = col.GetIfExpression()
@@ -73,7 +70,7 @@ func (col *SingleCol) GetExpression() string {
 		}
 		return fmt.Sprintf("1.0 * COUNT(DISTINCT %v )", name)
 	case ColumnTypeSum:
-		var name string = fmt.Sprintf("`%v`.`%v`", col.Table, col.Name)
+		name := col.getSimpleName()
 		var err error
 		if col.Filter != nil {
 			name, err = col.GetIfExpression()
@@ -89,6 +86,13 @@ func (col *SingleCol) GetExpression() string {
 
 func (col *SingleCol) GetAlias() string {
 	return col.Alias
+}
+
+func (col *SingleCol) getSimpleName() string {
+	if col.Name == "" {
+		return fmt.Sprintf("`%v`.`%v`", col.Table, col.Alias)
+	}
+	return fmt.Sprintf("`%v`.`%v`", col.Table, col.Name)
 }
 
 type ArithmeticOperatorType string

@@ -151,7 +151,7 @@ func (g *DependencyGraphBuilder) doIndependentMetric(metric *types.Metric) {
 		return
 	}
 	metric.Children = nil
-	metric.Type = types.MetricTypeValue
+	metric.Type = types.MetricTypeSum
 }
 
 func (g *DependencyGraphBuilder) doIndependentDimension(dimension *types.Dimension) {

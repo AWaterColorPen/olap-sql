@@ -1,18 +1,29 @@
 sets = [
-  {name = "wikistat", type = "clickhouse", description = "", root = "wikistat", join = [
-    {data_source1 = "wikistat", data_source2 = "wikistat_relate", join_on = [
-      {dimension1 = "project", dimension2 = "project"},
-    ]},
-    {data_source1 = "wikistat_relate", data_source2 = "wikistat_class", join_on = [
-      {dimension1 = "class_id", dimension2 = "class_id"},
-    ]},
-  ]},
+  {name = "wikistat", type = "clickhouse", description = "", data_source = "wikistat"},
+  {name = "wikistat_join", type = "clickhouse", description = "", data_source = "wikistat_base"},
+  {name = "merged_uv", type = "clickhouse", description = "", data_source = "wikistat_uv_merged"},
 ]
 
 sources = [
-  {database = "", name = "wikistat", alias = "", description = ""},
-  {database = "", name = "wikistat_relate", alias = "", description = ""},
-  {database = "", name = "wikistat_class", alias = "", description = ""},
+  {database = "", name = "wikistat", alias = "", type = "fact", description = ""},
+  {database = "", name = "wikistat_relate", alias = "", type = "dimension", description = ""},
+  {database = "", name = "wikistat_class", alias = "", type = "dimension", description = ""},
+  {database = "", name = "wikistat_base", alias = "", type = "fact_dimension_join", description = "", dimension_join = [
+    [
+      {data_source = "wikistat", dimension = ["project"]},
+      {data_source = "wikistat_relate", dimension = ["project"]},
+    ],
+    [
+      {data_source = "wikistat_relate", dimension = ["class_id"]},
+      {data_source = "wikistat_class", dimension = ["class_id"]},
+    ]
+  ]},
+  {database = "", name = "wikistat_uv", alias = "", type = "fact", description = ""},
+  {database = "", name = "wikistat_uv_merged", alias = "", type = "merged_join", description = "", merged_join = [
+    {data_source = "wikistat_uv_merged", dimension = ["time_by_hour", "sub_project"]},
+    {data_source = "wikistat_base", dimension = ["time_by_hour", "sub_project"]},
+    {data_source = "wikistat_uv", dimension = ["time_by_hour", "sub_project"]},
+  ]},
 ]
 
 metrics = [
@@ -24,19 +35,63 @@ metrics = [
   {data_source = "wikistat", type = "METRIC_DIVIDE", name = "hits_per_size", field_name = "", value_type = "VALUE_FLOAT", description = "", composition = ["wikistat.hits", "wikistat.size_sum"]},
   {data_source = "wikistat", type = "METRIC_DISTINCT_COUNT", name = "project_count", field_name = "project", value_type = "VALUE_INTEGER", description = "", filter = {operator_type = "FILTER_OPERATOR_GREATER_EQUALS", value_type = "VALUE_INTEGER", name = "hits", value = [1]}},
   {data_source = "wikistat", type = "METRIC_SUM", name = "hits_sum", field_name = "hits", value_type = "VALUE_INTEGER", description = "", filter = {operator_type = "FILTER_OPERATOR_GREATER_EQUALS", value_type = "VALUE_INTEGER", name = "hits", value = [1]}},
+
   {data_source = "wikistat_relate", type = "METRIC_SUM", name = "source_sum", field_name = "source", value_type = "VALUE_FLOAT", description = ""},
   {data_source = "wikistat_relate", type = "METRIC_COUNT", name = "count", field_name = "*", value_type = "VALUE_INTEGER", description = ""},
-  {data_source = "wikistat_relate", type = "METRIC_DIVIDE", name = "source_avg", field_name = "", value_type = "VALUE_FLOAT", description = "", composition = ["wikistat_relate.source_sum", "wikistat_relate.count"]},
+
+  {data_source = "wikistat_base", type = "METRIC_AS", name = "hits", field_name = "", value_type = "VALUE_INTEGER", description = "", composition = ["wikistat.hits"]},
+  {data_source = "wikistat_base", type = "METRIC_AS", name = "size_sum", field_name = "", value_type = "VALUE_INTEGER", description = "", composition = ["wikistat.size_sum"]},
+  {data_source = "wikistat_base", type = "METRIC_AS", name = "count", field_name = "", value_type = "VALUE_INTEGER", description = "", composition = ["wikistat.count"]},
+  {data_source = "wikistat_base", type = "METRIC_AS", name = "hits_avg", field_name = "", value_type = "VALUE_FLOAT", description = "", composition = ["wikistat.hits_avg"]},
+  {data_source = "wikistat_base", type = "METRIC_AS", name = "size_avg", field_name = "", value_type = "VALUE_FLOAT", description = "", composition = ["wikistat.size_avg"]},
+  {data_source = "wikistat_base", type = "METRIC_AS", name = "hits_per_size", field_name = "", value_type = "VALUE_FLOAT", description = "", composition = ["wikistat.hits_per_size"]},
+  {data_source = "wikistat_base", type = "METRIC_AS", name = "project_count", field_name = "", value_type = "VALUE_INTEGER", description = "", composition = ["wikistat.project_count"]},
+  {data_source = "wikistat_base", type = "METRIC_AS", name = "hits_sum", field_name = "", value_type = "VALUE_INTEGER", description = "", composition = ["wikistat.hits_sum"]},
+  {data_source = "wikistat_base", type = "METRIC_AS", name = "source_sum", field_name = "", value_type = "VALUE_FLOAT", description = "", composition = ["wikistat_relate.source_sum"]},
+  {data_source = "wikistat_base", type = "METRIC_AS", name = "count", field_name = "", value_type = "VALUE_INTEGER", description = "", composition = ["wikistat_relate.count"]},
+  {data_source = "wikistat_base", type = "METRIC_DIVIDE", name = "source_avg", field_name = "", value_type = "VALUE_FLOAT", description = "", composition = ["wikistat_relate.source_sum", "wikistat_relate.count"]},
+
+  {data_source = "wikistat_uv", type = "METRIC_DISTINCT_COUNT", name = "uid_count", field_name = "uid", value_type = "VALUE_INTEGER", description = ""},
+  {data_source = "wikistat_uv", type = "METRIC_SUM", name = "activation_cnt", field_name = "activation_cnt", value_type = "VALUE_INTEGER", description = ""},
+  {data_source = "wikistat_uv", type = "METRIC_SUM", name = "cost", field_name = "cost", value_type = "VALUE_FLOAT", description = ""},
+
+  {data_source = "wikistat_uv_merged", type = "METRIC_AS", name = "hits", field_name = "", value_type = "VALUE_INTEGER", description = "", composition = ["wikistat_base.hits"]},
+  {data_source = "wikistat_uv_merged", type = "METRIC_AS", name = "source_avg", field_name = "", value_type = "VALUE_FLOAT", description = "", composition = ["wikistat_base.source_avg"]},
+  {data_source = "wikistat_uv_merged", type = "METRIC_AS", name = "activation_cnt", field_name = "", value_type = "VALUE_INTEGER", description = "", composition = ["wikistat_uv.activation_cnt"]},
+  {data_source = "wikistat_uv_merged", type = "METRIC_AS", name = "cost", field_name = "", value_type = "VALUE_FLOAT", description = "", composition = ["wikistat_uv.cost"]},
+  {data_source = "wikistat_uv_merged", type = "METRIC_DIVIDE", name = "activation_rate", field_name = "", value_type = "VALUE_FLOAT", description = "", composition = ["wikistat_uv.activation_cnt", "wikistat_base.hits"]},
+  {data_source = "wikistat_uv_merged", type = "METRIC_DIVIDE", name = "hits_per_user", field_name = "", value_type = "VALUE_FLOAT", description = "", composition = ["wikistat_base.hits", "wikistat_uv.uid_count"]},
 ]
 
 dimensions = [
-  {data_source = "wikistat", name = "date", field_name = "date", value_type = "VALUE_STRING", description = ""},
-  {data_source = "wikistat", name = "time_by_hour", field_name = "formatDateTime(time, '%Y-%m-%d %H:00:00')", value_type = "VALUE_STRING", description = ""},
-  {data_source = "wikistat", name = "project", field_name = "project", value_type = "VALUE_STRING", description = ""},
-  {data_source = "wikistat", name = "sub_project", field_name = "subproject", value_type = "VALUE_STRING", description = ""},
-  {data_source = "wikistat", name = "path", field_name = "path", value_type = "VALUE_STRING", description = ""},
-  {data_source = "wikistat_relate", name = "project", field_name = "project", value_type = "VALUE_STRING", description = ""},
-  {data_source = "wikistat_relate", name = "class_id", field_name = "class", value_type = "VALUE_INTEGER", description = ""},
-  {data_source = "wikistat_class", name = "class_id", field_name = "id", value_type = "VALUE_INTEGER", description = ""},
-  {data_source = "wikistat_class", name = "class_name", field_name = "name", value_type = "VALUE_STRING", description = ""},
+  {data_source = "wikistat", type = "DIMENSION_SINGLE", name = "date", field_name = "date", value_type = "VALUE_STRING", description = ""},
+  {data_source = "wikistat", type = "DIMENSION_EXPRESSION", name = "time_by_hour", field_name = "formatDateTime(time, '%Y-%m-%d %H:00:00')", value_type = "VALUE_STRING", description = ""},
+  {data_source = "wikistat", type = "DIMENSION_SINGLE", name = "project", field_name = "project", value_type = "VALUE_STRING", description = ""},
+  {data_source = "wikistat", type = "DIMENSION_SINGLE", name = "sub_project", field_name = "subproject", value_type = "VALUE_STRING", description = ""},
+  {data_source = "wikistat", type = "DIMENSION_SINGLE", name = "path", field_name = "path", value_type = "VALUE_STRING", description = ""},
+
+  {data_source = "wikistat_relate", type = "DIMENSION_SINGLE", name = "project", field_name = "project", value_type = "VALUE_STRING", description = ""},
+  {data_source = "wikistat_relate", type = "DIMENSION_SINGLE", name = "class_id", field_name = "class", value_type = "VALUE_INTEGER", description = ""},
+  {data_source = "wikistat_class", type = "DIMENSION_SINGLE", name = "class_id", field_name = "id", value_type = "VALUE_INTEGER", description = ""},
+  {data_source = "wikistat_class", type = "DIMENSION_SINGLE", name = "class_name", field_name = "name", value_type = "VALUE_STRING", description = ""},
+
+  {data_source = "wikistat_uv", type = "DIMENSION_SINGLE", name = "date", field_name = "date", value_type = "VALUE_STRING", description = ""},
+  {data_source = "wikistat_uv", type = "DIMENSION_EXPRESSION", name = "time_by_hour", field_name = "formatDateTime(time, '%Y-%m-%d %H:00:00')", value_type = "VALUE_STRING", description = ""},
+  {data_source = "wikistat_uv", type = "DIMENSION_SINGLE", name = "sub_project", field_name = "sub_project", value_type = "VALUE_STRING", description = ""},
+
+  {data_source = "wikistat_base", type = "DIMENSION_MULTI", name = "date", field_name = "", value_type = "VALUE_STRING", description = "", composition = ["wikistat.date"]},
+  {data_source = "wikistat_base", type = "DIMENSION_MULTI", name = "time_by_hour", field_name = "", value_type = "VALUE_STRING", description = "", composition = ["wikistat.time_by_hour"]},
+  {data_source = "wikistat_base", type = "DIMENSION_MULTI", name = "project", field_name = "", value_type = "VALUE_STRING", description = "", composition = ["wikistat.project", "wikistat_relate.project"]},
+  {data_source = "wikistat_base", type = "DIMENSION_MULTI", name = "sub_project", field_name = "", value_type = "VALUE_STRING", description = "", composition = ["wikistat.sub_project"]},
+  {data_source = "wikistat_base", type = "DIMENSION_MULTI", name = "path", field_name = "", value_type = "VALUE_STRING", description = "", composition = ["wikistat.path"]},
+  {data_source = "wikistat_base", type = "DIMENSION_MULTI", name = "class_id", field_name = "", value_type = "VALUE_INTEGER", description = "", composition = ["wikistat_relate.class_id", "wikistat_class.class_id"]},
+  {data_source = "wikistat_base", type = "DIMENSION_MULTI", name = "class_name", field_name = "", value_type = "VALUE_STRING", description = "", composition = ["wikistat_class.class_name"]},
+
+  {data_source = "wikistat_uv_merged", type = "DIMENSION_MULTI", name = "date", field_name = "", value_type = "VALUE_STRING", description = "", composition = ["wikistat_base.date"]},
+  {data_source = "wikistat_uv_merged", type = "DIMENSION_MULTI", name = "time_by_hour", field_name = "", value_type = "VALUE_STRING", description = "", composition = ["wikistat_base.time_by_hour", "wikistat_uv.time_by_hour"]},
+  {data_source = "wikistat_uv_merged", type = "DIMENSION_MULTI", name = "project", field_name = "", value_type = "VALUE_STRING", description = "", composition = ["wikistat_base.project"]},
+  {data_source = "wikistat_uv_merged", type = "DIMENSION_MULTI", name = "sub_project", field_name = "", value_type = "VALUE_STRING", description = "", composition = ["wikistat_base.sub_project", "wikistat_uv.sub_project"]},
+  {data_source = "wikistat_uv_merged", type = "DIMENSION_MULTI", name = "path", field_name = "", value_type = "VALUE_STRING", description = "", composition = ["wikistat_base.path"]},
+  {data_source = "wikistat_uv_merged", type = "DIMENSION_MULTI", name = "class_id", field_name = "", value_type = "VALUE_INTEGER", description = "", composition = ["wikistat_base.class_id"]},
+  {data_source = "wikistat_uv_merged", type = "DIMENSION_MULTI", name = "class_name", field_name = "", value_type = "VALUE_STRING", description = "", composition = ["wikistat_base.class_name"]},
 ]
