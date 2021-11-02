@@ -28,7 +28,12 @@ type DataSource struct {
 
 func (d *DataSource) Expression() (string, error) {
 	if d.expression != "" {
-		return fmt.Sprintf("( %v )", d.expression), nil
+		switch d.Clause {
+		case nil:
+			return d.expression, nil
+		default:
+			return fmt.Sprintf("( %v )", d.expression), nil
+		}
 	}
 	if d.Database == "" {
 		return fmt.Sprintf("`%v`", d.Name), nil
