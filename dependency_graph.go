@@ -2,7 +2,6 @@ package olapsql
 
 import (
 	"fmt"
-
 	"github.com/awatercolorpen/olap-sql/api/types"
 )
 
@@ -59,9 +58,17 @@ type DependencyGraph interface {
 type DependencyGraphBuilder struct {
 	dbType     types.DBType
 	dictionary IAdapter
+
+	current    string
+	inDependencySourceKey map[string]bool
 }
 
 func (g *DependencyGraphBuilder) Build() (DependencyGraph, error) {
+	g.inDependencySourceKey = map[string]bool{g.current: true}
+	source, _ := g.dictionary.GetSourceByKey(g.current)
+	for _, in := range source.GetGetDependencyKey() {
+		g.inDependencySourceKey[in] = true
+	}
 	graph := &dependencyGraph{key: map[string]interface{}{}}
 	if err := g.buildMetricDependency(graph); err != nil {
 		return nil, err
@@ -98,6 +105,7 @@ func (g *DependencyGraphBuilder) buildMetricDependency(graph *dependencyGraph) e
 			value, _ := graph.GetMetric(u)
 			current.Children = append(current.Children, value)
 		}
+		g.doIndependentMetric(current)
 		graph.set(current)
 	}
 	return nil
@@ -127,9 +135,36 @@ func (g *DependencyGraphBuilder) buildDimensionDependency(graph *dependencyGraph
 			value, _ := graph.GetDimension(u)
 			current.Dependency = append(current.Dependency, value)
 		}
+		g.doIndependentDimension(current)
 		graph.set(current)
 	}
 	return nil
+}
+
+func (g *DependencyGraphBuilder) doIndependentMetric(metric *types.Metric) {
+	independent := true
+	for _, child := range metric.Children {
+		_, ok := g.inDependencySourceKey[child.Table]
+		independent = independent && ok
+	}
+	if independent {
+		return
+	}
+	metric.Children = nil
+	metric.Type = types.MetricTypeValue
+}
+
+func (g *DependencyGraphBuilder) doIndependentDimension(dimension *types.Dimension) {
+	independent := true
+	for _, child := range dimension.Dependency {
+		_, ok := g.inDependencySourceKey[child.Table]
+		independent = independent && ok
+	}
+	if independent {
+		return
+	}
+	dimension.Dependency = nil
+	dimension.Type = types.DimensionTypeValue
 }
 
 type iDependencyModel interface {

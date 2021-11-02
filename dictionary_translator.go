@@ -37,6 +37,7 @@ func newNormalTranslator(option *TranslatorOption) (*normalTranslator, error) {
 	dBuilder := &DependencyGraphBuilder{
 		dbType:     option.DBType,
 		dictionary: adapter,
+		current:    option.Current,
 	}
 	dGraph, err := dBuilder.Build()
 	if err != nil {

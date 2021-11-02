@@ -21,6 +21,7 @@ type Dimension struct {
 }
 
 const (
+	DimensionTypeValue      DimensionType = "DIMENSION_VALUE"
 	DimensionTypeSingle     DimensionType = "DIMENSION_SINGLE"
 	DimensionTypeMulti      DimensionType = "DIMENSION_MULTI"
 	DimensionTypeExpression DimensionType = "DIMENSION_EXPRESSION"
@@ -28,6 +29,8 @@ const (
 
 func (d *Dimension) Expression() (string, error) {
 	switch d.Type {
+	case DimensionTypeValue:
+		return fmt.Sprintf("%v.%v", d.Table, d.Name), nil
 	case DimensionTypeSingle:
 		return fmt.Sprintf("%v.%v", d.Table, d.FieldName), nil
 	case DimensionTypeExpression:
