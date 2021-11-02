@@ -48,6 +48,7 @@ func GetDependencyTree(adapter IAdapter, current string) (models.Graph, error) {
 		return nil, fmt.Errorf("can't get dependency from a dimension datasource")
 	}
 
+	visit := map[string]bool{current: true}
 	graph := models.Graph{current: nil}
 	queue := []string{current}
 	for i := 0; i < len(queue); i++ {
@@ -61,32 +62,14 @@ func GetDependencyTree(adapter IAdapter, current string) (models.Graph, error) {
 		}
 		for k, v := range tree {
 			for _, u := range v {
+				if _, ok := visit[u]; ok {
+					return nil, fmt.Errorf("visit %v more than once, it is no a tree", u)
+				}
 				queue = append(queue, u)
 				graph[k] = append(graph[k], u)
 			}
 		}
 	}
-	// TODO (1) graph must be a tree.
-	// for _, v := range d.DimensionJoin {
-	// 	if _, ok := inDegree[v.DataSource1]; !ok {
-	// 		inDegree[v.DataSource1] = 0
-	// 	}
-	// 	inDegree[v.DataSource2] = inDegree[v.DataSource2] + 1
-	// 	graph[v.DataSource1] = append(graph[v.DataSource1], v.DataSource2)
-	// }
-	//
-	// for i := 0; i < len(queue); i++ {
-	// 	node := queue[i]
-	// 	for _, v := range graph[node] {
-	// 		inDegree[v]--
-	// 		if inDegree[v] == 0 {
-	// 			queue = append(queue, v)
-	// 		}
-	// 	}
-	// }
-	// if len(inDegree) != len(queue) {
-	// 	return nil, fmt.Errorf("it is not a topology graph. node=%v, intop=%v", len(inDegree), len(queue))
-	// }
 	return graph, nil
 }
 
@@ -114,11 +97,7 @@ type FileAdapter struct {
 }
 
 func (f *FileAdapter) BuildDataSourceAdapter(key string) (IAdapter, error) {
-	source, err := f.GetSourceByKey(key)
-	if err != nil {
-		return nil, err
-	}
-	tree, err := source.GetDependencyTree()
+	tree, err := GetDependencyTree(f, key)
 	if err != nil {
 		return nil, err
 	}
