@@ -322,9 +322,9 @@ func buildMergedJoin(translator Translator, source *models.DataSource, hitMap ma
 		ds1, dl1 := source.MergedJoin[1].DataSource, source.MergedJoin[1].Dimension
 		ds2, dl2 := source.MergedJoin[i].DataSource, source.MergedJoin[i].Dimension
 		var on []*types.JoinOn
-		for j := 0; j < len(dl1); i++ {
-			k1 := fmt.Sprintf("%v.%v", ds1, dl1[i])
-			k2 := fmt.Sprintf("%v.%v", ds2, dl2[i])
+		for j := 0; j < len(dl1); j++ {
+			k1 := fmt.Sprintf("%v.%v", ds1, dl1[j])
+			k2 := fmt.Sprintf("%v.%v", ds2, dl2[j])
 			d1, _ := adapter.GetDimensionByKey(k1)
 			d2, _ := adapter.GetDimensionByKey(k2)
 			on = append(on, &types.JoinOn{Key1: d1.FieldName, Key2: d2.FieldName})
@@ -419,10 +419,10 @@ func (n *normalTranslator) buildDataSourcesAndJoins(clause *types.NormalClause) 
 		}
 		for k, v := range mq {
 			o := &TranslatorOption{
-				Adapter: n.option.Adapter,
+				Adapter: n.adapter,
 				Query:   v,
 				DBType:  n.dBType,
-				Current: n.current,
+				Current: k.Name,
 			}
 			t, e := NewTranslator(o)
 			if e != nil {

@@ -13,7 +13,7 @@ type normalClauseSplitter struct {
 
 func NewNormalClauseSplitter(source []*types.DataSource) (*normalClauseSplitter, error) {
 	candidate := map[string]*types.DataSource{}
-	for _, v := range candidate {
+	for _, v := range source {
 		candidate[v.Name] = v
 	}
 	splitter := &normalClauseSplitter{

@@ -34,7 +34,7 @@ func (d *Dimension) Expression() (string, error) {
 		return d.FieldName, nil
 	case DimensionTypeMulti:
 		if len(d.Dependency) == 0 {
-			return "", fmt.Errorf("dimension dependency error")
+			return "", fmt.Errorf("dimension dependency len = 0")
 		}
 		return d.Dependency[0].Expression()
 	default:
