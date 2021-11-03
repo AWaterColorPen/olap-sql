@@ -12,7 +12,7 @@ import (
 
 const mockWikiStatDataSet = "wikistat"
 const mockWikiStatDataSetJoin = "wikistat_join"
-const mockWikiStatDataSetMerged = "merged_uv"
+const mockWikiStatDataSetMerge = "merge_uv"
 
 type WikiStat struct {
 	Date       time.Time `gorm:"column:date"       json:"date"`
@@ -47,7 +47,7 @@ func (ClassRelate) TableName() string {
 	return mockWikiStatDataSet + "_class"
 }
 
-type MergedUv struct {
+type MergeUv struct {
 	Date          time.Time `gorm:"column:date"       json:"date"`
 	Time          time.Time `gorm:"column:time"       json:"time"`
 	SubProject    string    `gorm:"column:sub_project" json:"sub_project"`
@@ -56,7 +56,7 @@ type MergedUv struct {
 	Cost          float64   `gorm:"column:cost"  json:"cost"`
 }
 
-func (MergedUv) TableName() string {
+func (MergeUv) TableName() string {
 	return mockWikiStatDataSet + "_uv"
 }
 
@@ -92,7 +92,7 @@ func MockWikiStatData(db *gorm.DB) error {
 		return nil
 	}
 
-	if err := db.Debug().AutoMigrate(&WikiStat{}, &WikiStatRelate{}, &ClassRelate{}, &MergedUv{}); err != nil {
+	if err := db.Debug().AutoMigrate(&WikiStat{}, &WikiStatRelate{}, &ClassRelate{}, &MergeUv{}); err != nil {
 		return err
 	}
 	if err := db.Debug().Create([]*WikiStat{
@@ -129,7 +129,7 @@ func MockWikiStatData(db *gorm.DB) error {
 	}).Error; err != nil {
 		return err
 	}
-	if err := db.Debug().Create([]*MergedUv{
+	if err := db.Debug().Create([]*MergeUv{
 		{Date: timeParseDate("2021-05-06"), Time: timeParseTime("2021-05-06T10:00:00Z"), SubProject: "CHN", UID: "aaa", ActivationCnt: 0, Cost: 0.0},
 		{Date: timeParseDate("2021-05-06"), Time: timeParseTime("2021-05-06T21:00:00Z"), SubProject: "university", UID: "pl-okm", ActivationCnt: 3, Cost: 0.45},
 		{Date: timeParseDate("2021-05-07"), Time: timeParseTime("2021-05-07T07:00:00Z"), SubProject: "US", UID: "aaa", ActivationCnt: 4, Cost: 0.51},
@@ -336,7 +336,7 @@ func MockQuery7ResultAssert(t assert.TestingT, result *types.Result) {
 // MockQuery8 mock query for easy merge join
 func MockQuery8() *types.Query {
 	query := &types.Query{
-		DataSetName:  mockWikiStatDataSetMerged,
+		DataSetName:  mockWikiStatDataSetMerge,
 		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
 		Metrics:      []string{"hits", "activation_cnt", "cost", "activation_rate"},
 		Dimensions:   []string{"time_by_hour", "sub_project"},
@@ -361,7 +361,7 @@ func MockQuery8ResultAssert(t assert.TestingT, result *types.Result) {
 // MockQuery9 mock query for mixed merge join
 func MockQuery9() *types.Query {
 	query := &types.Query{
-		DataSetName:  mockWikiStatDataSetMerged,
+		DataSetName:  mockWikiStatDataSetMerge,
 		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
 		Metrics:      []string{"cost", "hits_per_user"},
 		Dimensions:   []string{"sub_project", "class_name"},
@@ -385,7 +385,7 @@ func MockQuery9ResultAssert(t assert.TestingT, result *types.Result) {
 // MockQuery10 mock query for merge join without dimension
 func MockQuery10() *types.Query {
 	query := &types.Query{
-		DataSetName:  mockWikiStatDataSetMerged,
+		DataSetName:  mockWikiStatDataSetMerge,
 		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
 		Metrics:      []string{"cost", "hits_per_user"},
 		Dimensions:   []string{"class_name"},
@@ -409,7 +409,7 @@ func MockQuery10ResultAssert(t assert.TestingT, result *types.Result) {
 // MockQuery11 mock query for merge join with dimension
 func MockQuery11() *types.Query {
 	query := &types.Query{
-		DataSetName:  mockWikiStatDataSetMerged,
+		DataSetName:  mockWikiStatDataSetMerge,
 		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
 		Metrics:      []string{"big_cost_per_hits"},
 		Dimensions:   []string{"time_by_hour"},

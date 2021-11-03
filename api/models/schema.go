@@ -95,24 +95,24 @@ func (d DimensionJoins) GetDependencyTree(source string) (Graph, error) {
 	return g, nil
 }
 
-type MergedJoin []*Join
+type MergeJoin []*Join
 
-func (m MergedJoin) IsValid(source string) error {
+func (m MergeJoin) IsValid(source string) error {
 	if len(m) < 3 {
-		return fmt.Errorf("merged join len %v < 3", len(m))
+		return fmt.Errorf("merge join len %v < 3", len(m))
 	}
 	if m[0].DataSource != source {
-		return fmt.Errorf("merged join's first dimension should be itself's, but %v", m[0].DataSource)
+		return fmt.Errorf("merge join's first dimension should be itself's, but %v", m[0].DataSource)
 	}
 	for i := 1; i < len(m); i++ {
 		if len(m[i-1].Dimension) != len(m[i].Dimension) {
-			return fmt.Errorf("merged join's dimension list len %v != %v", len(m[i-1].Dimension), len(m[i].Dimension))
+			return fmt.Errorf("merge join's dimension list len %v != %v", len(m[i-1].Dimension), len(m[i].Dimension))
 		}
 	}
 	return nil
 }
 
-func (m MergedJoin) GetDependencyTree(source string) (Graph, error) {
+func (m MergeJoin) GetDependencyTree(source string) (Graph, error) {
 	g := Graph{}
 	for i := 1; i < len(m); i++ {
 		g[source] = append(g[source], m[i].DataSource)
@@ -127,7 +127,7 @@ type DataSource struct {
 	Type          types.DataSourceType `toml:"type"`
 	Description   string               `toml:"description"`
 	DimensionJoin DimensionJoins       `toml:"dimension_join"`
-	MergedJoin    MergedJoin           `toml:"merged_join"`
+	MergeJoin     MergeJoin            `toml:"merge_join"`
 }
 
 func (d *DataSource) GetKey() string {
@@ -136,7 +136,7 @@ func (d *DataSource) GetKey() string {
 
 func (d *DataSource) IsFact() bool {
 	switch d.Type {
-	case types.DataSourceTypeFact, types.DataSourceTypeFactDimensionJoin, types.DataSourceTypeMergedJoin:
+	case types.DataSourceTypeFact, types.DataSourceTypeFactDimensionJoin, types.DataSourceTypeMergeJoin:
 		return true
 	default:
 		return false
@@ -156,8 +156,8 @@ func (d *DataSource) IsValid() error {
 	switch d.Type {
 	case types.DataSourceTypeFactDimensionJoin:
 		return d.DimensionJoin.IsValid()
-	case types.DataSourceTypeMergedJoin:
-		return d.MergedJoin.IsValid(d.Name)
+	case types.DataSourceTypeMergeJoin:
+		return d.MergeJoin.IsValid(d.Name)
 	case types.DataSourceTypeFact, types.DataSourceTypeDimension:
 		return nil
 	default:
@@ -169,8 +169,8 @@ func (d *DataSource) GetDependencyTree() (Graph, error) {
 	switch d.Type {
 	case types.DataSourceTypeFactDimensionJoin:
 		return d.DimensionJoin.GetDependencyTree(d.Name)
-	case types.DataSourceTypeMergedJoin:
-		return d.MergedJoin.GetDependencyTree(d.Name)
+	case types.DataSourceTypeMergeJoin:
+		return d.MergeJoin.GetDependencyTree(d.Name)
 	case types.DataSourceTypeFact, types.DataSourceTypeDimension:
 		return Graph{d.Name: nil}, nil
 	default:
@@ -183,8 +183,8 @@ func (d *DataSource) GetGetDependencyKey() []string {
 	for _, v := range d.DimensionJoin {
 		key = append(key, v.Get1().DataSource, v.Get2().DataSource)
 	}
-	for i := 1; i < len(d.MergedJoin); i++ {
-		key = append(key, d.MergedJoin[i].DataSource)
+	for i := 1; i < len(d.MergeJoin); i++ {
+		key = append(key, d.MergeJoin[i].DataSource)
 	}
 	linq.From(key).Distinct().ToSlice(&key)
 	return key
@@ -206,7 +206,7 @@ type Dimension struct {
 	FieldName   string              `toml:"field_name"`
 	Type        types.DimensionType `toml:"type"`
 	ValueType   types.ValueType     `toml:"value_type"`
-	Composition []string            `toml:"composition"`
+	Dependency  []string            `toml:"dependency"`
 	Description string              `toml:"description"`
 }
 
@@ -215,7 +215,7 @@ func (d *Dimension) GetKey() string {
 }
 
 func (d *Dimension) GetDependency() []string {
-	return d.Composition
+	return d.Dependency
 }
 
 type Metric struct {
@@ -225,7 +225,7 @@ type Metric struct {
 	Type        types.MetricType `toml:"type"`
 	ValueType   types.ValueType  `toml:"value_type"`
 	Description string           `toml:"description"`
-	Composition []string         `toml:"composition"`
+	Dependency  []string         `toml:"dependency"`
 	Filter      *types.Filter    `toml:"filter"`
 }
 
@@ -234,7 +234,7 @@ func (m *Metric) GetKey() string {
 }
 
 func (m *Metric) GetDependency() []string {
-	return m.Composition
+	return m.Dependency
 }
 
 func GetNameFromKey(key string) string {

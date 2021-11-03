@@ -12,7 +12,7 @@ const (
 	DataSourceTypeFact              DataSourceType = "fact"
 	DataSourceTypeDimension         DataSourceType = "dimension"
 	DataSourceTypeFactDimensionJoin DataSourceType = "fact_dimension_join"
-	DataSourceTypeMergedJoin        DataSourceType = "merged_join"
+	DataSourceTypeMergeJoin         DataSourceType = "merge_join"
 )
 
 type DataSource struct {

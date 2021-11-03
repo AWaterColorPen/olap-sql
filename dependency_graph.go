@@ -61,17 +61,11 @@ type DependencyGraphBuilder struct {
 	dictionary IAdapter
 
 	current               string
-	inDependencySourceKey map[string]bool
 	isFold                map[string]bool
 }
 
 func (g *DependencyGraphBuilder) Build() (DependencyGraph, error) {
 	g.isFold = g.buildFold()
-	g.inDependencySourceKey = map[string]bool{g.current: true}
-	source, _ := g.dictionary.GetSourceByKey(g.current)
-	for _, in := range source.GetGetDependencyKey() {
-		g.inDependencySourceKey[in] = true
-	}
 	graph := &dependencyGraph{key: map[string]interface{}{}}
 	if err := g.buildMetricDependency(graph); err != nil {
 		return nil, err
@@ -104,7 +98,7 @@ func (g *DependencyGraphBuilder) buildMetricDependency(graph *dependencyGraph) e
 			Filter:    metric.Filter,
 			DBType:    g.dbType,
 		}
-		for _, u := range metric.Composition {
+		for _, u := range metric.GetDependency() {
 			value, _ := graph.GetMetric(u)
 			current.Children = append(current.Children, value)
 		}
@@ -134,7 +128,7 @@ func (g *DependencyGraphBuilder) buildDimensionDependency(graph *dependencyGraph
 			ValueType: dimension.ValueType,
 			FieldName: dimension.FieldName,
 		}
-		for _, u := range dimension.Composition {
+		for _, u := range dimension.GetDependency() {
 			value, _ := graph.GetDimension(u)
 			current.Dependency = append(current.Dependency, value)
 		}
@@ -181,7 +175,7 @@ func (g *DependencyGraphBuilder) dfsFold(graph models.Graph, current string) map
 		for k, v := range kv {
 			out[k] = v
 		}
-		if source.Type == types.DataSourceTypeMergedJoin {
+		if source.Type == types.DataSourceTypeMergeJoin {
 			out[node] = true
 		}
 	}

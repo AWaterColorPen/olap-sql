@@ -44,13 +44,13 @@ func NewNormalClauseSplitter(translator Translator, clause *types.NormalClause, 
 		splitQuery[v.Name] = &types.Query{}
 	}
 	splitter := &normalClauseSplitter{
-		Translator: translator,
+		Translator:    translator,
 		CandidateList: candidateList,
-		Candidate:  candidate,
-		SplitQuery: splitQuery,
-		Clause:     clause,
-		Query:      query,
-		DBType:     dbType,
+		Candidate:     candidate,
+		SplitQuery:    splitQuery,
+		Clause:        clause,
+		Query:         query,
+		DBType:        dbType,
 	}
 	return splitter, nil
 }
@@ -62,7 +62,7 @@ func (n *normalClauseSplitter) Run() error {
 		return n.factRun()
 	case types.DataSourceTypeFactDimensionJoin:
 		return n.joinRun()
-	case types.DataSourceTypeMergedJoin:
+	case types.DataSourceTypeMergeJoin:
 		return n.mergeRun()
 	default:
 		return fmt.Errorf("can't use datasource type=%v as dateset's datasource", source.Type)
@@ -256,11 +256,11 @@ func (n *normalClauseSplitter) addFilter(filter map[string][]*types.Filter) {
 	}
 }
 
-func buildHitMergedJoinDimension(translator Translator, query *types.Query) (map[string]bool, error) {
+func buildHitMergeJoinDimension(translator Translator, query *types.Query) (map[string]bool, error) {
 	current := translator.GetCurrent()
 	adapter := translator.GetAdapter()
 	source, _ := adapter.GetSourceByKey(current)
-	if source.Type != types.DataSourceTypeMergedJoin {
+	if source.Type != types.DataSourceTypeMergeJoin {
 		return nil, fmt.Errorf("the source is not a merged join data source")
 	}
 
@@ -269,14 +269,11 @@ func buildHitMergedJoinDimension(translator Translator, query *types.Query) (map
 		set[v] = true
 	}
 	hit := map[string]bool{}
-	for _, v := range source.MergedJoin[0].Dimension {
+	for _, v := range source.MergeJoin[0].Dimension {
 		if _, ok := set[v]; ok {
 			hit[v] = true
 		}
 	}
-	// if len(hit) == 0 {
-	// 	hit[source.MergedJoin[0].Dimension[0]] = true
-	// }
 	return hit, nil
 }
 
@@ -309,23 +306,23 @@ func (n *normalClauseSplitter) buildDimensionJoin() []*types.Join {
 	return joins
 }
 
-func (n *normalClauseSplitter) buildMergedJoin() []*types.Join {
+func (n *normalClauseSplitter) buildMergeJoin() []*types.Join {
 	candidate := n.Candidate
 	dGraph := n.Translator.GetDependencyGraph()
 	source := getSourceFromTranslator(n.Translator)
-	hitDimension, _ := buildHitMergedJoinDimension(n.Translator, n.Query)
+	hitDimension, _ := buildHitMergeJoinDimension(n.Translator, n.Query)
 	var joins []*types.Join
-	for i := 2; i < len(source.MergedJoin); i++ {
-		s1, ok1 := candidate[source.MergedJoin[1].DataSource]
-		s2, ok2 := candidate[source.MergedJoin[i].DataSource]
+	for i := 2; i < len(source.MergeJoin); i++ {
+		s1, ok1 := candidate[source.MergeJoin[1].DataSource]
+		s2, ok2 := candidate[source.MergeJoin[i].DataSource]
 		if !ok1 || !ok2 {
 			continue
 		}
-		ds1, dl1 := source.MergedJoin[1].DataSource, source.MergedJoin[1].Dimension
-		ds2, dl2 := source.MergedJoin[i].DataSource, source.MergedJoin[i].Dimension
+		ds1, dl1 := source.MergeJoin[1].DataSource, source.MergeJoin[1].Dimension
+		ds2, dl2 := source.MergeJoin[i].DataSource, source.MergeJoin[i].Dimension
 		var on []*types.JoinOn
 		for j := 0; j < len(dl1); j++ {
-			if _, ok := hitDimension[source.MergedJoin[0].Dimension[j]]; !ok {
+			if _, ok := hitDimension[source.MergeJoin[0].Dimension[j]]; !ok {
 				continue
 			}
 			k1 := fmt.Sprintf("%v.%v", ds1, dl1[j])
@@ -345,7 +342,7 @@ func (n *normalClauseSplitter) buildMergedJoin() []*types.Join {
 func (n *normalClauseSplitter) buildJoins() ([]*types.Join, error) {
 	var joins []*types.Join
 	joins = append(joins, n.buildDimensionJoin()...)
-	joins = append(joins, n.buildMergedJoin()...)
+	joins = append(joins, n.buildMergeJoin()...)
 	return joins, nil
 }
 

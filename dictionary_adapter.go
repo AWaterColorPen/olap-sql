@@ -265,7 +265,7 @@ func (f *FileAdapter) isValidDataSource(source *models.DataSource) error {
 			}
 		}
 	}
-	for _, v := range source.MergedJoin {
+	for _, v := range source.MergeJoin {
 		if err := IsValidJoin(f, v); err != nil {
 			return err
 		}
@@ -283,8 +283,8 @@ func (f *FileAdapter) isValidMetric(metric *models.Metric) error {
 	if _, err := f.GetSourceByKey(metric.DataSource); err != nil {
 		return err
 	}
-	for _, composition := range metric.Composition {
-		if _, err := f.GetMetricByKey(composition); err != nil {
+	for _, dependency := range metric.GetDependency() {
+		if _, err := f.GetMetricByKey(dependency); err != nil {
 			return err
 		}
 	}
