@@ -203,6 +203,11 @@ func (n *NormalClause) tableAndJoinStatement(tx *gorm.DB) (table string, join []
 		}
 
 		joinName2, _ := v.DataSource2.Statement()
+		if len(on) == 0 {
+			join = append(join, fmt.Sprintf(", %v", joinName2))
+			continue
+		}
+
 		switch n.DBType {
 		case DBTypeSQLite, DBTypeClickHouse:
 			join = append(join, fmt.Sprintf("LEFT JOIN %v ON %v", joinName2, strings.Join(on, " AND ")))

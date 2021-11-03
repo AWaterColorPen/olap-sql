@@ -274,9 +274,9 @@ func buildHitMergedJoinDimension(translator Translator, query *types.Query) (map
 			hit[v] = true
 		}
 	}
-	if len(hit) == 0 {
-		hit[source.MergedJoin[0].Dimension[0]] = true
-	}
+	// if len(hit) == 0 {
+	// 	hit[source.MergedJoin[0].Dimension[0]] = true
+	// }
 	return hit, nil
 }
 
