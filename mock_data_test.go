@@ -316,6 +316,7 @@ func MockQuery6ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Equal(t, float64(3), result.Source[0]["project_count"])
 }
 
+// MockQuery7 mock query for sum if
 func MockQuery7() *types.Query {
 	query := &types.Query{
 		DataSetName:  mockWikiStatDataSetJoin,
@@ -403,6 +404,28 @@ func MockQuery10ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Source, 2)
 	assert.Len(t, result.Source[0], 3)
 	assert.Equal(t, 1293.5, getValue(result.Source[0]["hits_per_user"]))
+}
+
+// MockQuery11 mock query for merge join with dimension
+func MockQuery11() *types.Query {
+	query := &types.Query{
+		DataSetName:  mockWikiStatDataSetMerged,
+		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
+		Metrics:      []string{"big_cost_per_hits"},
+		Dimensions:   []string{"time_by_hour"},
+		Orders: []*types.OrderBy{
+			{Name: "time_by_hour", Direction: types.OrderDirectionTypeAscending},
+		},
+	}
+	return query
+}
+
+func MockQuery11ResultAssert(t assert.TestingT, result *types.Result) {
+	assert.Len(t, result.Dimensions, 2)
+	assert.Len(t, result.Source, 9)
+	assert.Len(t, result.Source[0], 2)
+	assert.Equal(t, nil, result.Source[0]["big_cost_per_hits"])
+	assert.Equal(t, 0.56, getValue(result.Source[8]["big_cost_per_hits"]))
 }
 
 // func MockClause() *types.NormalClause {
