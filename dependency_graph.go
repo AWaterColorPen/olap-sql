@@ -152,6 +152,7 @@ func (g *DependencyGraphBuilder) doIndependentMetric(metric *types.Metric) {
 			child.Children = nil
 			child.Type = types.MetricTypeSum
 			child.FieldName = child.Name
+			child.Filter = nil
 		}
 	}
 }
