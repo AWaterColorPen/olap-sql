@@ -2,6 +2,7 @@ package olapsql
 
 import (
 	"fmt"
+	"github.com/awatercolorpen/olap-sql/api/models"
 	"github.com/awatercolorpen/olap-sql/api/types"
 )
 
@@ -61,9 +62,11 @@ type DependencyGraphBuilder struct {
 
 	current               string
 	inDependencySourceKey map[string]bool
+	isFold                map[string]bool
 }
 
 func (g *DependencyGraphBuilder) Build() (DependencyGraph, error) {
+	g.isFold = g.buildFold()
 	g.inDependencySourceKey = map[string]bool{g.current: true}
 	source, _ := g.dictionary.GetSourceByKey(g.current)
 	for _, in := range source.GetGetDependencyKey() {
@@ -142,29 +145,51 @@ func (g *DependencyGraphBuilder) buildDimensionDependency(graph *dependencyGraph
 }
 
 func (g *DependencyGraphBuilder) doIndependentMetric(metric *types.Metric) {
-	independent := true
 	for _, child := range metric.Children {
-		_, ok := g.inDependencySourceKey[child.Table]
-		independent = independent && ok
+		ok1 := g.isFold[child.Table]
+		ok2 := metric.Table != child.Table
+		if ok1 && ok2 {
+			child.Children = nil
+			child.Type = types.MetricTypeSum
+			child.FieldName = child.Name
+		}
 	}
-	if independent {
-		return
-	}
-	metric.Children = nil
-	metric.Type = types.MetricTypeSum
 }
 
 func (g *DependencyGraphBuilder) doIndependentDimension(dimension *types.Dimension) {
-	independent := true
 	for _, child := range dimension.Dependency {
-		_, ok := g.inDependencySourceKey[child.Table]
-		independent = independent && ok
+		ok1 := g.isFold[child.Table]
+		ok2 := dimension.Table != child.Table
+		if ok1 && ok2 {
+			child.Dependency = nil
+			child.Type = types.DimensionTypeValue
+		}
 	}
-	if independent {
-		return
+}
+
+func (g *DependencyGraphBuilder) buildFold() map[string]bool {
+	graph, _ := GetDependencyTree(g.dictionary, g.current)
+	return g.dfsFold(graph, g.current)
+}
+
+func (g *DependencyGraphBuilder) dfsFold(graph models.Graph, current string) map[string]bool {
+	out := map[string]bool{current: false}
+	source, _ := g.dictionary.GetSourceByKey(current)
+	for _, node := range graph[current] {
+		kv := g.dfsFold(graph, node)
+		for k, v := range kv {
+			out[k] = v
+		}
+		if source.Type == types.DataSourceTypeMergedJoin {
+			out[node] = true
+		}
 	}
-	dimension.Dependency = nil
-	dimension.Type = types.DimensionTypeValue
+	for _, node := range graph[current] {
+		if out[node] == true {
+			out[current] = true
+		}
+	}
+	return out
 }
 
 type iDependencyModel interface {

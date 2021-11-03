@@ -332,7 +332,7 @@ func MockQuery7ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Equal(t, float64(7325), getValue(result.Source[0]["hits_sum"]))
 }
 
-// MockQuery8 mock query for merge join
+// MockQuery8 mock query for easy merge join
 func MockQuery8() *types.Query {
 	query := &types.Query{
 		DataSetName:  mockWikiStatDataSetMerged,
@@ -340,17 +340,45 @@ func MockQuery8() *types.Query {
 		Metrics:      []string{"hits", "activation_cnt", "cost", "activation_rate"},
 		Dimensions:   []string{"time_by_hour", "sub_project"},
 		Filters: []*types.Filter{
-			{OperatorType: types.FilterOperatorTypeIn, Name: "time_by_hour", Value: []interface{}{"2021-05-07 10:00:00"}},
+			{OperatorType: types.FilterOperatorTypeGreaterEquals, Name: "time_by_hour", Value: []interface{}{"2021-05-07 06:00:00"}},
+		},
+		Orders: []*types.OrderBy{
+			{Name: "time_by_hour", Direction: types.OrderDirectionTypeAscending},
+			{Name: "sub_project", Direction: types.OrderDirectionTypeAscending},
 		},
 	}
 	return query
 }
 
 func MockQuery8ResultAssert(t assert.TestingT, result *types.Result) {
-	assert.Len(t, result.Dimensions, 1)
-	assert.Len(t, result.Source, 1)
-	assert.Len(t, result.Source[0], 1)
-	assert.Equal(t, float64(7325), getValue(result.Source[0]["hits_sum"]))
+	assert.Len(t, result.Dimensions, 6)
+	assert.Len(t, result.Source, 7)
+	assert.Len(t, result.Source[0], 6)
+	assert.Equal(t, 0.21052631578947367, getValue(result.Source[0]["activation_rate"]))
+}
+
+// MockQuery9 mock query for easy merge join
+func MockQuery9() *types.Query {
+	query := &types.Query{
+		DataSetName:  mockWikiStatDataSetMerged,
+		TimeInterval: &types.TimeInterval{Name: "date", Start: "2021-05-06", End: "2021-05-08"},
+		Metrics:      []string{"cost", "hits_per_user"},
+		Dimensions:   []string{"sub_project", "class_name"},
+		Filters: []*types.Filter{
+			{OperatorType: types.FilterOperatorTypeIn, Name: "path", Value: []interface{}{"level1", "level2", "engineering"}},
+		},
+		Orders: []*types.OrderBy{
+			{Name: "class_name", Direction: types.OrderDirectionTypeAscending},
+		},
+	}
+	return query
+}
+
+func MockQuery9ResultAssert(t assert.TestingT, result *types.Result) {
+	assert.Len(t, result.Dimensions, 4)
+	assert.Len(t, result.Source, 3)
+	assert.Len(t, result.Source[0], 4)
+	assert.Equal(t, 93.33333333333333, getValue(result.Source[0]["hits_per_user"]))
 }
 
 // func MockClause() *types.NormalClause {
