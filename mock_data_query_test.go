@@ -62,7 +62,7 @@ func testMockQuery(t *testing.T, query *types.Query, check func(t assert.Testing
 	check(t, result)
 }
 
-func BenchmarkTestBuildSql(b *testing.B){
+func BenchmarkBuildSql(b *testing.B){
 	m, err := newManager(b)
 	assert.NoError(b, err)
 	m.SetLogger(logger.Discard)
