@@ -59,3 +59,31 @@ func testMockQuery(t *testing.T, query *types.Query, check func(t assert.Testing
 	assert.NoError(t, err)
 	check(t, result)
 }
+
+func BenchmarkTestBuildSql(b *testing.B){
+	m, err := newManager(b)
+	assert.NoError(b, err)
+	assert.NoError(b, MockLoad(m))
+	var Querys = []*types.Query{
+		MockQuery1(),
+		MockQuery2(),
+		MockQuery3(),
+		MockQuery4(),
+		MockQuery5(),
+		MockQuery6(),
+		MockQuery7(),
+		MockQuery8(),
+		MockQuery9(),
+		MockQuery10(),
+		MockQuery11(),
+	}
+	b.ReportAllocs()
+	for i, query := range Querys {
+		b.Run(string(rune(i+1)), func(b * testing.B){
+			for i := 0; i < b.N; i++ {
+				_, _ = m.BuildSQL(query)
+			}
+		})
+	}
+
+}
