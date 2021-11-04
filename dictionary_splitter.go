@@ -418,5 +418,5 @@ func convertOneFilterToTargetTables(translator Translator, in *types.Filter, tar
 }
 
 func convertDataSourceToDataSource(in *models.DataSource) *types.DataSource {
-	return &types.DataSource{Database: in.Database, Name: in.Name, AliasName: in.Alias, Type: in.Type}
+	return &types.DataSource{Database: in.Database, Name: in.Name, AliasName: in.Alias, Type: in.Type, JoinType: in.JoinType}
 }

@@ -60,8 +60,8 @@ type DependencyGraphBuilder struct {
 	dbType     types.DBType
 	dictionary IAdapter
 
-	current               string
-	isFold                map[string]bool
+	current string
+	isFold  map[string]bool
 }
 
 func (g *DependencyGraphBuilder) Build() (DependencyGraph, error) {

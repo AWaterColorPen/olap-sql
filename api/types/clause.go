@@ -208,13 +208,8 @@ func (n *NormalClause) tableAndJoinStatement(tx *gorm.DB) (table string, join []
 			continue
 		}
 
-		switch n.DBType {
-		case DBTypeSQLite, DBTypeClickHouse:
-			join = append(join, fmt.Sprintf("LEFT JOIN %v ON %v", joinName2, strings.Join(on, " AND ")))
-		default:
-			err = fmt.Errorf("not supported db type %v", n.DBType)
-			return
-		}
+		joinType := n.DataSource[0].GetJoinType()
+		join = append(join, fmt.Sprintf("%v %v ON %v", joinType, joinName2, strings.Join(on, " AND ")))
 	}
 	return
 }

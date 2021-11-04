@@ -20,8 +20,8 @@ type DataSource struct {
 	Name      string         `json:"name"`
 	AliasName string         `json:"alias"`
 	Type      DataSourceType `json:"type"`
-	// Joins    []*Join        `json:"joins"`
-	Clause Clause `json:"clause"`
+	JoinType  string         `json:"join_type"`
+	Clause    Clause         `json:"clause"`
 
 	expression string
 }
@@ -62,4 +62,11 @@ func (d *DataSource) Init(tx *gorm.DB) (err error) {
 		d.expression, err = d.Clause.BuildSQL(tx)
 	}
 	return
+}
+
+func (d *DataSource) GetJoinType() string {
+	if len(d.JoinType) == 0 {
+		return "LEFT JOIN"
+	}
+	return d.JoinType
 }

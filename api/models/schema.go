@@ -125,6 +125,7 @@ type DataSource struct {
 	Name          string               `toml:"name"`
 	Alias         string               `toml:"alias"`
 	Type          types.DataSourceType `toml:"type"`
+	JoinType      string               `json:"join_type"`
 	Description   string               `toml:"description"`
 	DimensionJoin DimensionJoins       `toml:"dimension_join"`
 	MergeJoin     MergeJoin            `toml:"merge_join"`

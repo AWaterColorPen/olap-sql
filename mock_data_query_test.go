@@ -1,6 +1,8 @@
 package olapsql_test
 
 import (
+	"fmt"
+	"gorm.io/gorm/logger"
 	"testing"
 
 	"github.com/awatercolorpen/olap-sql/api/types"
@@ -63,8 +65,10 @@ func testMockQuery(t *testing.T, query *types.Query, check func(t assert.Testing
 func BenchmarkTestBuildSql(b *testing.B){
 	m, err := newManager(b)
 	assert.NoError(b, err)
+	m.SetLogger(logger.Discard)
+
 	assert.NoError(b, MockLoad(m))
-	var Querys = []*types.Query{
+	query := []*types.Query{
 		MockQuery1(),
 		MockQuery2(),
 		MockQuery3(),
@@ -77,13 +81,13 @@ func BenchmarkTestBuildSql(b *testing.B){
 		MockQuery10(),
 		MockQuery11(),
 	}
-	b.ReportAllocs()
-	for i, query := range Querys {
-		b.Run(string(rune(i+1)), func(b * testing.B){
-			for i := 0; i < b.N; i++ {
-				_, _ = m.BuildSQL(query)
+	for i, q := range query {
+		name := fmt.Sprint(i)
+		b.Run(name, func(b * testing.B){
+			b.ReportAllocs()
+			for j := 0; j < b.N; j++ {
+				_, _ = m.BuildSQL(q)
 			}
 		})
 	}
-
 }
