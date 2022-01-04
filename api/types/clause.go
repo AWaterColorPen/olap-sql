@@ -208,7 +208,7 @@ func (n *NormalClause) tableAndJoinStatement(tx *gorm.DB) (table string, join []
 			continue
 		}
 
-		joinType := n.DataSource[0].GetJoinType()
+		joinType := v.GetJoinType()
 		join = append(join, fmt.Sprintf("%v %v ON %v", joinType, joinName2, strings.Join(on, " AND ")))
 	}
 	return

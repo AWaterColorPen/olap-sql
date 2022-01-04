@@ -30,6 +30,7 @@ func (d *DataSet) GetCurrent() string {
 type Join struct {
 	DataSource string   `toml:"data_source"`
 	Dimension  []string `toml:"dimension"`
+	JoinType   string   `toml:"join_type"`
 }
 
 type JoinPair []*Join
@@ -40,6 +41,16 @@ func (j JoinPair) Get1() *Join {
 
 func (j JoinPair) Get2() *Join {
 	return j[1]
+}
+
+func (j JoinPair) GetJoinType() string {
+	if len(j.Get1().JoinType) != 0 {
+		return j.Get1().JoinType
+	}
+	if len(j.Get2().JoinType) != 0 {
+		return j.Get2().JoinType
+	}
+	return ""
 }
 
 func (j JoinPair) IsValid() error {
@@ -125,7 +136,6 @@ type DataSource struct {
 	Name          string               `toml:"name"`
 	Alias         string               `toml:"alias"`
 	Type          types.DataSourceType `toml:"type"`
-	JoinType      string               `toml:"join_type"`
 	Description   string               `toml:"description"`
 	DimensionJoin DimensionJoins       `toml:"dimension_join"`
 	MergeJoin     MergeJoin            `toml:"merge_join"`

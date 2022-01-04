@@ -300,7 +300,7 @@ func (n *normalClauseSplitter) buildDimensionJoin() []*types.Join {
 			on = append(on, &types.JoinOn{Key1: models.GetNameFromKey(key1), Key2: models.GetNameFromKey(key2)})
 		}
 
-		j := &types.Join{DataSource1: s1, DataSource2: s2, On: on}
+		j := &types.Join{DataSource1: s1, DataSource2: s2, On: on, JoinType: v.GetJoinType()}
 		joins = append(joins, j)
 	}
 	return joins
@@ -333,7 +333,7 @@ func (n *normalClauseSplitter) buildMergeJoin() []*types.Join {
 			key2, _ := d2.Alias()
 			on = append(on, &types.JoinOn{Key1: models.GetNameFromKey(key1), Key2: models.GetNameFromKey(key2)})
 		}
-		j := &types.Join{DataSource1: s1, DataSource2: s2, On: on}
+		j := &types.Join{DataSource1: s1, DataSource2: s2, On: on, JoinType: source.MergeJoin[i].JoinType}
 		joins = append(joins, j)
 	}
 	return joins
@@ -418,5 +418,5 @@ func convertOneFilterToTargetTables(translator Translator, in *types.Filter, tar
 }
 
 func convertDataSourceToDataSource(in *models.DataSource) *types.DataSource {
-	return &types.DataSource{Database: in.Database, Name: in.Name, AliasName: in.Alias, Type: in.Type, JoinType: in.JoinType}
+	return &types.DataSource{Database: in.Database, Name: in.Name, AliasName: in.Alias, Type: in.Type}
 }

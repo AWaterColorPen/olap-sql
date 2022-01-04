@@ -19,10 +19,10 @@ sources = [
     ]
   ]},
   {database = "", name = "wikistat_uv", type = "fact"},
-  {database = "", name = "wikistat_uv_merge", type = "merge_join", join_type = "FULL OUTER JOIN", merge_join = [
+  {database = "", name = "wikistat_uv_merge", type = "merge_join", merge_join = [
     {data_source = "wikistat_uv_merge", dimension = ["time_by_hour", "sub_project"]},
     {data_source = "wikistat_base", dimension = ["time_by_hour", "sub_project"]},
-    {data_source = "wikistat_uv", dimension = ["time_by_hour", "sub_project"]},
+    {data_source = "wikistat_uv", dimension = ["time_by_hour", "sub_project"], join_type = "FULL OUTER JOIN"},
   ]},
 ]
 
