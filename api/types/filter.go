@@ -107,6 +107,8 @@ func (f *Filter) valueToStringSlice() ([]string, error) {
 			out = append(out, fmt.Sprintf("'%v'", v))
 		case ValueTypeInteger, ValueTypeFloat:
 			out = append(out, fmt.Sprintf("%v", v))
+		case ValueTypeUnknown, "":
+			out = append(out, tryToParseValue(v))
 		default:
 			return nil, fmt.Errorf("not supported value type %v", f.ValueType)
 		}
@@ -124,4 +126,16 @@ func (f *Filter) treeStatement(sep string) (string, error) {
 		filter = append(filter, statement)
 	}
 	return fmt.Sprintf("( %v )", strings.Join(filter, sep)), nil
+}
+
+func tryToParseValue(value interface{}) string {
+	switch v := value.(type) {
+	case string:
+		return fmt.Sprintf("'%v'", v)
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+		return fmt.Sprintf("%v", v)
+	default:
+		return fmt.Sprint(v)
+	}
+
 }
