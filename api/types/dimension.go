@@ -2,11 +2,6 @@ package types
 
 import (
 	"fmt"
-	"regexp"
-)
-
-var (
-	reg = regexp.MustCompile(`^[0-9A-Za-z_]+$`)
 )
 
 type DimensionType string
