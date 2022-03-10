@@ -90,8 +90,8 @@ dimensions = [
   {data_source = "wikistat_base", type = "DIMENSION_MULTI", name = "class_id", value_type = "VALUE_INTEGER", dependency = ["wikistat_relate.class_id", "wikistat_class.class_id"]},
   {data_source = "wikistat_base", type = "DIMENSION_MULTI", name = "class_name", value_type = "VALUE_STRING", dependency = ["wikistat_class.class_name"]},
 
-  {data_source = "wikistat_uv_merge", type = "DIMENSION_MULTI", name = "date", value_type = "VALUE_STRING", dependency = ["wikistat_base.date"]},
-  {data_source = "wikistat_uv_merge", type = "DIMENSION_MULTI", name = "time_by_hour", value_type = "VALUE_STRING", dependency = ["wikistat_base.time_by_hour", "wikistat_uv.time_by_hour"]},
+  {data_source = "wikistat_uv_merge", type = "DIMENSION_CASE", name = "date", value_type = "VALUE_STRING", dependency = ["wikistat_base.date"]},
+  {data_source = "wikistat_uv_merge", type = "DIMENSION_CASE", name = "time_by_hour", value_type = "VALUE_STRING", dependency = ["wikistat_base.time_by_hour", "wikistat_uv.time_by_hour"]},
   {data_source = "wikistat_uv_merge", type = "DIMENSION_MULTI", name = "project", value_type = "VALUE_STRING", dependency = ["wikistat_base.project"]},
   {data_source = "wikistat_uv_merge", type = "DIMENSION_MULTI", name = "sub_project", value_type = "VALUE_STRING", dependency = ["wikistat_base.sub_project", "wikistat_uv.sub_project"]},
   {data_source = "wikistat_uv_merge", type = "DIMENSION_MULTI", name = "path", value_type = "VALUE_STRING", dependency = ["wikistat_base.path"]},

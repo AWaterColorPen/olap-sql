@@ -60,7 +60,7 @@ func (c *columnStruct) IsAs() bool {
 		return c.Metric.Type == types.MetricTypeAs
 	}
 	if c.FieldProperty == types.FieldPropertyDimension {
-		return c.Dimension.Type == types.DimensionTypeMulti
+		return c.Dimension.Type == types.DimensionTypeMulti || c.Dimension.Type == types.DimensionTypeCase
 	}
 	return false
 }
