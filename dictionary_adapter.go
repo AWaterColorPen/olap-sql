@@ -81,7 +81,7 @@ type AdapterOption struct {
 
 func NewAdapter(option *AdapterOption) (IAdapter, error) {
 	switch option.Type {
-	case FILEAdapter:
+	case FILEAdapter, "":
 		return newDictionaryAdapterByFile(option)
 	default:
 		return nil, fmt.Errorf("not supported adapter type %v", option.Type)
