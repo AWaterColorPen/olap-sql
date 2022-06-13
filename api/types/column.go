@@ -137,6 +137,11 @@ func (col *ArithmeticCol) GetExpression() string {
 			children[i] = fmt.Sprintf("NULLIF(%v, 0)", children[i])
 		}
 	}
+	if operator == ArithmeticOperatorTypeAdd {
+		for i := 1; i < len(children); i++ {
+			children[i] = fmt.Sprintf("IFNULL(%v, 0)", children[i])
+		}
+	}
 	return fmt.Sprintf("( %v )", strings.Join(children, fmt.Sprintf(" %v  ", operator)))
 }
 

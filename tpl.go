@@ -6,15 +6,15 @@ import (
 	"github.com/ahmetb/go-linq/v3"
 )
 
-func Parallel(input interface{}, function func(interface{}) interface{}, parallelNumber int) chan interface{} {
+func Parallel(input any, function func(any) any, parallelNumber int) chan any {
 	wg := sync.WaitGroup{}
 
-	in := make(chan interface{})
-	out := make(chan interface{})
+	in := make(chan any)
+	out := make(chan any)
 	for i := 0; i < parallelNumber; i++ {
 		wg.Add(1)
 		go func() {
-			linq.FromChannel(in).ForEach(func(v interface{}) {
+			linq.FromChannel(in).ForEach(func(v any) {
 				out <- function(v)
 			})
 			wg.Done()
