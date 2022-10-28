@@ -352,8 +352,8 @@ func newDictionaryAdapterByFile(option *AdapterOption) (*FileAdapter, error) {
 	return adapter, nil
 }
 
-func getKeySet(key []string) map[interface{}]struct{} {
-	set := make(map[interface{}]struct{})
+func getKeySet(key []string) map[any]struct{} {
+	set := make(map[any]struct{})
 	for _, k := range key {
 		set[k] = struct{}{}
 	}

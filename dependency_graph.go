@@ -2,15 +2,16 @@ package olapsql
 
 import (
 	"fmt"
+
 	"github.com/awatercolorpen/olap-sql/api/models"
 	"github.com/awatercolorpen/olap-sql/api/types"
 )
 
 type dependencyGraph struct {
-	key map[string]interface{}
+	key map[string]any
 }
 
-func (g *dependencyGraph) Get(key string) (interface{}, error) {
+func (g *dependencyGraph) Get(key string) (any, error) {
 	if v, ok := g.key[key]; ok {
 		return v, nil
 	}
@@ -39,7 +40,7 @@ func (g *dependencyGraph) GetDimension(key string) (*types.Dimension, error) {
 	return nil, fmt.Errorf("found item, but it is not a dimension")
 }
 
-func (g *dependencyGraph) set(in interface{}) {
+func (g *dependencyGraph) set(in any) {
 	switch v := in.(type) {
 	case *types.Metric:
 		k := fmt.Sprintf("%v.%v", v.Table, v.Name)
@@ -51,7 +52,7 @@ func (g *dependencyGraph) set(in interface{}) {
 }
 
 type DependencyGraph interface {
-	Get(key string) (interface{}, error)
+	Get(key string) (any, error)
 	GetMetric(key string) (*types.Metric, error)
 	GetDimension(key string) (*types.Dimension, error)
 }
@@ -66,7 +67,7 @@ type DependencyGraphBuilder struct {
 
 func (g *DependencyGraphBuilder) Build() (DependencyGraph, error) {
 	g.isFold = g.buildFold()
-	graph := &dependencyGraph{key: map[string]interface{}{}}
+	graph := &dependencyGraph{key: map[string]any{}}
 	if err := g.buildMetricDependency(graph); err != nil {
 		return nil, err
 	}

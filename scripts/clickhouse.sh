@@ -1,5 +1,5 @@
 ## CREATE TABLE
-clickhouse-client --query "CREATE TABLE wikistat ( date Date, time DateTime, project String, subproject String, path String, hits UInt64, size UInt64 ) ENGINE = MergeTree(date, (path, time), 8192);"
+clickhouse-client --query "CREATE TABLE wikistat ( date Date, time DateTime, project String, subproject String, path String, hits UInt64, size UInt64 ) ENGINE = MergeTree() ORDER BY (path, time) PARTITION BY date;"
 clickhouse-client --query "CREATE TABLE wikistat_relate ( project String, class UInt64, source Float64 ) ENGINE = MergeTree() ORDER BY (project, class);"
 clickhouse-client --query "CREATE TABLE wikistat_class ( id UInt64, name String ) ENGINE = MergeTree() ORDER BY (id);"
 clickhouse-client --query "CREATE TABLE wikistat_uv ( date Date, time DateTime, sub_project String, uid String, activation_cnt UInt64, cost Float64 ) ENGINE = MergeTree() ORDER BY (sub_project, uid);"

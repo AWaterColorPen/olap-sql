@@ -7,8 +7,8 @@ type TimeInterval struct {
 }
 
 func (t *TimeInterval) ToFilter() *Filter {
-	filter1 := &Filter{OperatorType: FilterOperatorTypeGreaterEquals, Name: t.Name, Value: []interface{}{t.Start}}
-	filter2 := &Filter{OperatorType: FilterOperatorTypeLess, Name: t.Name, Value: []interface{}{t.End}}
+	filter1 := &Filter{OperatorType: FilterOperatorTypeGreaterEquals, Name: t.Name, Value: []any{t.Start}}
+	filter2 := &Filter{OperatorType: FilterOperatorTypeLess, Name: t.Name, Value: []any{t.End}}
 	return &Filter{
 		OperatorType: FilterOperatorTypeAnd,
 		Children:     []*Filter{filter1, filter2},

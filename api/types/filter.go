@@ -26,6 +26,7 @@ const (
 	FilterOperatorTypeGreaterEquals FilterOperatorType = "FILTER_OPERATOR_GREATER_EQUALS"
 	FilterOperatorTypeGreater       FilterOperatorType = "FILTER_OPERATOR_GREATER"
 	FilterOperatorTypeLike          FilterOperatorType = "FILTER_OPERATOR_LIKE"
+	FilterOperatorTypeHas           FilterOperatorType = "FILTER_OPERATOR_HAS"
 	FilterOperatorTypeExpression    FilterOperatorType = "FILTER_OPERATOR_EXTENSION"
 	FilterOperatorTypeAnd           FilterOperatorType = "FILTER_OPERATOR_AND"
 	FilterOperatorTypeOr            FilterOperatorType = "FILTER_OPERATOR_OR"
@@ -46,7 +47,7 @@ type Filter struct {
 	Table         string             `toml:"table"          json:"table"`
 	Name          string             `toml:"name"           json:"name"`
 	FieldProperty FieldProperty      `toml:"field_property" json:"field_property"`
-	Value         []interface{}      `toml:"value"          json:"value"`
+	Value         []any              `toml:"value"          json:"value"`
 	Children      []*Filter          `toml:"children"       json:"children"`
 }
 
@@ -79,6 +80,9 @@ func (f *Filter) Expression() (string, error) {
 	case FilterOperatorTypeLike:
 		v := value[0]
 		return fmt.Sprintf("%v LIKE %v", key, v), nil
+	case FilterOperatorTypeHas:
+		v := value[0]
+		return fmt.Sprintf("HAS(%v, %v)", key, v), nil
 	case FilterOperatorTypeExpression:
 		v := value[0]
 		return v, nil
@@ -128,7 +132,7 @@ func (f *Filter) treeStatement(sep string) (string, error) {
 	return fmt.Sprintf("( %v )", strings.Join(filter, sep)), nil
 }
 
-func tryToParseValue(value interface{}) string {
+func tryToParseValue(value any) string {
 	switch v := value.(type) {
 	case string:
 		return fmt.Sprintf("'%v'", v)

@@ -164,7 +164,7 @@ func MockQuery1() *types.Query {
 		Metrics:      []string{"hits", "size_sum", "hits_avg", "hits_per_size"},
 		Dimensions:   []string{"date"},
 		Filters: []*types.Filter{
-			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
+			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []any{"*"}},
 		},
 		Orders: []*types.OrderBy{
 			{Name: "size_sum", Direction: types.OrderDirectionTypeDescending},
@@ -180,8 +180,8 @@ func MockQuery1ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Equal(t, "hits_per_size", result.Dimensions[4])
 	assert.Len(t, result.Source, 1)
 	assert.Len(t, result.Source[0], 5)
-	assert.Equal(t, float64(10244), result.Source[0]["size_sum"])
-	assert.Equal(t, 0.013861772745021476, getValue(result.Source[0]["hits_per_size"]))
+	assert.Equal(t, float64(10244), getValue[float64](result.Source[0]["size_sum"]))
+	assert.Equal(t, 0.013861772745021476, getValue[float64](result.Source[0]["hits_per_size"]))
 }
 
 // MockQuery2 mock query for normal fact dimension join case
@@ -192,8 +192,8 @@ func MockQuery2() *types.Query {
 		Metrics:      []string{"hits", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
 		Dimensions:   []string{"date", "class_id"},
 		Filters: []*types.Filter{
-			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
-			{OperatorType: types.FilterOperatorTypeIn, Name: "class_id", Value: []interface{}{1, 2, 3, 4}},
+			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []any{"*"}},
+			{OperatorType: types.FilterOperatorTypeIn, Name: "class_id", Value: []any{1, 2, 3, 4}},
 		},
 		Orders: []*types.OrderBy{
 			{Name: "source_sum", Direction: types.OrderDirectionTypeDescending},
@@ -209,10 +209,10 @@ func MockQuery2ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Equal(t, "source_avg", result.Dimensions[6])
 	assert.Len(t, result.Source, 2)
 	assert.Len(t, result.Source[0], 7)
-	assert.Equal(t, float64(7326), result.Source[0]["size_sum"])
+	assert.Equal(t, float64(7326), getValue[float64](result.Source[0]["size_sum"]))
 
-	assert.Equal(t, 0.022113022113022112, getValue(result.Source[0]["hits_per_size"]))
-	assert.Equal(t, 3.700855, getValue(result.Source[0]["source_avg"]))
+	assert.Equal(t, 0.022113022113022112, getValue[float64](result.Source[0]["hits_per_size"]))
+	assert.Equal(t, 3.700855, getValue[float64](result.Source[0]["source_avg"]))
 }
 
 // MockQuery3 mock query for group by time case
@@ -223,8 +223,8 @@ func MockQuery3() *types.Query {
 		Metrics:      []string{"hits", "size_sum", "hits_avg", "hits_per_size", "source_avg"},
 		Dimensions:   []string{"time_by_hour", "class_id"},
 		Filters: []*types.Filter{
-			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
-			{OperatorType: types.FilterOperatorTypeIn, Name: "class_id", Value: []interface{}{1, 2, 3, 4}},
+			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []any{"*"}},
+			{OperatorType: types.FilterOperatorTypeIn, Name: "class_id", Value: []any{1, 2, 3, 4}},
 		},
 		Orders: []*types.OrderBy{
 			{Name: "time_by_hour", Direction: types.OrderDirectionTypeAscending},
@@ -240,10 +240,10 @@ func MockQuery3ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Equal(t, "source_avg", result.Dimensions[6])
 	assert.Len(t, result.Source, 8)
 	assert.Len(t, result.Source[0], 7)
-	assert.Equal(t, "2021-05-06 11:00:00", result.Source[0]["time_by_hour"])
-	assert.Equal(t, float64(10086), result.Source[0]["size_sum"])
-	assert.Equal(t, 0.013781479278207416, getValue(result.Source[0]["hits_per_size"]))
-	assert.Equal(t, 4.872, getValue(result.Source[0]["source_avg"]))
+	assert.Equal(t, "2021-05-06 11:00:00", getValue[string](result.Source[0]["time_by_hour"]))
+	assert.Equal(t, float64(10086), getValue[float64](result.Source[0]["size_sum"]))
+	assert.Equal(t, 0.013781479278207416, getValue[float64](result.Source[0]["hits_per_size"]))
+	assert.Equal(t, 4.872, getValue[float64](result.Source[0]["source_avg"]))
 }
 
 // MockQuery4 mock query for nested join case
@@ -254,8 +254,8 @@ func MockQuery4() *types.Query {
 		Metrics:      []string{"source_avg"},
 		Dimensions:   []string{"project", "class_name"},
 		Filters: []*types.Filter{
-			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []interface{}{"*"}},
-			{OperatorType: types.FilterOperatorTypeIn, Name: "project", Value: []interface{}{"city", "school", "music"}},
+			{OperatorType: types.FilterOperatorTypeNotIn, Name: "path", Value: []any{"*"}},
+			{OperatorType: types.FilterOperatorTypeIn, Name: "project", Value: []any{"city", "school", "music"}},
 		},
 		Orders: []*types.OrderBy{
 			{Name: "project", Direction: types.OrderDirectionTypeDescending},
@@ -272,7 +272,7 @@ func MockQuery4ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Source[0], 3)
 	assert.Equal(t, "school", result.Source[0]["project"])
 	assert.Equal(t, "location", result.Source[0]["class_name"])
-	assert.Equal(t, 0.18742, getValue(result.Source[0]["source_avg"]))
+	assert.Equal(t, 0.18742, getValue[float64](result.Source[0]["source_avg"]))
 }
 
 // MockQuery5 mock query for nan / inf case
@@ -283,7 +283,7 @@ func MockQuery5() *types.Query {
 		Metrics:      []string{"hits_per_size"},
 		Dimensions:   []string{"class_name"},
 		Filters: []*types.Filter{
-			{OperatorType: types.FilterOperatorTypeIn, Name: "time_by_hour", Value: []interface{}{"2021-05-07 10:00:00"}},
+			{OperatorType: types.FilterOperatorTypeIn, Name: "time_by_hour", Value: []any{"2021-05-07 10:00:00"}},
 		},
 	}
 	return query
@@ -313,7 +313,7 @@ func MockQuery6ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Dimensions, 1)
 	assert.Len(t, result.Source, 1)
 	assert.Len(t, result.Source[0], 1)
-	assert.Equal(t, float64(3), result.Source[0]["project_count"])
+	assert.Equal(t, float64(3), getValue[float64](result.Source[0]["project_count"]))
 }
 
 // MockQuery7 mock query for sum if
@@ -330,7 +330,7 @@ func MockQuery7ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Dimensions, 1)
 	assert.Len(t, result.Source, 1)
 	assert.Len(t, result.Source[0], 1)
-	assert.Equal(t, float64(7325), getValue(result.Source[0]["hits_sum"]))
+	assert.Equal(t, float64(7325), getValue[float64](result.Source[0]["hits_sum"]))
 }
 
 // MockQuery8 mock query for easy merge join
@@ -341,7 +341,7 @@ func MockQuery8() *types.Query {
 		Metrics:      []string{"hits", "activation_cnt", "cost", "activation_rate"},
 		Dimensions:   []string{"time_by_hour", "sub_project"},
 		Filters: []*types.Filter{
-			{OperatorType: types.FilterOperatorTypeGreaterEquals, Name: "time_by_hour", Value: []interface{}{"2021-05-07 06:00:00"}},
+			{OperatorType: types.FilterOperatorTypeGreaterEquals, Name: "time_by_hour", Value: []any{"2021-05-07 06:00:00"}},
 		},
 		Orders: []*types.OrderBy{
 			{Name: "time_by_hour", Direction: types.OrderDirectionTypeAscending},
@@ -355,7 +355,7 @@ func MockQuery8ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Dimensions, 6)
 	assert.Len(t, result.Source, 7)
 	assert.Len(t, result.Source[0], 6)
-	assert.Equal(t, 0.21052631578947367, getValue(result.Source[0]["activation_rate"]))
+	assert.Equal(t, 0.21052631578947367, getValue[float64](result.Source[0]["activation_rate"]))
 }
 
 // MockQuery9 mock query for mixed merge join
@@ -366,7 +366,7 @@ func MockQuery9() *types.Query {
 		Metrics:      []string{"cost", "hits_per_user"},
 		Dimensions:   []string{"sub_project", "class_name"},
 		Filters: []*types.Filter{
-			{OperatorType: types.FilterOperatorTypeIn, Name: "path", Value: []interface{}{"level1", "level2", "engineering"}},
+			{OperatorType: types.FilterOperatorTypeIn, Name: "path", Value: []any{"level1", "level2", "engineering"}},
 		},
 		Orders: []*types.OrderBy{
 			{Name: "class_name", Direction: types.OrderDirectionTypeAscending},
@@ -379,7 +379,7 @@ func MockQuery9ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Dimensions, 4)
 	assert.Len(t, result.Source, 3)
 	assert.Len(t, result.Source[0], 4)
-	assert.Equal(t, 93.33333333333333, getValue(result.Source[0]["hits_per_user"]))
+	assert.Equal(t, 93.33333333333333, getValue[float64](result.Source[0]["hits_per_user"]))
 }
 
 // MockQuery10 mock query for merge join without dimension
@@ -390,7 +390,7 @@ func MockQuery10() *types.Query {
 		Metrics:      []string{"cost", "hits_per_user"},
 		Dimensions:   []string{"class_name"},
 		Filters: []*types.Filter{
-			{OperatorType: types.FilterOperatorTypeIn, Name: "sub_project", Value: []interface{}{"CHN", "pop", "university", "senior"}},
+			{OperatorType: types.FilterOperatorTypeIn, Name: "sub_project", Value: []any{"CHN", "pop", "university", "senior"}},
 		},
 		Orders: []*types.OrderBy{
 			{Name: "class_name", Direction: types.OrderDirectionTypeAscending},
@@ -403,7 +403,7 @@ func MockQuery10ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Dimensions, 3)
 	assert.Len(t, result.Source, 2)
 	assert.Len(t, result.Source[0], 3)
-	assert.Equal(t, 1293.5, getValue(result.Source[0]["hits_per_user"]))
+	assert.Equal(t, 1293.5, getValue[float64](result.Source[0]["hits_per_user"]))
 }
 
 // MockQuery11 mock query for merge join with dimension
@@ -425,19 +425,24 @@ func MockQuery11ResultAssert(t assert.TestingT, result *types.Result) {
 	assert.Len(t, result.Source, 9)
 	assert.Len(t, result.Source[0], 2)
 	assert.Equal(t, nil, result.Source[0]["big_cost_per_hits"])
-	assert.Equal(t, 0.56, getValue(result.Source[8]["big_cost_per_hits"]))
+	assert.Equal(t, 0.56, getValue[float64](result.Source[8]["big_cost_per_hits"]))
 }
 
-func getValue(value interface{}) float64 {
+func getValue[T any](value any) T {
 	switch v := value.(type) {
-	case float64:
+	case T:
 		return v
-	case *float64:
+	case *T:
 		if v != nil {
 			return *v
 		}
-		return -123456789
+		return *new(T)
+	case *any:
+		if v != nil {
+			return getValue[T](*v)
+		}
+		return *new(T)
 	default:
-		return -123456789
+		return *new(T)
 	}
 }
