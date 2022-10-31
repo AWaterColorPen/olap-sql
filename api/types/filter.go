@@ -82,7 +82,7 @@ func (f *Filter) Expression() (string, error) {
 		return fmt.Sprintf("%v LIKE %v", key, v), nil
 	case FilterOperatorTypeHas:
 		v := value[0]
-		return fmt.Sprintf("HAS(%v, %v)", key, v), nil
+		return fmt.Sprintf("has(%v, %v)", key, v), nil
 	case FilterOperatorTypeExpression:
 		v := value[0]
 		return v, nil
