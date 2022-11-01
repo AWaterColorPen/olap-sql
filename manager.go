@@ -92,11 +92,6 @@ func (m *Manager) build(query *types.Query) (Clients, types.Clause, error) {
 }
 
 func NewManager(configuration *Configuration) (*Manager, error) {
-	// set default olap-sql option
-	if configuration.DefaultParallelNumber != 0 {
-		DefaultParallelNumber = configuration.DefaultParallelNumber
-	}
-
 	m := &Manager{}
 	if configuration.ClientsOption != nil {
 		clients, err := NewClients(configuration.ClientsOption)

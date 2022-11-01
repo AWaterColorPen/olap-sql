@@ -15,7 +15,7 @@ func getSourceFromTranslator(translator Translator) *models.DataSource {
 	return source
 }
 
-type normalClauseSplitter struct {
+type NormalClauseSplitter struct {
 	Translator Translator
 
 	CandidateList []*types.DataSource
@@ -27,7 +27,7 @@ type normalClauseSplitter struct {
 	DBType types.DBType
 }
 
-func NewNormalClauseSplitter(translator Translator, clause *types.NormalClause, query *types.Query, dbType types.DBType) (*normalClauseSplitter, error) {
+func NewNormalClauseSplitter(translator Translator, clause *types.NormalClause, query *types.Query, dbType types.DBType) (*NormalClauseSplitter, error) {
 	adapter := translator.GetAdapter()
 	source := getSourceFromTranslator(translator)
 
@@ -43,7 +43,7 @@ func NewNormalClauseSplitter(translator Translator, clause *types.NormalClause, 
 		candidate[v.Name] = v
 		splitQuery[v.Name] = &types.Query{}
 	}
-	splitter := &normalClauseSplitter{
+	splitter := &NormalClauseSplitter{
 		Translator:    translator,
 		CandidateList: candidateList,
 		Candidate:     candidate,
@@ -55,7 +55,7 @@ func NewNormalClauseSplitter(translator Translator, clause *types.NormalClause, 
 	return splitter, nil
 }
 
-func (n *normalClauseSplitter) Run() error {
+func (n *NormalClauseSplitter) Run() error {
 	source := getSourceFromTranslator(n.Translator)
 	switch source.Type {
 	case types.DataSourceTypeFact:
@@ -69,13 +69,13 @@ func (n *normalClauseSplitter) Run() error {
 	}
 }
 
-func (n *normalClauseSplitter) factRun() error {
+func (n *NormalClauseSplitter) factRun() error {
 	source := n.GetSelfCandidate()
 	n.Clause.DataSource = append(n.Clause.DataSource, source)
 	return nil
 }
 
-func (n *normalClauseSplitter) joinRun() error {
+func (n *NormalClauseSplitter) joinRun() error {
 	candidate := n.GetOtherCandidate()
 	for _, v := range candidate {
 		n.Clause.DataSource = append(n.Clause.DataSource, v)
@@ -88,7 +88,7 @@ func (n *normalClauseSplitter) joinRun() error {
 	return nil
 }
 
-func (n *normalClauseSplitter) mergeRun() error {
+func (n *NormalClauseSplitter) mergeRun() error {
 	if err := n.joinRun(); err != nil {
 		return err
 	}
@@ -119,17 +119,17 @@ func (n *normalClauseSplitter) mergeRun() error {
 	return nil
 }
 
-func (n *normalClauseSplitter) Polish() map[string]*types.Query {
+func (n *NormalClauseSplitter) Polish() map[string]*types.Query {
 	n.polish()
 	return n.SplitQuery
 }
 
-func (n *normalClauseSplitter) GetSelfSplitQuery() *types.Query {
+func (n *NormalClauseSplitter) GetSelfSplitQuery() *types.Query {
 	current := n.Translator.GetCurrent()
 	return n.Polish()[current]
 }
 
-func (n *normalClauseSplitter) GetOtherSplitQuery() map[string]*types.Query {
+func (n *NormalClauseSplitter) GetOtherSplitQuery() map[string]*types.Query {
 	other := map[string]*types.Query{}
 	current := n.Translator.GetCurrent()
 	for k, v := range n.Polish() {
@@ -140,12 +140,12 @@ func (n *normalClauseSplitter) GetOtherSplitQuery() map[string]*types.Query {
 	return other
 }
 
-func (n *normalClauseSplitter) GetSelfCandidate() *types.DataSource {
+func (n *NormalClauseSplitter) GetSelfCandidate() *types.DataSource {
 	current := n.Translator.GetCurrent()
 	return n.Candidate[current]
 }
 
-func (n *normalClauseSplitter) GetOtherCandidate() []*types.DataSource {
+func (n *NormalClauseSplitter) GetOtherCandidate() []*types.DataSource {
 	var other []*types.DataSource
 	current := n.Translator.GetCurrent()
 	for _, v := range n.CandidateList {
@@ -156,7 +156,7 @@ func (n *normalClauseSplitter) GetOtherCandidate() []*types.DataSource {
 	return other
 }
 
-func (n *normalClauseSplitter) split() error {
+func (n *NormalClauseSplitter) split() error {
 	for _, m := range n.Clause.Metrics {
 		kv, err := n.splitMetric(m)
 		if err != nil {
@@ -181,7 +181,7 @@ func (n *normalClauseSplitter) split() error {
 	return nil
 }
 
-func (n *normalClauseSplitter) splitMetric(metric *types.Metric) (map[string][]string, error) {
+func (n *NormalClauseSplitter) splitMetric(metric *types.Metric) (map[string][]string, error) {
 	out := map[string][]string{}
 	if len(metric.Table) > 0 {
 		out[metric.Table] = append(out[metric.Table], metric.Name)
@@ -198,7 +198,7 @@ func (n *normalClauseSplitter) splitMetric(metric *types.Metric) (map[string][]s
 	return out, nil
 }
 
-func (n *normalClauseSplitter) splitDimension(dimension *types.Dimension) (map[string][]string, error) {
+func (n *NormalClauseSplitter) splitDimension(dimension *types.Dimension) (map[string][]string, error) {
 	out := map[string][]string{}
 	if len(dimension.Table) > 0 {
 		out[dimension.Table] = append(out[dimension.Table], dimension.Name)
@@ -215,7 +215,7 @@ func (n *normalClauseSplitter) splitDimension(dimension *types.Dimension) (map[s
 	return out, nil
 }
 
-func (n *normalClauseSplitter) splitFilter(filter *types.Filter) (map[string][]*types.Filter, error) {
+func (n *NormalClauseSplitter) splitFilter(filter *types.Filter) (map[string][]*types.Filter, error) {
 	out := map[string][]*types.Filter{}
 	target, err := getOneFilterTargetTable(n.Translator, filter)
 	if err != nil {
@@ -231,26 +231,26 @@ func (n *normalClauseSplitter) splitFilter(filter *types.Filter) (map[string][]*
 	return out, nil
 }
 
-func (n *normalClauseSplitter) polish() {
+func (n *NormalClauseSplitter) polish() {
 	for _, v := range n.SplitQuery {
 		linq.From(v.Metrics).Distinct().ToSlice(&v.Metrics)
 		linq.From(v.Dimensions).Distinct().ToSlice(&v.Dimensions)
 	}
 }
 
-func (n *normalClauseSplitter) addMetric(metric map[string][]string) {
+func (n *NormalClauseSplitter) addMetric(metric map[string][]string) {
 	for k, v := range metric {
 		n.SplitQuery[k].Metrics = append(n.SplitQuery[k].Metrics, v...)
 	}
 }
 
-func (n *normalClauseSplitter) addDimension(dimension map[string][]string) {
+func (n *NormalClauseSplitter) addDimension(dimension map[string][]string) {
 	for k, v := range dimension {
 		n.SplitQuery[k].Dimensions = append(n.SplitQuery[k].Dimensions, v...)
 	}
 }
 
-func (n *normalClauseSplitter) addFilter(filter map[string][]*types.Filter) {
+func (n *NormalClauseSplitter) addFilter(filter map[string][]*types.Filter) {
 	for k, v := range filter {
 		n.SplitQuery[k].Filters = append(n.SplitQuery[k].Filters, v...)
 	}
@@ -277,7 +277,7 @@ func buildHitMergeJoinDimension(translator Translator, query *types.Query) (map[
 	return hit, nil
 }
 
-func (n *normalClauseSplitter) buildDimensionJoin() []*types.Join {
+func (n *NormalClauseSplitter) buildDimensionJoin() []*types.Join {
 	candidate := n.Candidate
 	dGraph := n.Translator.GetDependencyGraph()
 	source := getSourceFromTranslator(n.Translator)
@@ -306,7 +306,7 @@ func (n *normalClauseSplitter) buildDimensionJoin() []*types.Join {
 	return joins
 }
 
-func (n *normalClauseSplitter) buildMergeJoin() []*types.Join {
+func (n *NormalClauseSplitter) buildMergeJoin() []*types.Join {
 	candidate := n.Candidate
 	dGraph := n.Translator.GetDependencyGraph()
 	source := getSourceFromTranslator(n.Translator)
@@ -339,7 +339,7 @@ func (n *normalClauseSplitter) buildMergeJoin() []*types.Join {
 	return joins
 }
 
-func (n *normalClauseSplitter) buildJoins() ([]*types.Join, error) {
+func (n *NormalClauseSplitter) buildJoins() ([]*types.Join, error) {
 	var joins []*types.Join
 	joins = append(joins, n.buildDimensionJoin()...)
 	joins = append(joins, n.buildMergeJoin()...)

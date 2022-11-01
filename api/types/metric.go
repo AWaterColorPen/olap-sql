@@ -18,7 +18,7 @@ const (
 	MetricTypeDivide        MetricType = "METRIC_DIVIDE"         // composition type.eg: 相除指标
 	MetricTypeAs            MetricType = "METRIC_AS"             // composition type eg: 关联指标
 	MetricTypeExpression    MetricType = "METRIC_EXPRESSION"     // single type. eg: 表达式
-	MetricTypePost          MetricType = "METRIC_POST"           // composition type, unsupported now
+	// MetricTypePost          MetricType = "METRIC_POST"           // composition type, unsupported now
 )
 
 type Metric struct {

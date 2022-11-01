@@ -2,7 +2,7 @@ package olapsql
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
@@ -330,7 +330,7 @@ func (f *FileAdapter) isValid() error {
 }
 
 func newDictionaryAdapterByFile(option *AdapterOption) (*FileAdapter, error) {
-	b, err := ioutil.ReadFile(option.Dsn)
+	b, err := os.ReadFile(option.Dsn)
 	if err != nil {
 		return nil, err
 	}

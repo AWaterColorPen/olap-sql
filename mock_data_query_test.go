@@ -62,7 +62,7 @@ func testMockQuery(t *testing.T, query *types.Query, check func(t assert.Testing
 	check(t, result)
 }
 
-func BenchmarkBuildSql(b *testing.B){
+func BenchmarkBuildSql(b *testing.B) {
 	m, err := newManager(b)
 	assert.NoError(b, err)
 	m.SetLogger(logger.Discard)
@@ -83,7 +83,7 @@ func BenchmarkBuildSql(b *testing.B){
 	}
 	for i, q := range query {
 		name := fmt.Sprint(i)
-		b.Run(name, func(b * testing.B){
+		b.Run(name, func(b *testing.B) {
 			b.ReportAllocs()
 			for j := 0; j < b.N; j++ {
 				_, _ = m.BuildSQL(q)

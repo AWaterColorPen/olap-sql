@@ -171,6 +171,7 @@ func MockQuery1() *types.Query {
 		},
 		Limit: &types.Limit{Limit: 2, Offset: 1},
 	}
+
 	return query
 }
 

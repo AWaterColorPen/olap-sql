@@ -15,8 +15,8 @@ const (
 	ColumnTypeMultiply      ColumnType = "multiply"
 	ColumnTypeDivide        ColumnType = "divide"
 	ColumnTypeAs            ColumnType = "as"
-	ColumnTypePost          ColumnType = "post"
-	ColumnTypeExpression    ColumnType = "expression"
+	// ColumnTypePost          ColumnType = "post"
+	// ColumnTypeExpression    ColumnType = "expression"
 )
 
 type ColumnType string
