@@ -35,7 +35,7 @@ SELECT SUM(wikistat.hits) AS hits FROM wikistat AS wikistat WHERE wikistat.date 
 
 ### Define the OLAP dictionary configuration file
 
-Create a new file named `olap-sql.toml` to define 
+Create a new file for example named `olap-sql.toml` to define 
 [sets](./docs/configuration.md#sets), 
 [sources](./docs/configuration.md#sources), 
 [metrics](./docs/configuration.md#metrics),
@@ -63,7 +63,7 @@ dimensions = [
 
 ### To make use of olap-sql in golang
 
-Create a new manager instance.
+Create a new [manager instance](./docs/configuration.md#manager-configuration).
 
 ```golang
 import "github.com/awatercolorpen/olap-sql"
@@ -81,6 +81,7 @@ dictionaryOption := olapsql.AdapterOption{
 	Dsn: "olap_sql.toml",
 }
 
+// build manager configuration
 configuration := &olapsql.Configuration{
 	ClientsOption:    clientsOption, 
 	DictionaryOption: dictionaryOption,
@@ -88,9 +89,6 @@ configuration := &olapsql.Configuration{
 
 // create a new manager instance
 manager, err := olapsql.NewManager(configuration)
-if err != nil {
-	log.Fatal(err)
-}
 ```
 
 Build olap-sql [query](./docs/query.md).
@@ -126,15 +124,9 @@ Run query to get result from manager.
 ```golang
 // run query with parallel chan
 result, err := manager.RunChan(query)
-if err != nil {
-	return err
-}
 
 // run query with sync
 result, err := manager.RunSync(query)
-if err != nil {
-	return err
-}
 ```
 
 ### Generate SQL then format result
