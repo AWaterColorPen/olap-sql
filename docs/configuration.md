@@ -156,18 +156,18 @@ metrics = [
 
 #### Supported metric type:
 
-| type                    | description                                         | classify    | required                                                              | sql example                            |
-|-------------------------|-----------------------------------------------------|-------------|-----------------------------------------------------------------------|----------------------------------------|
-| `METRIC_VALUE`          | original value as one metrics.                      | single      | must `field_name`. eg `field_name = "value"`                          | `SELECT value AS name`                 |
-| `METRIC_COUNT`          | count one column as one metrics.                    | single      | must `field_name`. eg `field_name = "*"`                              | `SELECT COUNT(*) AS name`              |
-| `METRIC_DISTINCT_COUNT` | distinct count one metrics to a new metrics.        | single      | must `field_name`. eg `field_name = "value"`                          | `SELECT COUNT(DISTINCT value) AS name` |
-| `METRIC_SUM`            | sum the metrics to a new metrics.                   | single      | must `field_name`. eg `field_name = "value"`                          | `SELECT SUM(value) AS name`            |
-| `METRIC_ADD`            | add multi metrics to a new metrics.                 | composition | must `dependency`. eg `dependency = ["value1", "value2"]`             | `SELECT value1 + value2 AS name`       |
-| `METRIC_SUBTRACT`       | subtract multi metrics to a new metrics.            | composition | must `dependency`. eg `dependency = ["value1", "value2"]`             | `SELECT value1 - value2 AS name`       |
-| `METRIC_MULTIPLY`       | multiply multi metrics to a new metrics.            | composition | must `dependency`. eg `dependency = ["value1", "value2"]`             | `SELECT value1 * value2 AS name`       |
-| `METRIC_DIVIDE`         | divide multi metrics to a new metrics.              | composition | must `dependency`. eg `dependency = ["value1", "value2"]`             | `SELECT value1 / value2 AS name`       |
-| `METRIC_AS`             | relation with other table metrics to a new metrics. | composition | must `dependency`. eg `dependency = ["table.value1", "table.value2"]` | `SELECT table.value1 AS name`          |
-| `METRIC_EXPRESSION`     | expression as one metrics                           | single      | must `field_name`. eg `field_name = "100"`                            | `SELECT 100 AS name`                   |
+| type                    | description                                         | classify    | required with example                           | sql example                            |
+|-------------------------|-----------------------------------------------------|-------------|-------------------------------------------------|----------------------------------------|
+| `METRIC_VALUE`          | original value as one metrics.                      | single      | `field_name = "value"`                          | `SELECT value AS name`                 |
+| `METRIC_COUNT`          | count one column as one metrics.                    | single      | `field_name = "*"`                              | `SELECT COUNT(*) AS name`              |
+| `METRIC_DISTINCT_COUNT` | distinct count one metrics to a new metrics.        | single      | `field_name = "value"`                          | `SELECT COUNT(DISTINCT value) AS name` |
+| `METRIC_SUM`            | sum the metrics to a new metrics.                   | single      | `field_name = "value"`                          | `SELECT SUM(value) AS name`            |
+| `METRIC_ADD`            | add multi metrics to a new metrics.                 | composition | `dependency = ["value1", "value2"]`             | `SELECT value1 + value2 AS name`       |
+| `METRIC_SUBTRACT`       | subtract multi metrics to a new metrics.            | composition | `dependency = ["value1", "value2"]`             | `SELECT value1 - value2 AS name`       |
+| `METRIC_MULTIPLY`       | multiply multi metrics to a new metrics.            | composition | `dependency = ["value1", "value2"]`             | `SELECT value1 * value2 AS name`       |
+| `METRIC_DIVIDE`         | divide multi metrics to a new metrics.              | composition | `dependency = ["value1", "value2"]`             | `SELECT value1 / value2 AS name`       |
+| `METRIC_AS`             | relation with other table metrics to a new metrics. | composition | `dependency = ["table.value1", "table.value2"]` | `SELECT table.value1 AS name`          |
+| `METRIC_EXPRESSION`     | expression as one metrics                           | single      | `field_name = "100"`                            | `SELECT 100 AS name`                   |
 
 #### Supported metric value type:
 
@@ -192,13 +192,13 @@ dimensions = [
 
 #### Supported dimension type:
 
-| type                   | description                                             | classify    | required                                                                | sql example                                                           |
-|------------------------|---------------------------------------------------------|-------------|-------------------------------------------------------------------------|-----------------------------------------------------------------------|
-| `METRIC_VALUE`         | original value as one dimension.                        | single      |                                                                         | `SELECT name ... GROUP BY name`                                       |
-| `DIMENSION_SINGLE`     | one single column as one dimension.                     | single      | must `field_name`. eg `field_name = "value"`                            | `SELECT value AS name ... GROUP BY value`                             |
-| `DIMENSION_MULTI`      | relation with other tables dimension to a new dimension | composition | must `dependency`. eg `dependency = ["table1.value"]`                   | `SELECT table1.value AS name ... GROUP BY table1.value`               |
-| `DIMENSION_CASE`       | `CASE` pattern for multi dimension to a new dimension   | composition | must `dependency`. eg `dependency = ["table1.value1", "table2.value2"]` | `SELECT CASE WHEN table1.value1 != '' THEN table2.value2 END AS name` |
-| `DIMENSION_EXPRESSION` | expression as one dimension.                            | single      | must `field_name`. eg `field_name = "formatDateTime(time, '%Y-%m-%d')"` | `SELECT formatDateTime(time, '%Y-%m-%d') AS name ... GROUP BY name`   |
+| type                   | description                                             | classify    | required with example                             | sql example                                                           |
+|------------------------|---------------------------------------------------------|-------------|---------------------------------------------------|-----------------------------------------------------------------------|
+| `METRIC_VALUE`         | original value as one dimension.                        | single      |                                                   | `SELECT name ... GROUP BY name`                                       |
+| `DIMENSION_SINGLE`     | one single column as one dimension.                     | single      | `field_name = "value"`                            | `SELECT value AS name ... GROUP BY value`                             |
+| `DIMENSION_MULTI`      | relation with other tables dimension to a new dimension | composition | `dependency = ["table1.value"]`                   | `SELECT table1.value AS name ... GROUP BY table1.value`               |
+| `DIMENSION_CASE`       | `CASE` pattern for multi dimension to a new dimension   | composition | `dependency = ["table1.value1", "table2.value2"]` | `SELECT CASE WHEN table1.value1 != '' THEN table2.value2 END AS name` |
+| `DIMENSION_EXPRESSION` | expression as one dimension.                            | single      | `field_name = "formatDateTime(time, '%Y-%m-%d')"` | `SELECT formatDateTime(time, '%Y-%m-%d') AS name ... GROUP BY name`   |
 
 #### Supported dimension value type:
 
