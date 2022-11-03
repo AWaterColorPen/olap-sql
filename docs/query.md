@@ -135,25 +135,35 @@ At least one of metrics or dimensions is required.
 
 ```json
 {
+  "filters": [
+    {
+      "operator_type":"FILTER_OPERATOR_IN",
+      "name":"date",
+      "value": [
+        "2021-05-06",
+        "2021-05-07"
+      ]
+    }
+  ]
 }
 ```
 
 #### Supported filter operator type and value
 
-| type                             | description                  | required                       | sql example                     |
-|----------------------------------|------------------------------|--------------------------------|---------------------------------|
-| `FILTER_OPERATOR_EQUALS`         | `=` condition.               | `value` size equals 1.         | `name = value[0]`               |
-| `FILTER_OPERATOR_IN`             | `IN` condition.              | `value` size must larger 0.    | `name IN (value)`               |
-| `FILTER_OPERATOR_NOT_IN`         | `NOT IN` condition.          | `value` size must larger 0.    | `name NOT IN (value)`           |
-| `FILTER_OPERATOR_LESS_EQUALS`    | `<=` condition.              | `value` size equals 1.         | `name <= value[0]`              |
-| `FILTER_OPERATOR_LESS`           | `<` condition.               | `value` size equals 1.         | `name < value[0]`               |
-| `FILTER_OPERATOR_GREATER_EQUALS` | `>=` condition.              | `value` size equals 1.         | `name >= value[0]`              |
-| `FILTER_OPERATOR_GREATER`        | `>` condition.               | `value` size equals 1.         | `name > value[0]`               |
-| `FILTER_OPERATOR_LIKE`           | `like` condition.            | `value` size equals 1.         | `name like value[0]`            |
-| `FILTER_OPERATOR_HAS`            | `has` condition.             | `value` size equals 1.         | `hash(name, value[0])`          |
-| `FILTER_OPERATOR_EXTENSION`      | expression as one condition  | `value` size equals 1.         | `value[0]`                      |
-| `FILTER_OPERATOR_AND`            | `AND` multi children filters | `children` size must larger 0. | `(children[0] AND children[1])` |
-| `FILTER_OPERATOR_OR`             | `OR` multi children filters  | `children` size must larger 0. | `(children[0] OR children[1])`  |
+| type                             | description             | required             | sql example                     |
+|----------------------------------|-------------------------|----------------------|---------------------------------|
+| `FILTER_OPERATOR_EQUALS`         | `=` condition.          | `value` size == 1.   | `name = value[0]`               |
+| `FILTER_OPERATOR_IN`             | `IN` condition.         | `value` size > 0.    | `name IN (value)`               |
+| `FILTER_OPERATOR_NOT_IN`         | `NOT IN` condition.     | `value` size > 0.    | `name NOT IN (value)`           |
+| `FILTER_OPERATOR_LESS_EQUALS`    | `<=` condition.         | `value` size == 1.   | `name <= value[0]`              |
+| `FILTER_OPERATOR_LESS`           | `<` condition.          | `value` size == 1.   | `name < value[0]`               |
+| `FILTER_OPERATOR_GREATER_EQUALS` | `>=` condition.         | `value` size == 1.   | `name >= value[0]`              |
+| `FILTER_OPERATOR_GREATER`        | `>` condition.          | `value` size == 1.   | `name > value[0]`               |
+| `FILTER_OPERATOR_LIKE`           | `like` condition.       | `value` size == 1.   | `name like value[0]`            |
+| `FILTER_OPERATOR_HAS`            | `has` condition.        | `value` size == 1.   | `hash(name, value[0])`          |
+| `FILTER_OPERATOR_EXTENSION`      | expression as condition | `value` size == 1.   | `value[0]`                      |
+| `FILTER_OPERATOR_AND`            | `AND` multi children    | `children` size > 0. | `(children[0] AND children[1])` |
+| `FILTER_OPERATOR_OR`             | `OR` multi children     | `children` size > 0. | `(children[0] OR children[1])`  |
 
 #### Supported value type
 

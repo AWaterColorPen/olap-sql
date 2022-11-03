@@ -31,6 +31,12 @@ It wants a sql to query the data with `metrics: sum(hits)` and `filter: date <= 
 SELECT SUM(wikistat.hits) AS hits FROM wikistat AS wikistat WHERE wikistat.date <= '2021-05-06'
 ```
 
+## Documentation
+
+1. [Configuration](./docs/configuration.md) to configure olap-sql instance and OLAP dictionary.
+2. [Query](./docs/query.md) to define olap query.
+3. [Result](./docs/result.md) to parse olap result.
+
 ## Getting Started
 
 ### Define the OLAP dictionary configuration file
@@ -129,9 +135,9 @@ result, err := manager.RunSync(query)
 
 ### Generate SQL then format result
 
-firstly, auto generate sql. [For detail](./docs/query.md#generate-sql-from-query).
+Firstly, auto generate sql. [For detail](./docs/query.md#generate-sql-from-query).
 
-Then get [result](./docs/result.md) json with `dimensions` property and `source` property.
+Then, get [result](./docs/result.md) json with `dimensions` property and `source` property.
 
 ```json
 {
@@ -154,12 +160,6 @@ Then get [result](./docs/result.md) json with `dimensions` property and `source`
   ]
 }
 ```
-
-## Documentation
-
-1. [Configuration](./docs/configuration.md) to configure olap-sql instance and OLAP dictionary.
-2. [Query](./docs/query.md) to define olap query.
-3. [Result](./docs/result.md) to parse olap result.
 
 ## License
 
