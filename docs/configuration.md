@@ -156,7 +156,7 @@ metrics = [
 
 #### Supported metric type:
 
-| type                    | description                                         | classify         | required                                                                  | example                                |
+| type                    | description                                         | classify         | required                                                                  | sql example                            |
 |-------------------------|-----------------------------------------------------|------------------|---------------------------------------------------------------------------|----------------------------------------|
 | `METRIC_VALUE`          | original value as one metrics.                      | single type      | must set `field_name`. eg `field_name = "value"`                          | `SELECT value AS name`                 |
 | `METRIC_COUNT`          | count one column as one metrics.                    | single type      | must set `field_name`. eg `field_name = "*"`                              | `SELECT COUNT(*) AS name`              |
@@ -171,7 +171,7 @@ metrics = [
 
 #### Supported metric value type:
 
-Same with [database client](#database-client) type
+Same with [Supported value type](./query.md#supported-value-type) type
 
 ### Dimensions
 
@@ -192,7 +192,7 @@ dimensions = [
 
 #### Supported dimension type:
 
-| type                   | description                                             | classify         | required                                                                    | example                                                               |
+| type                   | description                                             | classify         | required                                                                    | sql example                                                           |
 |------------------------|---------------------------------------------------------|------------------|-----------------------------------------------------------------------------|-----------------------------------------------------------------------|
 | `METRIC_VALUE`         | original value as one dimension.                        | single type      |                                                                             | `SELECT name ... GROUP BY name`                                       |
 | `DIMENSION_SINGLE`     | one single column as one dimension.                     | single type      | must set `field_name`. eg `field_name = "value"`                            | `SELECT value AS name ... GROUP BY value`                             |
@@ -202,4 +202,4 @@ dimensions = [
 
 #### Supported dimension value type:
 
-Same with [database client](#database-client) type
+Same with [Supported value type](./query.md#supported-value-type) type

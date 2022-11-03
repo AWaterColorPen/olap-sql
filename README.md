@@ -114,9 +114,7 @@ queryJson := `
 }`
 
 query := &types.Query{}
-if err := json.Unmarshal([]byte(queryJson), query); err != nil {
-	return err
-}
+err := json.Unmarshal([]byte(queryJson), query)
 ```
 
 Run query to get result from manager.
@@ -131,21 +129,9 @@ result, err := manager.RunSync(query)
 
 ### Generate SQL then format result
 
-Auto generate sql by [query](./docs/query.md).
+firstly, auto generate sql. [For detail](./docs/query.md#generate-sql-from-query).
 
-```sql
-SELECT
-    wikistat.date AS date,
-    1.0 * SUM(wikistat.hits) AS hits,
-    ( ( 1.0 * SUM(wikistat.hits) ) /  NULLIF(( COUNT(*) ), 0) ) AS hits_avg
-FROM wikistat AS wikistat
-WHERE
-    ( wikistat.date >= '2021-05-06' AND wikistat.date < '2021-05-08' )
-GROUP BY
-    wikistat.date
-```
-
-Get [result](./docs/result.md) json with `dimensions` property and `source` property.
+Then get [result](./docs/result.md) json with `dimensions` property and `source` property.
 
 ```json
 {
