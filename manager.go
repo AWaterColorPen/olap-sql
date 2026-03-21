@@ -1,3 +1,6 @@
+// Package olapsql provides a Go library for generating SQL queries for OLAP (Online Analytical Processing) systems.
+// It allows defining metrics, dimensions, and filters to construct analytical queries that can be executed
+// against various database backends.
 package olapsql
 
 import (
@@ -8,11 +11,16 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+// Manager is the central coordinating type for the olap-sql library.
+// It manages database clients and the OLAP dictionary configuration,
+// providing methods to execute queries and retrieve results.
 type Manager struct {
 	clients    Clients
 	dictionary *Dictionary
 }
 
+// GetClients returns the database clients managed by this Manager.
+// Returns an error if the manager is not properly initialized.
 func (m *Manager) GetClients() (Clients, error) {
 	if m.clients == nil {
 		return nil, fmt.Errorf("it is no initialization")
@@ -20,6 +28,8 @@ func (m *Manager) GetClients() (Clients, error) {
 	return m.clients, nil
 }
 
+// GetDictionary returns the OLAP dictionary managed by this Manager.
+// Returns an error if the manager is not properly initialized.
 func (m *Manager) GetDictionary() (*Dictionary, error) {
 	if m.dictionary == nil {
 		return nil, fmt.Errorf("it is no initialization")
@@ -27,6 +37,7 @@ func (m *Manager) GetDictionary() (*Dictionary, error) {
 	return m.dictionary, nil
 }
 
+// SetLogger sets the logger interface for all database clients.
 func (m *Manager) SetLogger(log logger.Interface) {
 	c, err := m.GetClients()
 	if err == nil {
@@ -34,6 +45,8 @@ func (m *Manager) SetLogger(log logger.Interface) {
 	}
 }
 
+// RunSync executes an OLAP query synchronously and returns the result.
+// It builds the SQL transaction from the query, executes it, and formats the result.
 func (m *Manager) RunSync(query *types.Query) (*types.Result, error) {
 	db, err := m.BuildTransaction(query)
 	if err != nil {
