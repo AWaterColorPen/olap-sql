@@ -111,7 +111,7 @@ func isSameColumnTables(t1, t2 []string) error {
 	sort.Strings(t1)
 	sort.Strings(t2)
 	// TODO linq
-	for i := 0; i < len(t1); i++ {
+	for i := range len(t1) {
 		if t1[i] != t2[i] {
 			return fmt.Errorf("table is not same t1=%v, t2=%v", t1, t2)
 		}

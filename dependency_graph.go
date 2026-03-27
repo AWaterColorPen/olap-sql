@@ -215,7 +215,7 @@ func (g *DependencyGraphBuilder) sort(key []string, key2Model func(string) iDepe
 			queue = append(queue, k)
 		}
 	}
-	for i := 0; i < len(queue); i++ {
+	for i := range len(queue) {
 		node := queue[i]
 		for _, v := range graph[node] {
 			inDegree[v]--

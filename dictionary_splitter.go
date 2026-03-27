@@ -290,7 +290,7 @@ func (n *NormalClauseSplitter) buildDimensionJoin() []*types.Join {
 		}
 		ds1, dl1, ds2, dl2 := v.Get1().DataSource, v.Get1().Dimension, v.Get2().DataSource, v.Get2().Dimension
 		var on []*types.JoinOn
-		for i := 0; i < len(dl1); i++ {
+		for i := range len(dl1) {
 			k1 := fmt.Sprintf("%v.%v", ds1, dl1[i])
 			k2 := fmt.Sprintf("%v.%v", ds2, dl2[i])
 			d1, _ := dGraph.GetDimension(k1)

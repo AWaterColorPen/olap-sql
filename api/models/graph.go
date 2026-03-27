@@ -5,7 +5,7 @@ type Graph map[string][]string
 func (g Graph) GetTree(current string) Graph {
 	graph := Graph{}
 	queue := []string{current}
-	for i := 0; i < len(queue); i++ {
+	for i := range len(queue) {
 		k := queue[i]
 		for _, v := range g[k] {
 			queue = append(queue, v)
