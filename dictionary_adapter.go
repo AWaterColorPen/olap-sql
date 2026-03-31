@@ -51,7 +51,7 @@ func GetDependencyTree(adapter IAdapter, current string) (models.Graph, error) {
 	visit := map[string]bool{current: true}
 	graph := models.Graph{current: nil}
 	queue := []string{current}
-	for i := range len(queue) {
+	for i := 0; i < len(queue); i++ {
 		node, err := adapter.GetSourceByKey(queue[i])
 		if err != nil {
 			return nil, err
