@@ -14,3 +14,4 @@ func (g Graph) GetTree(current string) Graph {
 	}
 	return graph
 }
+
