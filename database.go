@@ -11,12 +11,25 @@ import (
 	"gorm.io/gorm"
 )
 
+// DBOption holds the connection parameters for a single database instance.
 type DBOption struct {
-	Debug bool         `json:"debug"`
-	DSN   string       `json:"dsn"`
-	Type  types.DBType `json:"type"`
+	// Debug enables GORM's debug mode, which prints every generated SQL statement.
+	Debug bool `json:"debug"`
+
+	// DSN is the data source name (connection string) for the database.
+	// Format depends on the driver, e.g.:
+	//   ClickHouse: "clickhouse://user:pass@host:9000/db"
+	//   MySQL:      "user:pass@tcp(host:3306)/db?charset=utf8"
+	//   PostgreSQL: "host=host user=user password=pass dbname=db port=5432"
+	//   SQLite:     "/path/to/file.db"
+	DSN string `json:"dsn"`
+
+	// Type identifies the database engine. Supported values: clickhouse, mysql, postgre, sqlite.
+	Type types.DBType `json:"type"`
 }
 
+// NewDB opens a database connection using the DBOption settings.
+// Returns a configured *gorm.DB or an error if the DSN or type is invalid.
 func (o *DBOption) NewDB() (*gorm.DB, error) {
 	dialect, err := getDialect(o.Type, o.DSN)
 	if err != nil {
@@ -34,6 +47,7 @@ func (o *DBOption) NewDB() (*gorm.DB, error) {
 	return db, nil
 }
 
+// getDialect maps a DBType to the corresponding GORM Dialector.
 func getDialect(ty types.DBType, dsn string) (gorm.Dialector, error) {
 	switch ty {
 	case types.DBTypeSQLite:
