@@ -4,7 +4,6 @@ go 1.24
 
 require (
 	github.com/BurntSushi/toml v1.2.1
-	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/stretchr/testify v1.8.4
 	gorm.io/driver/clickhouse v0.5.0
 	gorm.io/driver/mysql v1.3.6

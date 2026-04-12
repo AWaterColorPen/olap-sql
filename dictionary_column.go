@@ -2,9 +2,9 @@ package olapsql
 
 import (
 	"fmt"
-	"github.com/ahmetb/go-linq/v3"
+	"slices"
+
 	"github.com/awatercolorpen/olap-sql/api/types"
-	"sort"
 )
 
 type columnStruct struct {
@@ -75,7 +75,8 @@ func (c *columnStruct) GetAsTables() []string {
 			out = append(out, v.Table)
 		}
 	}
-	linq.From(out).Distinct().ToSlice(&out)
+	slices.Sort(out)
+	out = slices.Compact(out)
 	return out
 }
 
@@ -108,9 +109,8 @@ func isSameColumnTables(t1, t2 []string) error {
 	if len(t1) != len(t2) {
 		return fmt.Errorf("table is not same t1=%v, t2=%v", t1, t2)
 	}
-	sort.Strings(t1)
-	sort.Strings(t2)
-	// TODO linq
+	slices.Sort(t1)
+	slices.Sort(t2)
 	for i := range len(t1) {
 		if t1[i] != t2[i] {
 			return fmt.Errorf("table is not same t1=%v, t2=%v", t1, t2)

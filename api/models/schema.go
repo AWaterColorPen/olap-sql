@@ -2,9 +2,9 @@ package models
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
-	"github.com/ahmetb/go-linq/v3"
 	"github.com/awatercolorpen/olap-sql/api/types"
 )
 
@@ -197,7 +197,8 @@ func (d *DataSource) GetGetDependencyKey() []string {
 	for i := 1; i < len(d.MergeJoin); i++ {
 		key = append(key, d.MergeJoin[i].DataSource)
 	}
-	linq.From(key).Distinct().ToSlice(&key)
+	slices.Sort(key)
+	key = slices.Compact(key)
 	return key
 }
 
