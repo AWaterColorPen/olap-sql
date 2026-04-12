@@ -3,7 +3,8 @@ package olapsql
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ahmetb/go-linq/v3"
+	"slices"
+
 	"github.com/awatercolorpen/olap-sql/api/models"
 	"github.com/awatercolorpen/olap-sql/api/types"
 )
@@ -233,8 +234,10 @@ func (n *NormalClauseSplitter) splitFilter(filter *types.Filter) (map[string][]*
 
 func (n *NormalClauseSplitter) polish() {
 	for _, v := range n.SplitQuery {
-		linq.From(v.Metrics).Distinct().ToSlice(&v.Metrics)
-		linq.From(v.Dimensions).Distinct().ToSlice(&v.Dimensions)
+		slices.Sort(v.Metrics)
+		v.Metrics = slices.Compact(v.Metrics)
+		slices.Sort(v.Dimensions)
+		v.Dimensions = slices.Compact(v.Dimensions)
 	}
 }
 
