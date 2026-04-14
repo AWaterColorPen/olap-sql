@@ -29,17 +29,17 @@ olap-sql 是一个 Go 的 OLAP 查询 SQL 生成库，支持 metrics、dimension
 
 ### 任务清单
 
-- [ ] 升级 Go 到最新版（1.24）
-- [ ] 依赖升级（只升无破坏性变更的小版本/patch）
-- [ ] 跑通所有现有测试，修复失败的
-- [ ] 使用新 Go 语法重构：
+- [x] 升级 Go 到最新版（1.24）
+- [x] 依赖升级（只升无破坏性变更的小版本/patch）
+- [x] 跑通所有现有测试，修复失败的
+- [x] 使用新 Go 语法重构：
   - `interface{}` → `any`
   - `range` over integers（Go 1.22）
   - `slices` / `maps` 标准库替换手写循环
   - `min()` / `max()` 内置函数
   - 适当引入泛型简化重复代码
-- [ ] 完善 README：补充真实可运行的 Quick Start 示例
-- [ ] 补充 godoc 注释（核心 API）
+- [x] 完善 README：补充真实可运行的 Quick Start 示例
+- [x] 补充 godoc 注释（核心 API）
 
 **卡点：完成后汇报，等用户确认进入 Phase 2**
 
