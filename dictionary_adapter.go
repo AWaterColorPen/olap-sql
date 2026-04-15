@@ -129,12 +129,7 @@ func (f *FileAdapter) GetDimension() []*models.Dimension {
 }
 
 func (f *FileAdapter) GetDataSetByKey(key string) (*models.DataSet, error) {
-	for _, set := range f.Sets {
-		if set.GetKey() == key {
-			return set, nil
-		}
-	}
-	return nil, fmt.Errorf("can not find '%v' data set", key)
+	return findByKey(f.Sets, key, "data set")
 }
 
 func (f *FileAdapter) GetSourceByKey(key string) (*models.DataSource, error) {
@@ -147,21 +142,11 @@ func (f *FileAdapter) GetSourceByKey(key string) (*models.DataSource, error) {
 }
 
 func (f *FileAdapter) GetMetricByKey(key string) (*models.Metric, error) {
-	for _, metric := range f.Metrics {
-		if metric.GetKey() == key {
-			return metric, nil
-		}
-	}
-	return nil, fmt.Errorf("can not find '%v' metric", key)
+	return findByKey(f.Metrics, key, "metric")
 }
 
 func (f *FileAdapter) GetDimensionByKey(key string) (*models.Dimension, error) {
-	for _, dimension := range f.Dimensions {
-		if dimension.GetKey() == key {
-			return dimension, nil
-		}
-	}
-	return nil, fmt.Errorf("can not find '%v' dimension", key)
+	return findByKey(f.Dimensions, key, "dimension")
 }
 
 func (f *FileAdapter) GetMetricsBySource(key string) []*models.Metric {
@@ -185,7 +170,7 @@ func (f *FileAdapter) GetDimensionsBySource(key string) []*models.Dimension {
 }
 
 func (f *FileAdapter) getSourcesByKeys(key []string) []*models.DataSource {
-	set := getKeySet(key)
+	set := toSet(key)
 	var out []*models.DataSource
 	for _, source := range f.Sources {
 		if _, ok := set[source.GetKey()]; ok {
@@ -198,7 +183,7 @@ func (f *FileAdapter) getSourcesByKeys(key []string) []*models.DataSource {
 }
 
 func (f *FileAdapter) getMetricsByKeys(key []string) []*models.Metric {
-	set := getKeySet(key)
+	set := toSet(key)
 	var out []*models.Metric
 	for _, metric := range f.Metrics {
 		if _, ok := set[metric.GetKey()]; ok {
@@ -209,7 +194,7 @@ func (f *FileAdapter) getMetricsByKeys(key []string) []*models.Metric {
 }
 
 func (f *FileAdapter) getMetricsBySourceKeys(key []string) []*models.Metric {
-	set := getKeySet(key)
+	set := toSet(key)
 	var out []*models.Metric
 	for _, metric := range f.Metrics {
 		if _, ok := set[metric.DataSource]; ok {
@@ -220,7 +205,7 @@ func (f *FileAdapter) getMetricsBySourceKeys(key []string) []*models.Metric {
 }
 
 func (f *FileAdapter) getDimensionsByKeys(key []string) []*models.Dimension {
-	set := getKeySet(key)
+	set := toSet(key)
 	var out []*models.Dimension
 	for _, dimension := range f.Dimensions {
 		if _, ok := set[dimension.GetKey()]; ok {
@@ -231,7 +216,7 @@ func (f *FileAdapter) getDimensionsByKeys(key []string) []*models.Dimension {
 }
 
 func (f *FileAdapter) getDimensionsBySourceKeys(key []string) []*models.Dimension {
-	set := getKeySet(key)
+	set := toSet(key)
 	var out []*models.Dimension
 	for _, dimension := range f.Dimensions {
 		if _, ok := set[dimension.DataSource]; ok {
@@ -352,10 +337,23 @@ func newDictionaryAdapterByFile(option *AdapterOption) (*FileAdapter, error) {
 	return adapter, nil
 }
 
-func getKeySet(key []string) map[any]struct{} {
-	set := make(map[any]struct{})
-	for _, k := range key {
-		set[k] = struct{}{}
+// toSet converts a slice into a set (map with empty struct values) for O(1) membership tests.
+func toSet[T comparable](items []T) map[T]struct{} {
+	set := make(map[T]struct{}, len(items))
+	for _, item := range items {
+		set[item] = struct{}{}
 	}
 	return set
+}
+
+// findByKey performs a linear search over items, returning the first element
+// whose GetKey() matches key, or an error if not found.
+func findByKey[T models.IModel](items []T, key, kind string) (T, error) {
+	for _, item := range items {
+		if item.GetKey() == key {
+			return item, nil
+		}
+	}
+	var zero T
+	return zero, fmt.Errorf("can not find '%v' %v", key, kind)
 }
