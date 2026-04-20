@@ -194,9 +194,13 @@ fmt.Println(sql)
 
 | Document | Description |
 |----------|-------------|
+| [Getting Started](./docs/getting-started.md) | Step-by-step guide to your first query |
 | [Configuration](./docs/configuration.md) | Configure Manager, clients, and the OLAP dictionary |
 | [Query](./docs/query.md) | Define metrics, dimensions, filters, orders, and limits |
 | [Result](./docs/result.md) | Parse and work with query results |
+| [Examples](./docs/examples.md) | Common usage scenarios (ClickHouse joins, time filters, concurrency) |
+| [Architecture](./docs/architecture.md) | Internal design for contributors |
+| [Contributing](./CONTRIBUTING.md) | How to contribute to olap-sql |
 
 ---
 
