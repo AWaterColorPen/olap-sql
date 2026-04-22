@@ -53,12 +53,12 @@ olap-sql 是一个 Go 的 OLAP 查询 SQL 生成库，支持 metrics、dimension
 
 - [x] 重写 Getting Started（step-by-step，有完整可运行代码）
 - [ ] API 文档：每个方法说明参数、返回值、使用场景
-- [ ] 增加常见使用场景示例：
+- [x] 增加常见使用场景示例：
   - ClickHouse 多表联查
   - 自定义 metrics 公式
   - 时间区间过滤
   - 并发查询 vs 同步查询
-- [ ] 架构说明文档（给贡献者看）
+- [x] 架构说明文档（给贡献者看）
 - [ ] CONTRIBUTING.md
 
 **卡点：完成后汇报，等用户确认进入 Phase 3**
