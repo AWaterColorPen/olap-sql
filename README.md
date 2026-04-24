@@ -199,6 +199,7 @@ fmt.Println(sql)
 | [Query](./docs/query.md) | Define metrics, dimensions, filters, orders, and limits |
 | [Result](./docs/result.md) | Parse and work with query results |
 | [Examples](./docs/examples.md) | Common usage scenarios (ClickHouse joins, time filters, concurrency) |
+| [API Reference](./docs/api.md) | Full public API — Manager, Query, Filter, Result |
 | [Architecture](./docs/architecture.md) | Internal design for contributors |
 | [Contributing](./CONTRIBUTING.md) | How to contribute to olap-sql |
 
