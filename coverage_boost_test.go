@@ -31,9 +31,9 @@ func TestClients_SetLogger(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestClients_BuildSQL(t *testing.T) {
+	// BuildSQL uses DryRun mode, so no data loading is required.
 	m, err := newManager(t)
 	assert.NoError(t, err)
-	assert.NoError(t, MockLoad(m))
 
 	query := MockQuery1()
 
@@ -46,9 +46,9 @@ func TestClients_BuildSQL(t *testing.T) {
 	clients, err := m.GetClients()
 	assert.NoError(t, err)
 
-	sql, err := clients.BuildSQL(clause)
+	sqlStr, err := clients.BuildSQL(clause)
 	assert.NoError(t, err)
-	assert.NotEmpty(t, sql)
+	assert.NotEmpty(t, sqlStr)
 }
 
 // ---------------------------------------------------------------------------
@@ -91,9 +91,14 @@ func TestNewTranslator_DirectSQL(t *testing.T) {
 		Sql:         "SELECT 1",
 	}
 
-	sql, err := dict.Translate(query)
+	clause, err := dict.Translate(query)
 	assert.NoError(t, err)
-	assert.NotNil(t, sql)
+	assert.NotNil(t, clause)
+
+	// Verify the direct-SQL path preserved the raw SQL string.
+	sqlClause, ok := clause.(*types.SqlClause)
+	assert.True(t, ok, "expected clause to be *types.SqlClause")
+	assert.Equal(t, "SELECT 1", sqlClause.Sql)
 }
 
 // ---------------------------------------------------------------------------
