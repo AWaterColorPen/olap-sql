@@ -72,10 +72,22 @@ olap-sql 是一个 Go 的 OLAP 查询 SQL 生成库，支持 metrics、dimension
 ### 任务清单
 
 - [ ] 升级主要依赖到最新版（评估破坏性影响，分 PR）
-- [ ] 提升测试覆盖率（目标 80%+）
+- [x] 提升测试覆盖率（目标 80%+）：main 包从 79.1% → 82.8%（PR #24，2026-04-28 合并）
 - [ ] 每个 breaking change 单独 PR + CHANGELOG
 
 **卡点：完成后汇报，评估是否有 Phase 4**
+
+---
+
+---
+
+## Review 经验积累
+
+### 测试覆盖提升 PR 常见陷阱（2026-04-28，PR #24）
+
+1. **隔离的数据库实例不共享数据**：`MockLoad(m)` 加载数据到 manager 的 SQLite，而 `newClients(t.TempDir())` 创建的是独立实例——两者文件路径不同，加载的数据对后者不可见。DryRun 类函数只需调用，无需预置数据。
+2. **变量命名应反映类型**：函数返回 `types.Clause` 接口值时，变量不要命名为 `sql`（暗示字符串），应命名为 `clause` 或更具体的 `sqlClause`。
+3. **断言要覆盖核心逻辑**：`assert.NotNil` 不足以验证路径行为，应做类型断言（`clause.(*types.SqlClause)`）+ 字段等值检查（`assert.Equal(t, "SELECT 1", sqlClause.Sql)`）。
 
 ---
 
