@@ -36,3 +36,5 @@
   限制: 本地无 Go 运行时，无法执行 go list -m -u / go test；Issue #14 仍因 token 无 issues:write 权限无法自动关闭。
   下一步: 白天继续推进——建议从 adapter-pattern.md 开始逐篇完成 SDD，或等待本地 Go 运行时可用后扫描并升级直接依赖。
   [done-for-now]
+
+[2026-06-28] 维护推进（progress）：完成 SDD 系列第一篇 docs/sdd/adapter-pattern.md。内容覆盖 IAdapter 接口、FileAdapter 实现、AdapterOption 配置模型、BuildDataSourceAdapter 子适配器机制、加载即校验逻辑，以及与 Dictionary/Manager 的协作关系；包含 Mermaid 流程图。同步更新 docs/sdd/README.md 待办状态。GitHub 状态：0 open PR，Issue #14 仍 open（token 无 issues:write 权限）。本地仍无 Go 运行时，依赖升级继续搁置。下一步：继续完成第二篇 SDD（建议 schema-mapping.md）或等待 Go 运行时后处理依赖升级。[done-for-now]

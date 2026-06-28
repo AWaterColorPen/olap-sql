@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
-  "last_run_at": "2026-06-23T22:39:00+08:00",
+  "last_run_at": "2026-06-28T08:50:00+08:00",
   "project_root": "C:\\Users\\helli\\WorkBuddy\\Claw\\olap-sql",
   "last_phase": "progress",
   "phase_status": "done_for_now",
   "current_intent_link": ".long-haul/intent.md",
-  "in_progress_subtask": "SDD 从零建设（已完成索引，待完成 5 篇单篇文档）",
-  "next_planned_step": "白天继续推进：① 完成第一篇 SDD（建议 adapter-pattern.md）→ ② 本地有 Go 运行时后扫描并升级直接依赖 → ③ 提醒用户手动关闭 Issue #14",
+  "in_progress_subtask": "SDD 从零建设（已完成索引 + adapter-pattern.md 初稿，剩余 4 篇）",
+  "next_planned_step": "继续完成第二篇 SDD（建议 schema-mapping.md），或等待本地 Go 运行时可用后扫描并升级直接依赖；提醒用户手动关闭 Issue #14",
   "blocking_alignment_id": null,
   "context_snapshot": {
-    "files_touched": ["docs/sdd/README.md", ".long-haul/progress.log", ".long-haul/checkpoint.json", ".long-haul/cadence.yml"],
+    "files_touched": ["docs/sdd/adapter-pattern.md", "docs/sdd/README.md", ".long-haul/progress.log", ".long-haul/checkpoint.json"],
     "open_pr_link": null,
     "git_branch": "feature/refresh-deps",
-    "git_head": "3c98258c4482e95d6d21b1157b436f370ee7f09c",
+    "git_head": "TBD",
     "blocking": "Issue #14 仍待用户手动关闭；本地无 Go 运行时，依赖升级需运行时验证"
   }
 }

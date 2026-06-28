@@ -35,5 +35,5 @@
 - [ ] `splitter-engine.md` 初稿
 - [ ] `translator-chain.md` 初稿
 - [ ] `dependency-resolution.md` 初稿
-- [ ] `adapter-pattern.md` 初稿
+- [x] `adapter-pattern.md` 初稿
 - [ ] 与 `docs/architecture.md` 的交叉引用审查
