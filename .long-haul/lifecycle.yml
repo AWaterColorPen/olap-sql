@@ -1,0 +1,11 @@
+# 项目生命周期状态文件
+# 详见 references/core/lifecycle-state-machine.md
+
+state: active
+since: "2026-06-06T08:50:00+08:00"
+
+history:
+  - { state: bootstrapping, at: "2026-06-06T08:50:00+08:00", reason: "long-haul state files migrated from legacy format" }
+  - { state: active, at: "2026-06-06T08:50:00+08:00", reason: "readiness passed; project has active intent and merged PRs" }
+
+notes: "Phase 3 complete; pending final reflect and Issue #14 closure."

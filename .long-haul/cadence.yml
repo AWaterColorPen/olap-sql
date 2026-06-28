@@ -1,0 +1,16 @@
+# 项目节奏感知配置
+# 详见 references/core/cadence-schema.md
+
+intended_cadence: daily
+
+last_meaningful_run: "2026-06-23T22:39:00+08:00"
+last_any_run: "2026-06-23T22:39:00+08:00"
+
+project_activity_signal:
+  last_external_commit: "2026-05-14T07:02:52Z"
+  open_prs_count: 0
+  open_issues_count: 1
+  health_check_at: "2026-06-23T22:39:00+08:00"
+
+dormant_threshold_runs: 6                  # active → dormant 阈值
+sunsetting_dormant_threshold_runs: 12      # dormant → sunsetting 阈值

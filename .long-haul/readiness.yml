@@ -1,0 +1,27 @@
+# 项目就绪性配置
+# 详见 references/topics/readiness/schema.md
+
+schema_version: 1
+
+runtime:
+  language: go
+  version: "1.24.1"
+
+install_cmd:
+  - go mod download
+
+build_cmd: []
+test_cmd:
+  - go test ./...
+ci_check_cmd: []
+
+branch_policy: pr-only
+credentials_required:
+  - github-token
+config_files:
+  - go.mod
+network_prereq:
+  - github.com
+
+last_checked_at: "2026-06-21T08:50:00+08:00"
+last_result: pass
