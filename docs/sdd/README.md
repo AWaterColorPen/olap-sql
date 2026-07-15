@@ -31,7 +31,7 @@
 
 ## 待补充事项
 
-- [ ] `schema-mapping.md` 初稿
+- [x] `schema-mapping.md` 初稿
 - [ ] `splitter-engine.md` 初稿
 - [ ] `translator-chain.md` 初稿
 - [ ] `dependency-resolution.md` 初稿
