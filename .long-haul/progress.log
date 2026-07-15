@@ -38,3 +38,5 @@
   [done-for-now]
 
 [2026-06-28] 维护推进（progress）：完成 SDD 系列第一篇 docs/sdd/adapter-pattern.md。内容覆盖 IAdapter 接口、FileAdapter 实现、AdapterOption 配置模型、BuildDataSourceAdapter 子适配器机制、加载即校验逻辑，以及与 Dictionary/Manager 的协作关系；包含 Mermaid 流程图。同步更新 docs/sdd/README.md 待办状态。GitHub 状态：0 open PR，Issue #14 仍 open（token 无 issues:write 权限）。本地仍无 Go 运行时，依赖升级继续搁置。下一步：继续完成第二篇 SDD（建议 schema-mapping.md）或等待 Go 运行时后处理依赖升级。[done-for-now]
+
+[2026-07-15] 用户主动触发维护检查（reflect 形态）：距上次有意义运行 17 天，should-wake-up.sh 返回 WAKE_UP_FOR_REFLECT。GitHub 扫描 — 0 open PR，1 open issue（#14），main 最新 commit 9854407（62 天前）。本地复核：go.mod 已升级至 go 1.26.4 / toolchain go1.26.4；直接依赖尚未扫描升级；go.sum 无 yaml.v2；SDD 完成 README + adapter-pattern，剩余 4 篇；readiness.yml 滞后（仍记 1.24.1）。更新 reflect.md、checkpoint.json、cadence.yml、readiness.yml、progress.log。下一步建议：更新 readiness.yml 并提交，或继续 schema-mapping.md；用户仍需手动关闭 Issue #14；获取 Go 运行后扫描直接依赖。[done-for-now]

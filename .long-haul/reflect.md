@@ -582,3 +582,66 @@ Phase 2（文档建设）已全部完成。项目现在有完整的使用者文�
 1. 先向用户确认是否可以进入 Phase 3
 2. 若确认，先运行 `go test -cover ./...` 获取覆盖率基线
 3. 再评估依赖最新版本，制定升级优先级
+
+---
+
+## 【2026-07-15】用户主动触发维护检查（reflect 形态）
+
+### 我们在哪？
+
+项目仍处于 **active 维护模式**，当前工作在 **feature/refresh-deps** 分支上，本地有未提交的 `.long-haul/readiness-runs.log` 修改。
+
+- **GitHub 状态**：
+  - main 最新 commit：`9854407`（2026-05-14T07:02:52Z），距今天 **62 天** 无新活动
+  - **0 open PR**，**1 open issue**（#14，yaml.v2 CVE 已修复但仍 open）
+  - Issue #14 因 GitHub token 无 `issues:write` 权限，无法通过 API 自动关闭
+- **本地仓库状态**：
+  - 当前分支 `feature/refresh-deps`，本地包含 `go.mod` 已升级至 `go 1.26.4` / `toolchain go1.26.4`
+  - 直接依赖（gorm、driver、testify、toml 等）**尚未**扫描升级，仅 Go directive 已更新
+  - `go.sum` 确认：`gopkg.in/yaml.v2` 完全未出现，仅剩 `gopkg.in/yaml.v3`
+- **SDD 建设进度**：
+  - 已完成：`docs/sdd/README.md` 索引 + `docs/sdd/adapter-pattern.md` 初稿
+  - 剩余 4 篇：`schema-mapping.md`、`splitter-engine.md`、`translator-chain.md`、`dependency-resolution.md`
+- **环境限制**：本地仍无 Go 运行时，无法执行 `go test ./...` 或 `go list -m -u all`
+- **readiness.yml 滞后**：仍记录 Go version `1.24.1`，与实际 `go.mod` 的 `1.26.4` 不一致
+
+### 我们离目标更近了吗？
+
+**部分前进，但速度偏慢。**
+
+本次 `intent.md`（2026-06-22 全面刷新）设定的三项核心工作：
+
+1. **依赖全面升级**：
+   - Go directive：1.24.1 → 1.26.4 ✅ 已完成
+   - 直接依赖扫描 + 升级：❌ 尚未开始（受限于无 Go 运行时）
+2. **SDD 建设**：
+   - 计划 5 篇 + README 索引，共 6 个产物
+   - 已完成 2 个（README + adapter-pattern）✅ 进度约 33%
+3. **文档重建与升级**：
+   - 尚未启动，排在 SDD 和依赖之后
+
+**整体评估**：方向正确，但 17 天未推进，需在本次唤醒后重新启动小步推进。
+
+### 本次执行动作
+
+1. **形态选择**：reflect 形态（距上次有意义运行 17 天，should-wake-up.sh 返回 `WAKE_UP_FOR_REFLECT`）
+2. **GitHub 状态扫描**：0 open PR，1 open issue（#14），最新 commit 仍为 9854407
+3. **本地状态复核**：检查 go.mod、go.sum、SDD 目录、分支状态、readiness.yml 滞后
+4. **状态文件更新**：reflect.md / checkpoint.json / cadence.yml / progress.log / readiness.yml
+
+### 下一步最应该做什么？
+
+按"白天推进、不要太快"偏好，建议下一步只做 1 项：
+
+1. **更新 `.long-haul/readiness.yml`**：将 Go version 从 1.24.1 改为 1.26.4，与实际 `go.mod` 对齐；提交并推送（顺带提交未提交的 readiness-runs.log）
+2. **或继续第二篇 SDD**：`docs/sdd/schema-mapping.md`，这是 intent 中定义的"核心设计"文档
+3. **用户仍需手动关闭 Issue #14**（留言：PR #25 已移除 yaml.v2，CVE-2019-11254 已修复）
+4. **获取 Go 运行后**再执行 `go list -m -u all` 扫描并升级直接依赖
+
+### 风险/注意事项
+
+- 自动化 token 仍无 `issues:write` 权限，Issue #14 关闭需人工
+- 当前环境无 Go 运行时，无法本地验证依赖升级和测试
+- 项目活跃度低（62 天无 commit），但符合维护模式预期
+- readiness.yml 与实际 `go.mod` 版本不一致，属于状态文件腐化，需尽快修复
+
